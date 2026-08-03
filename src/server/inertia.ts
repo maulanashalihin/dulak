@@ -148,12 +148,16 @@ export class Inertia {
     const hasTitle = headTags.some((h) => h.includes('<title'))
     const titleTag = hasTitle ? '' : '<title>Elysia Inertia</title>'
     const cssTag = this.assets.css ? `<link rel="stylesheet" href="/assets/${this.assets.css}" />` : ''
+    const favicon = `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="%234f46e5"/><path d="M17.8 5.6 8.4 18h5.2l-1.2 8.4 9.2-12h-5.2z" fill="white"/></svg>',
+    )}" />`
     const doc = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
+${favicon}
 ${titleTag}
 ${headTags.join('\n')}
 ${cssTag}

@@ -22,7 +22,7 @@
   :root {
     --bg: #0f1117;
     --surface: #171a23;
-    --border: #262b38;
+    --border: #2d3444;
     --text: #e8eaf2;
     --muted: #9aa1b2;
     --primary: #6366f1;
@@ -73,6 +73,9 @@ a:hover {
 /* --- Brand -------------------------------------------------------------- */
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 700;
   font-size: 1.05rem;
   color: var(--text);
@@ -83,8 +86,14 @@ a:hover {
   text-decoration: none;
 }
 
-.brand span {
+.brand-mark {
   color: var(--primary);
+  flex-shrink: 0;
+}
+
+.brand em {
+  color: var(--primary);
+  font-style: normal;
 }
 
 /* --- Buttons ------------------------------------------------------------ */
@@ -231,6 +240,37 @@ a:hover {
   }
 }
 
+/* --- Footer -------------------------------------------------------------- */
+
+.footer {
+  margin-top: auto;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+}
+
+.footer-stack {
+  opacity: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .footer {
+    color: #b6bdcb;
+  }
+}
+
+/* --- Accessibility ------------------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 /* --- Auth pages --------------------------------------------------------- */
 
 .auth {
@@ -239,6 +279,9 @@ a:hover {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  background:
+    radial-gradient(700px 320px at 50% -10%, var(--primary-soft), transparent 70%),
+    var(--bg);
 }
 
 .auth-card {

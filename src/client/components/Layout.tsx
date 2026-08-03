@@ -1,8 +1,9 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import type { ReactNode } from 'react'
 import type { SharedPageProps } from '../../shared/types'
+import Brand from './Brand'
 
-/** App shell: nav, flash banners, page content. */
+/** App shell: nav, flash banners, page content, footer. */
 export default function Layout({ children }: { children: ReactNode }) {
   const { props, flash } = usePage<SharedPageProps>()
   const user = props.auth.user
@@ -10,9 +11,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="shell">
       <header className="nav">
-        <Link href={user ? '/dashboard' : '/login'} className="brand">
-          Elysia <span>Inertia</span>
-        </Link>
+        <Brand href={user ? '/dashboard' : '/login'} />
         <nav className="nav-links">
           {user ? (
             <>
@@ -36,6 +35,10 @@ export default function Layout({ children }: { children: ReactNode }) {
       {flash.error ? <div className="flash flash-error">{String(flash.error)}</div> : null}
 
       <main className="content">{children}</main>
+      <footer className="footer">
+        <span>Elysia Inertia boilerplate</span>
+        <span className="footer-stack">Bun · Elysia · bun:sqlite · Inertia v3</span>
+      </footer>
     </div>
   )
 }
