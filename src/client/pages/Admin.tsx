@@ -25,10 +25,11 @@ export default function Admin({ users }: { users: Paginated<User> }) {
       <Head title="Admin" />
       <h1>Admin</h1>
       <p className="page-sub">
-        {users.meta.total} users total — page {currentPage} of {lastPage}.
+        {users.meta.total} user{users.meta.total === 1 ? '' : 's'} total — page {currentPage} of {lastPage}.
       </p>
 
       <section className="panel">
+        <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
@@ -49,8 +50,16 @@ export default function Admin({ users }: { users: Paginated<User> }) {
                 <td>{formatDate(u.createdAt)}</td>
               </tr>
             ))}
+            {users.data.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="table-empty">
+                  No users yet.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
+        </div>
       </section>
 
       <nav className="pagination" aria-label="Pagination">

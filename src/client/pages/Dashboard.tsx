@@ -31,8 +31,8 @@ export default function Dashboard({ stats }: { stats: DashboardStats }) {
           <span className="stat-label">Total users</span>
         </div>
         <div className="stat-card">
-          <span className="stat-value">{user.name}</span>
-          <span className="stat-label">Signed in as</span>
+          <span className="stat-value badge-value">{user.role}</span>
+          <span className="stat-label">Role</span>
         </div>
         <div className="stat-card">
           <span className="stat-value">{formatDate(user.createdAt)}</span>
@@ -42,6 +42,7 @@ export default function Dashboard({ stats }: { stats: DashboardStats }) {
 
       <section className="panel">
         <h2>Recent users</h2>
+        <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
@@ -60,6 +61,7 @@ export default function Dashboard({ stats }: { stats: DashboardStats }) {
             ))}
           </tbody>
         </table>
+        </div>
       </section>
     </Layout>
   )
