@@ -1,10 +1,12 @@
 /**
  * bun:sqlite layer — synchronous, zero-ORM.
- * Schema is idempotent DDL run at startup; statements are prepared once.
+ * Schema comes from migrations/ (see migrations.ts); statements are
+ * prepared once, after migrations are applied.
  */
 import { Database } from 'bun:sqlite'
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
+import { migrate } from './migrations'
 
 export interface UserRow {
   id: number
@@ -39,25 +41,8 @@ export const db = new Database(dbPath, { create: true })
 db.exec('PRAGMA journal_mode = WAL')
 db.exec('PRAGMA foreign_keys = ON')
 
-db.exec(`
-CREATE TABLE IF NOT EXISTS users (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  name          TEXT    NOT NULL,
-  email         TEXT    NOT NULL UNIQUE COLLATE NOCASE,
-  password_hash TEXT    NOT NULL,
-  created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-);
-
-CREATE TABLE IF NOT EXISTS sessions (
-  token      TEXT PRIMARY KEY,
-  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  flash      TEXT    NOT NULL DEFAULT '{}',
-  expires_at TEXT    NOT NULL,
-  created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
-`)
+// Apply pending migrations before any statement is prepared/used.
+migrate(db)
 
 const USER_COLUMNS = 'id, name, email, password_hash AS passwordHash, created_at AS createdAt'
 

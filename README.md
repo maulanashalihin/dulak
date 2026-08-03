@@ -49,7 +49,8 @@ src/
 ├── index.ts                # entry: build assets (dev), load manifest, listen
 ├── server/
 │   ├── app.ts              # composition + global error handling (422/404/500)
-│   ├── db.ts               # bun:sqlite: schema, prepared statements
+│   ├── db.ts               # bun:sqlite: connection, prepared statements
+│   ├── migrations.ts       # SQL migration runner
 │   ├── auth.ts             # argon2id, sessions, flash, cookies, guards
 │   ├── inertia.ts          # Inertia v3 server adapter (SSR shell, XHR, 409)
 │   ├── inertia-plugin.ts   # store declarations + per-request session resolve
@@ -68,6 +69,7 @@ src/
 ├── shared/
 │   ├── types.ts            # User, FlashData, SharedPageProps, DashboardStats
 │   └── inertia.d.ts        # InertiaConfig augmentation → typed props.auth
+├── migrations/             # versioned SQL schema files (0001_init.sql, …)
 └── scripts/                # build.ts, seed.ts
 ```
 
@@ -91,6 +93,39 @@ src/
 - **Validation**: TypeBox schemas at the route level; `onError` maps failures
   to 422 Inertia page payloads with per-field messages
   (`VALIDATION_MESSAGES` in `routes/auth.routes.ts`).
+
+## Database migrations
+
+Schema changes are plain SQL files in `migrations/`, applied automatically at
+startup in filename order, each inside a transaction and recorded in
+`schema_migrations` (never re-applied).
+
+```bash
+# add a column to an existing table
+cat > migrations/0002_add_last_login.sql <<'SQL'
+ALTER TABLE users ADD COLUMN last_login_at TEXT;
+SQL
+bun run dev   # migration runs on boot
+```
+
+```bash
+# add a whole new table
+cat > migrations/0003_create_posts.sql <<'SQL'
+CREATE TABLE posts (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title      TEXT    NOT NULL,
+  body       TEXT    NOT NULL,
+  created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+SQL
+```
+
+Rules:
+- **Never edit an applied migration** — add a new numbered file instead.
+- SQLite `ALTER TABLE ADD COLUMN` with `NOT NULL` requires a `DEFAULT`.
+- A migration runs in a transaction: a failed file leaves the DB unchanged
+  and aborts startup.
 
 ## Notes / decisions
 
