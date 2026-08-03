@@ -207,6 +207,20 @@ Alternatives: `bun build --compile` for a single binary, or plain
 `bun run start` behind your process supervisor (it handles SIGTERM
 gracefully).
 
+## Styling
+
+**Vanilla CSS by design** (`src/client/styles.css`, ~6KB): design tokens via CSS
+variables, light/dark via `prefers-color-scheme`, no framework. Chosen to keep
+the starter zero-dependency and zero extra build steps — the CSS is bundled and
+content-hashed by the same `Bun.build` pipeline as the JS.
+
+Adding **Tailwind v4** later is a per-project decision, not a boilerplate
+rewrite: `@tailwindcss/cli` has no Bun.build plugin, so wire it as a step
+before the build — process `src/client/styles.css` (`@import "tailwindcss"`)
+into a generated file, import that in `src/client/app.tsx`, and keep the
+content scan pointed at `src/client/**/*.tsx`. The hashed-asset manifest and
+Inertia version negotiation then work unchanged.
+
 ## Notes / decisions
 
 - **Elysia 1.4 quirks handled**: hooks apply in registration order (global
