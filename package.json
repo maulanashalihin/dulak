@@ -1,0 +1,26 @@
+{
+  "name": "elysia-inertia-boilerplate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "module": "src/index.ts",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun run scripts/build.ts",
+    "start": "NODE_ENV=production bun run src/index.ts",
+    "db:seed": "bun run scripts/seed.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@inertiajs/react": "^3.0.0",
+    "elysia": "^1.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.8.0"
+  }
+}
