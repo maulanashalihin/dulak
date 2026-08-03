@@ -4,10 +4,13 @@
  * both `src/server` (Bun runtime) and `src/client` (browser bundle).
  */
 
+export type Role = 'user' | 'admin'
+
 export interface User {
   id: number
   name: string
   email: string
+  role: Role
   createdAt: string
 }
 
@@ -30,4 +33,15 @@ export interface SharedPageProps {
 export interface DashboardStats {
   userCount: number
   recentUsers: User[]
+}
+
+/** Generic pagination envelope, mirroring what the server returns. */
+export interface Paginated<T> {
+  data: T[]
+  meta: {
+    currentPage: number
+    perPage: number
+    lastPage: number
+    total: number
+  }
 }

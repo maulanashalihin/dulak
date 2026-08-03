@@ -1,14 +1,18 @@
 /**
  * Auth: argon2id password hashing (Bun.password), DB-backed sessions,
- * httpOnly cookie helpers, flash messages, and route guards.
+ * httpOnly cookie helpers, flash messages, password-reset tokens,
+ * Google OAuth state, and route guards (requireAuth / guestOnly / requireRole).
  */
-import { randomBytes } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import type { Cookie } from 'elysia'
-import type { FlashData, User } from '../shared/types'
+import type { FlashData, Role, User } from '../shared/types'
 import {
+  deletePasswordResetsByEmail,
   deleteSession,
+  findPasswordReset,
   findSession,
   findUserById,
+  insertPasswordReset,
   insertSession,
   updateSessionFlash,
   type UserRow,
@@ -16,6 +20,7 @@ import {
 
 export const SESSION_COOKIE = 'session'
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+export const RESET_TOKEN_TTL_MS = 60 * 60 * 1000 // 1 hour
 const isProd = process.env.NODE_ENV === 'production'
 
 // ---------------------------------------------------------------------------
@@ -81,6 +86,30 @@ export function clearFlash(token: string | null | undefined): void {
 }
 
 // ---------------------------------------------------------------------------
+// Password reset tokens (hashed at rest; the raw token goes in the email)
+// ---------------------------------------------------------------------------
+
+export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex')
+
+/** Create a reset token for `email` and return the raw token to email out. */
+export function createPasswordReset(email: string): string {
+  const token = randomBytes(32).toString('hex')
+  insertPasswordReset.run(email, hashToken(token), new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString())
+  return token
+}
+
+/** Verify a raw reset token for `email` (consumes nothing; caller deletes). */
+export function verifyPasswordReset(email: string, token: string): boolean {
+  const row = findPasswordReset.get(hashToken(token))
+  if (!row || row.email.toLowerCase() !== email.toLowerCase()) return false
+  return Date.now() <= new Date(row.expiresAt).getTime()
+}
+
+export function clearPasswordResets(email: string): void {
+  deletePasswordResetsByEmail.run(email)
+}
+
+// ---------------------------------------------------------------------------
 // Cookies (cookie may be undefined under noUncheckedIndexedAccess)
 // ---------------------------------------------------------------------------
 
@@ -105,6 +134,24 @@ export function clearSessionCookie(cookie: Cookie<unknown> | undefined): void {
   cookie?.remove()
 }
 
+export const OAUTH_STATE_COOKIE = 'oauth_state'
+
+/** Short-lived state cookie protecting the OAuth callback from CSRF. */
+export function setOAuthStateCookie(cookie: Cookie<unknown> | undefined, state: string): void {
+  cookie?.set({
+    value: state,
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProd,
+    path: '/',
+    maxAge: 600, // 10 minutes
+  })
+}
+
+export function clearOAuthStateCookie(cookie: Cookie<unknown> | undefined): void {
+  cookie?.remove()
+}
+
 // ---------------------------------------------------------------------------
 // Route guards (return a Response to short-circuit, undefined to continue)
 // ---------------------------------------------------------------------------
@@ -124,3 +171,11 @@ export const requireAuth = ({ store, request }: GuardContext): Response | undefi
 export const guestOnly = ({ store, request }: GuardContext): Response | undefined => {
   if (store.user) return redirectTo(request, '/dashboard')
 }
+
+/** Guard factory: e.g. `requireRole('admin')` — non-admins go to /dashboard. */
+export const requireRole =
+  (...roles: Role[]) =>
+  ({ store, request }: GuardContext): Response | undefined => {
+    if (!store.user) return redirectTo(request, '/login')
+    if (!roles.includes(store.user.role)) return redirectTo(request, '/dashboard')
+  }

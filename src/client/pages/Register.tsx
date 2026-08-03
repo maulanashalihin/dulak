@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import AuthLayout from '../components/AuthLayout'
 import Field from '../components/Field'
 
-export default function Register() {
+export default function Register({ googleEnabled }: { googleEnabled: boolean }) {
   const { data, setData, post, processing, errors, clearErrors } = useForm({
     name: '',
     email: '',
@@ -20,6 +20,15 @@ export default function Register() {
       <Head title="Register" />
       <h1>Create your account</h1>
       <p className="auth-sub">Start building with the boilerplate in seconds.</p>
+
+      {googleEnabled ? (
+        <>
+          <a className="btn btn-block btn-google" href="/auth/google">
+            Continue with Google
+          </a>
+          <div className="divider">or</div>
+        </>
+      ) : null}
 
       <form onSubmit={submit} noValidate>
         <Field id="name" label="Name" error={errors.name}>

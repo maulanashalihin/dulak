@@ -1,18 +1,25 @@
 /**
- * App composition: security → assets → auth/inertia → routes → errors.
+ * App composition: security → logging → assets → auth/inertia → routes → errors.
+ * Hooks are registered in order (Elysia 1.4 applies them positionally) and
+ * error/global hooks must come before the routes they cover.
  */
 import { Elysia, ValidationError } from 'elysia'
 import { serveAsset } from './assets'
 import { readFlash, resolveUser } from './auth'
+import { db, toPublicUser } from './db'
 import { Inertia, type InertiaAssets, type InertiaContext } from './inertia'
-import { VALIDATION_MESSAGES, authRoutes } from './routes/auth.routes'
+import { logAfter, logBefore, logError, type LogState } from './logger'
+import { authRoutes, VALIDATION_MESSAGES } from './routes/auth.routes'
+import { oauthRoutes } from './routes/oauth.routes'
 import { pageRoutes } from './routes/pages.routes'
-import { checkOrigin } from './security'
+import { checkOrigin, securityHeaders } from './security'
 
 /** Form routes whose schema-level validation maps back to an Inertia page. */
 const COMPONENT_BY_PATH: Record<string, string> = {
   '/register': 'Register',
   '/login': 'Login',
+  '/forgot-password': 'ForgotPassword',
+  '/reset-password': 'ResetPassword',
 }
 
 /**
@@ -31,12 +38,13 @@ function inertiaFromContext(c: unknown, assets: InertiaAssets): Inertia {
   const sessionToken = typeof raw === 'string' && raw.length > 0 ? raw : null
   // For unmatched routes Elysia's runtime error context omits `headers`.
   const headers = ctx.headers ?? Object.fromEntries(ctx.request.headers.entries())
+  const row = resolveUser(sessionToken)
   return new Inertia(
     {
       request: ctx.request,
       headers,
       set: ctx.set,
-      user: resolveUser(sessionToken),
+      user: row ? toPublicUser(row) : null,
       flash: readFlash(sessionToken),
       sessionToken,
     },
@@ -45,12 +53,14 @@ function inertiaFromContext(c: unknown, assets: InertiaAssets): Inertia {
 }
 
 export function createApp(assets: InertiaAssets) {
-  // Note: Elysia applies hooks in registration order — error/global hooks
-  // must be registered before the routes they cover.
   return new Elysia()
+    .state('requestStart', 0 as number)
+    .state('requestId', '' as string)
+    .onBeforeHandle(logBefore)
     .onBeforeHandle(checkOrigin)
     .onError((c) => {
       const { code, error, request, set } = c
+      logError({ store: c.store, request, error })
 
       // Schema validation (TypeBox) → 422 with field errors, Inertia-aware.
       if (code === 'VALIDATION' && error instanceof ValidationError) {
@@ -73,11 +83,17 @@ export function createApp(assets: InertiaAssets) {
         return inertiaFromContext(c, assets).render('NotFound', {}, { status: 404 })
       }
 
-      console.error(`[error:${code}]`, error)
       set.status = 500
       return 'Internal Server Error'
     })
+    .onAfterHandle(logAfter)
+    .onAfterHandle(securityHeaders)
+    .get('/health', () => {
+      db.query('SELECT 1').get()
+      return { status: 'ok', uptime: process.uptime() }
+    })
     .get('/assets/*', ({ params }) => serveAsset(params['*']))
     .use(authRoutes(assets))
+    .use(oauthRoutes(assets))
     .use(pageRoutes(assets))
 }

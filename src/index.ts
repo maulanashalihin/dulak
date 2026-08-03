@@ -6,6 +6,7 @@
  */
 import { buildClientAssets, loadManifest, manifestExists } from './server/assets'
 import { createApp } from './server/app'
+import { db } from './server/db'
 
 const isProd = process.env.NODE_ENV === 'production'
 if (!isProd || !manifestExists()) {
@@ -15,5 +16,14 @@ if (!isProd || !manifestExists()) {
 const assets = loadManifest()
 const port = Number(process.env.PORT ?? 3000)
 
-createApp(assets).listen(port)
+const server = createApp(assets).listen(port)
 console.log(`Elysia Inertia boilerplate → http://localhost:${port}`)
+
+function shutdown(signal: string): void {
+  console.log(`\n${signal} received — shutting down`)
+  server.stop(true) // graceful: wait for in-flight requests
+  db.close()
+  process.exit(0)
+}
+process.on('SIGINT', () => shutdown('SIGINT'))
+process.on('SIGTERM', () => shutdown('SIGTERM'))

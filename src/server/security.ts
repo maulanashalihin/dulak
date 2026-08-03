@@ -1,15 +1,8 @@
 /**
- * Security middleware: CSRF defense for cookie-authenticated state changes.
- *
- * Strategy (defense in depth):
- *  1. Session cookie is SameSite=Lax — browsers never attach it to
- *     cross-site POSTs.
- *  2. For unsafe methods we additionally reject requests whose Origin
- *     (when sent) does not match the request host. Non-browser clients
- *     that omit Origin are allowed through.
- *
- * Registered as a plain app-level beforeHandle in app.ts (Elysia 1.4
- * drops hook-only plugins).
+ * Security middleware (registered on the app instance in app.ts):
+ *  - checkOrigin: CSRF defense — SameSite=Lax cookie + Origin check on
+ *    unsafe methods (non-browser clients that omit Origin are allowed).
+ *  - securityHeaders: hardening headers on every response.
  */
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
@@ -27,4 +20,21 @@ export function checkOrigin(c: {
     c.set.status = 403
     return 'Cross-origin requests are not allowed'
   }
+}
+
+/**
+ * Note: script-src needs 'unsafe-inline' because Inertia embeds the page
+ * payload as an inline <script type="application/json"> (and the progress
+ * bar injects inline styles). External script/style injection is still
+ * blocked; revisit with nonces if you need a stricter policy.
+ */
+export function securityHeaders(c: { set: { headers: Record<string, string | number> } }): void {
+  const h = c.set.headers
+  h['content-security-policy'] =
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+  h['x-content-type-options'] = 'nosniff'
+  h['x-frame-options'] = 'DENY'
+  h['referrer-policy'] = 'strict-origin-when-cross-origin'
+  h['permissions-policy'] = 'camera=(), microphone=(), geolocation=()'
+  h['x-xss-protection'] = '0'
 }
