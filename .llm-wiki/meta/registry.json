@@ -1,5 +1,280 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-03T08:59:10.235Z",
-  "pages": {}
+  "last_updated": "2026-08-03T09:07:40.734Z",
+  "pages": {
+    "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": {
+      "type": "source",
+      "title": "\"Observation: Inertia v3 in-process SSR adapter for Elysia\"",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "slug": "obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-03T09:06:59.563Z",
+      "tags": [
+        "inertia",
+        "ssr",
+        "react",
+        "elysia"
+      ],
+      "source_context": "\"Building SSR layer for elysia-inertia-boilerplate\""
+    },
+    "sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt": {
+      "type": "source",
+      "title": "\"Observation: Session design: SQLite-backed, not JWT\"",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "slug": "obs-2026-08-03-session-design-sqlite-backed-not-jwt",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-03T09:06:59.549Z",
+      "tags": [
+        "auth",
+        "session",
+        "database",
+        "security"
+      ],
+      "source_context": "\"Building auth for elysia-inertia-boilerplate\""
+    },
+    "sources/elysia-14-hook-order-and-plugin-quirks": {
+      "type": "source",
+      "title": "\"Elysia 1.4 hook/plugin quirks\"",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "slug": "elysia-14-hook-order-and-plugin-quirks",
+      "status": "insight",
+      "category": "architecture"
+    },
+    "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": {
+      "type": "source",
+      "title": "\"Observation: SQL migration runner for bun:sqlite\"",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "slug": "obs-2026-08-03-sql-migration-runner-for-bun-sqlite",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-03T09:06:59.556Z",
+      "tags": [
+        "database",
+        "migrations",
+        "sqlite"
+      ],
+      "source_context": "\"Adding migration support to elysia-inertia-boilerplate\""
+    },
+    "sources/SRC-2026-08-03-001": {
+      "type": "source",
+      "title": "SRC-2026-08-03-001",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "format": "markdown",
+      "source_id": "SRC-2026-08-03-001",
+      "raw_path": "raw/sources/SRC-2026-08-03-001/extracted.md",
+      "captured": "2026-08-03",
+      "status": "ingested"
+    },
+    "entities/elysia": {
+      "type": "entity",
+      "title": "elysia",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/docker": {
+      "type": "entity",
+      "title": "docker",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/mailtrap": {
+      "type": "entity",
+      "title": "mailtrap",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/typebox": {
+      "type": "entity",
+      "title": "typebox",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/google-oauth": {
+      "type": "entity",
+      "title": "google-oauth",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/inertiajsreact": {
+      "type": "entity",
+      "title": "inertiajsreact",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/bun": {
+      "type": "entity",
+      "title": "bun",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/bunsqlite": {
+      "type": "entity",
+      "title": "bunsqlite",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/resend": {
+      "type": "entity",
+      "title": "resend",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/inertia-v3": {
+      "type": "entity",
+      "title": "inertia-v3",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/elysia-inertia-boilerplate": {
+      "type": "page",
+      "title": "elysia-inertia-boilerplate",
+      "created": "2026-08-03",
+      "updated": "2026-08-03"
+    },
+    "entities/bunpassword": {
+      "type": "entity",
+      "title": "bunpassword",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "entities/react-19": {
+      "type": "entity",
+      "title": "react-19",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/csrf-origin-check": {
+      "type": "concept",
+      "title": "csrf-origin-check",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/partial-reloads": {
+      "type": "concept",
+      "title": "partial-reloads",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/asset-version-negotiation": {
+      "type": "concept",
+      "title": "asset-version-negotiation",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/route-guards-beforehandle": {
+      "type": "concept",
+      "title": "route-guards-beforehandle",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/one-shot-flash-messages": {
+      "type": "concept",
+      "title": "one-shot-flash-messages",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/fixed-window-rate-limiting": {
+      "type": "concept",
+      "title": "fixed-window-rate-limiting",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/in-process-ssr": {
+      "type": "concept",
+      "title": "in-process-ssr",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/server-driven-ui": {
+      "type": "concept",
+      "title": "server-driven-ui",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/correlation-id-logging": {
+      "type": "concept",
+      "title": "correlation-id-logging",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    },
+    "concepts/versioned-sql-migrations": {
+      "type": "concept",
+      "title": "versioned-sql-migrations",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "sources": [
+        "[[sources/SRC-2026-08-03-001]]"
+      ]
+    }
+  }
 }
