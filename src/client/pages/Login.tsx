@@ -35,7 +35,7 @@ export default function Login({
       {googleEnabled ? (
         <>
           <a className="btn btn-block btn-google" href="/auth/google">
-            Continue with Google
+            Log in with Google
           </a>
           <div className="divider">or</div>
         </>

@@ -24,7 +24,7 @@ export default function Register({ googleEnabled }: { googleEnabled: boolean }) 
       {googleEnabled ? (
         <>
           <a className="btn btn-block btn-google" href="/auth/google">
-            Continue with Google
+            Register with Google
           </a>
           <div className="divider">or</div>
         </>
