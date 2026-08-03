@@ -1,5 +1,9 @@
 # Elysia + Inertia v3 Boilerplate
 
+[![CI](https://github.com/maulanashalihin/elysia-inertia-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/maulanashalihin/elysia-inertia-boilerplate/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Bun](https://img.shields.io/badge/runtime-Bun_1.3-black?logo=bun&logoColor=white)](https://bun.sh)
+
 A production-shaped, full-stack boilerplate: **Elysia** (HTTP) + **bun:sqlite**
 (database) + **Inertia v3 / React 19** (server-driven UI with in-process SSR),
 running entirely on **Bun**. Auth (register / login / dashboard / logout /

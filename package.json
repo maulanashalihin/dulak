@@ -1,7 +1,17 @@
 {
   "name": "elysia-inertia-boilerplate",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
+  "description": "Full-stack boilerplate: Elysia + bun:sqlite + Inertia v3 (React 19) with auth, roles, SSR, migrations, tests and Docker.",
+  "keywords": ["elysia", "bun", "inertia", "react", "sqlite", "boilerplate", "ssr"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maulanashalihin/elysia-inertia-boilerplate.git"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "private": false,
   "type": "module",
   "module": "src/index.ts",
   "scripts": {
