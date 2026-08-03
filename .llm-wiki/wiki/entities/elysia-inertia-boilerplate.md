@@ -1,6 +1,6 @@
 # elysia-inertia-boilerplate
 
-Full-stack starter boilerplate: **Elysia 1.4.29** (stable; 2.x masih beta) + **bun:sqlite** + **Inertia v3 / React 19**, seluruhnya di atas **Bun 1.3**. Lokasi: `~/projects/elysia-inertia-boilerplate` (dipindah dari /tmp 2026-08-03 karena project ini dimaintain), repo GitHub privat `maulanashalihin/elysia-inertia-boilerplate`.
+Full-stack starter boilerplate: **Elysia 1.4.29** (stable; 2.x masih beta) + **bun:sqlite** + **Inertia v3 / React 19**, seluruhnya di atas **Bun 1.3**. Lokasi: `~/projects/elysia-inertia-boilerplate` (dipindah dari /tmp 2026-08-03 karena project ini dimaintain), repo GitHub public `maulanashalihin/elysia-inertia-boilerplate`.
 
 ## Stack & fitur
 - Auth lengkap: register/login/logout, forgot/reset password, Google OAuth (zero-dep fetch), roles (user/admin), rate limiting auth endpoints
