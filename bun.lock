@@ -6,7 +6,7 @@
       "name": "elysia-inertia-boilerplate",
       "dependencies": {
         "@inertiajs/react": "^3.0.0",
-        "elysia": "^1.2.0",
+        "elysia": "^1.4.29",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
       },
