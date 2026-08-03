@@ -9,3 +9,4 @@
 {"timestamp":"2026-08-03T09:11:17.763Z","kind":"retro","slug":"elysia-2-vs-14-differences","title":"Elysia 2.0 (DayDream) vs 1.4 differences","category":"architecture"}
 {"timestamp":"2026-08-03T09:32:12.180Z","kind":"retro","slug":"elysia-14-vs-2-benchmark-raw-speed","title":"Benchmark: Elysia 1.4.29 vs 2.0.0-beta.1 raw speed","category":"performance"}
 {"timestamp":"2026-08-03T09:47:35.667Z","kind":"observe","slug":"obs-2026-08-03-styling-decision-vanilla-css-final","title":"Styling decision: vanilla CSS, final","relevance":"critical"}
+{"timestamp":"2026-08-03T11:02:26.032Z","kind":"retro","slug":"boilerplate-v010-released-and-pat-workflow-scope","title":"Boilerplate v0.1.0 released + PAT workflow-scope gotcha","category":"project"}

@@ -36,6 +36,7 @@
 
 ## Sources
 
+- [[sources/boilerplate-v010-released-and-pat-workflow-scope]] — "Boilerplate v0.1.0 released + PAT workflow-scope gotcha" *(created: 2026-08-03)*
 - [[sources/elysia-14-hook-order-and-plugin-quirks]] — "Elysia 1.4 hook/plugin quirks" *(created: 2026-08-03)*
 - [[sources/elysia-14-vs-2-benchmark-raw-speed]] — "Benchmark: Elysia 1.4.29 vs 2.0.0-beta.1 raw speed" *(created: 2026-08-03)*
 - [[sources/elysia-2-vs-14-differences]] — "Elysia 2.0 (DayDream) vs 1.4 differences" *(created: 2026-08-03)*
@@ -46,4 +47,4 @@
 - [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-03)*
 
 ---
-*Last updated: 2026-08-03T09:47:35.669Z* | *Total pages: 31*
+*Last updated: 2026-08-03T11:02:26.039Z* | *Total pages: 32*

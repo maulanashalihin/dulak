@@ -1,5 +1,7 @@
 {
-  "sources/obs-2026-08-03-styling-decision-vanilla-css-final": [],
+  "sources/obs-2026-08-03-styling-decision-vanilla-css-final": [
+    "sources/boilerplate-v010-released-and-pat-workflow-scope"
+  ],
   "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": [
     "entities/elysia-inertia-boilerplate"
   ],
@@ -12,8 +14,10 @@
     "entities/elysia-inertia-boilerplate"
   ],
   "sources/elysia-2-vs-14-differences": [
-    "sources/elysia-14-vs-2-benchmark-raw-speed"
+    "sources/elysia-14-vs-2-benchmark-raw-speed",
+    "sources/boilerplate-v010-released-and-pat-workflow-scope"
   ],
+  "sources/boilerplate-v010-released-and-pat-workflow-scope": [],
   "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": [
     "entities/elysia-inertia-boilerplate"
   ],
@@ -76,7 +80,8 @@
     "sources/SRC-2026-08-03-001"
   ],
   "entities/elysia-inertia-boilerplate": [
-    "sources/elysia-14-hook-order-and-plugin-quirks"
+    "sources/elysia-14-hook-order-and-plugin-quirks",
+    "sources/boilerplate-v010-released-and-pat-workflow-scope"
   ],
   "entities/bunpassword": [
     "sources/SRC-2026-08-03-001"

@@ -35,3 +35,6 @@
 ## [2026-08-03T09:47:35.667Z] observe
 - slug: "obs-2026-08-03-styling-decision-vanilla-css-final", title: "Styling decision: vanilla CSS, final", relevance: "critical"
 
+## [2026-08-03T11:02:26.032Z] retro
+- slug: "boilerplate-v010-released-and-pat-workflow-scope", title: "Boilerplate v0.1.0 released + PAT workflow-scope gotcha", category: "project"
+

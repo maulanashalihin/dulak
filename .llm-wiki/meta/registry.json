@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-03T09:47:35.669Z",
+  "last_updated": "2026-08-03T11:02:26.039Z",
   "pages": {
     "sources/obs-2026-08-03-styling-decision-vanilla-css-final": {
       "type": "source",
@@ -79,6 +79,15 @@
       "slug": "elysia-2-vs-14-differences",
       "status": "insight",
       "category": "architecture"
+    },
+    "sources/boilerplate-v010-released-and-pat-workflow-scope": {
+      "type": "source",
+      "title": "\"Boilerplate v0.1.0 released + PAT workflow-scope gotcha\"",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "slug": "boilerplate-v010-released-and-pat-workflow-scope",
+      "status": "insight",
+      "category": "project"
     },
     "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": {
       "type": "source",
