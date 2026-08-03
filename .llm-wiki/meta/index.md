@@ -42,7 +42,8 @@
 - [[sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia]] — "Observation: Inertia v3 in-process SSR adapter for Elysia" *(created: 2026-08-03)*
 - [[sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt]] — "Observation: Session design: SQLite-backed, not JWT" *(created: 2026-08-03)*
 - [[sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite]] — "Observation: SQL migration runner for bun:sqlite" *(created: 2026-08-03)*
+- [[sources/obs-2026-08-03-styling-decision-vanilla-css-final]] — "Observation: Styling decision: vanilla CSS, final" *(created: 2026-08-03)*
 - [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-03)*
 
 ---
-*Last updated: 2026-08-03T09:32:12.195Z* | *Total pages: 30*
+*Last updated: 2026-08-03T09:47:35.669Z* | *Total pages: 31*

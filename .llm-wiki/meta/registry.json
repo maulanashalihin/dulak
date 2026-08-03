@@ -1,7 +1,24 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-03T09:32:12.195Z",
+  "last_updated": "2026-08-03T09:47:35.669Z",
   "pages": {
+    "sources/obs-2026-08-03-styling-decision-vanilla-css-final": {
+      "type": "source",
+      "title": "\"Observation: Styling decision: vanilla CSS, final\"",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "slug": "obs-2026-08-03-styling-decision-vanilla-css-final",
+      "status": "observation",
+      "relevance": "critical",
+      "observed_at": "2026-08-03T09:47:35.667Z",
+      "tags": [
+        "styling",
+        "decision",
+        "tailwind",
+        "css"
+      ],
+      "source_context": "\"Final styling decision untuk elysia-inertia-boilerplate\""
+    },
     "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": {
       "type": "source",
       "title": "\"Observation: Inertia v3 in-process SSR adapter for Elysia\"",

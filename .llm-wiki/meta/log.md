@@ -32,3 +32,6 @@
 ## [2026-08-03T09:32:12.180Z] retro
 - slug: "elysia-14-vs-2-benchmark-raw-speed", title: "Benchmark: Elysia 1.4.29 vs 2.0.0-beta.1 raw speed", category: "performance"
 
+## [2026-08-03T09:47:35.667Z] observe
+- slug: "obs-2026-08-03-styling-decision-vanilla-css-final", title: "Styling decision: vanilla CSS, final", relevance: "critical"
+
