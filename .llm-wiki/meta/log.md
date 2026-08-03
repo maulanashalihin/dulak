@@ -26,3 +26,6 @@
 ## [2026-08-03T09:07:35.625Z] ingest
 - source_id: "SRC-2026-08-03-001", entities_created: 12, concepts_created: 10, contradictions: 2, background: true
 
+## [2026-08-03T09:11:17.763Z] retro
+- slug: "elysia-2-vs-14-differences", title: "Elysia 2.0 (DayDream) vs 1.4 differences", category: "architecture"
+

@@ -6,3 +6,4 @@
 {"timestamp":"2026-08-03T09:06:59.563Z","kind":"observe","slug":"obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia","title":"Inertia v3 in-process SSR adapter for Elysia","relevance":"high"}
 {"timestamp":"2026-08-03T09:07:16.529Z","kind":"ensure_page","page_type":"entity","title":"elysia-inertia-boilerplate","path":"entities/elysia-inertia-boilerplate"}
 {"timestamp":"2026-08-03T09:07:35.625Z","kind":"ingest","source_id":"SRC-2026-08-03-001","entities_created":12,"concepts_created":10,"contradictions":2,"background":true}
+{"timestamp":"2026-08-03T09:11:17.763Z","kind":"retro","slug":"elysia-2-vs-14-differences","title":"Elysia 2.0 (DayDream) vs 1.4 differences","category":"architecture"}

@@ -6,8 +6,10 @@
     "entities/elysia-inertia-boilerplate"
   ],
   "sources/elysia-14-hook-order-and-plugin-quirks": [
+    "sources/elysia-2-vs-14-differences",
     "entities/elysia-inertia-boilerplate"
   ],
+  "sources/elysia-2-vs-14-differences": [],
   "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": [
     "entities/elysia-inertia-boilerplate"
   ],
@@ -38,6 +40,7 @@
     "concepts/versioned-sql-migrations"
   ],
   "entities/elysia": [
+    "sources/elysia-2-vs-14-differences",
     "sources/SRC-2026-08-03-001"
   ],
   "entities/docker": [

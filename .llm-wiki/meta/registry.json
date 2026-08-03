@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-03T09:07:40.734Z",
+  "last_updated": "2026-08-03T09:11:17.765Z",
   "pages": {
     "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": {
       "type": "source",
@@ -42,6 +42,15 @@
       "created": "2026-08-03",
       "updated": "2026-08-03",
       "slug": "elysia-14-hook-order-and-plugin-quirks",
+      "status": "insight",
+      "category": "architecture"
+    },
+    "sources/elysia-2-vs-14-differences": {
+      "type": "source",
+      "title": "\"Elysia 2.0 (DayDream) vs 1.4 differences\"",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "slug": "elysia-2-vs-14-differences",
       "status": "insight",
       "category": "architecture"
     },
