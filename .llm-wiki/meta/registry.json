@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-03T09:11:17.765Z",
+  "last_updated": "2026-08-03T09:32:12.195Z",
   "pages": {
     "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": {
       "type": "source",
@@ -35,6 +35,15 @@
         "security"
       ],
       "source_context": "\"Building auth for elysia-inertia-boilerplate\""
+    },
+    "sources/elysia-14-vs-2-benchmark-raw-speed": {
+      "type": "source",
+      "title": "\"Benchmark: Elysia 1.4.29 vs 2.0.0-beta.1 raw speed\"",
+      "created": "2026-08-03",
+      "updated": "2026-08-03",
+      "slug": "elysia-14-vs-2-benchmark-raw-speed",
+      "status": "insight",
+      "category": "performance"
     },
     "sources/elysia-14-hook-order-and-plugin-quirks": {
       "type": "source",

@@ -37,6 +37,7 @@
 ## Sources
 
 - [[sources/elysia-14-hook-order-and-plugin-quirks]] — "Elysia 1.4 hook/plugin quirks" *(created: 2026-08-03)*
+- [[sources/elysia-14-vs-2-benchmark-raw-speed]] — "Benchmark: Elysia 1.4.29 vs 2.0.0-beta.1 raw speed" *(created: 2026-08-03)*
 - [[sources/elysia-2-vs-14-differences]] — "Elysia 2.0 (DayDream) vs 1.4 differences" *(created: 2026-08-03)*
 - [[sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia]] — "Observation: Inertia v3 in-process SSR adapter for Elysia" *(created: 2026-08-03)*
 - [[sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt]] — "Observation: Session design: SQLite-backed, not JWT" *(created: 2026-08-03)*
@@ -44,4 +45,4 @@
 - [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-03)*
 
 ---
-*Last updated: 2026-08-03T09:11:17.765Z* | *Total pages: 29*
+*Last updated: 2026-08-03T09:32:12.195Z* | *Total pages: 30*

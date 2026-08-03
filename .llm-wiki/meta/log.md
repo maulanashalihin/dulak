@@ -29,3 +29,6 @@
 ## [2026-08-03T09:11:17.763Z] retro
 - slug: "elysia-2-vs-14-differences", title: "Elysia 2.0 (DayDream) vs 1.4 differences", category: "architecture"
 
+## [2026-08-03T09:32:12.180Z] retro
+- slug: "elysia-14-vs-2-benchmark-raw-speed", title: "Benchmark: Elysia 1.4.29 vs 2.0.0-beta.1 raw speed", category: "performance"
+
