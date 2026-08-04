@@ -7,7 +7,7 @@ The Banjar word for *bored* — a deliberately boring full-stack starter.
 [![Bun](https://img.shields.io/badge/runtime-Bun_1.3-black?logo=bun&logoColor=white)](https://bun.sh)
 
 A production-shaped, full-stack boilerplate: **Elysia** (HTTP) + **bun:sqlite**
-(database) + **Inertia v3 / React 19** (server-driven UI with in-process SSR),
+(database) + **Inertia v3 / Svelte 5** (server-driven UI with in-process SSR),
 running entirely on **Bun**. Auth (register / login / logout / forgot-password /
 Google OAuth), roles, rate limiting, tus uploads, migrations, tests, and Docker
 are wired end to end.
@@ -18,10 +18,10 @@ flowchart LR
   subgraph Bun process
     Elysia -->|session, flash| Auth
     Elysia -->|page payloads| InertiaAdapter
-    InertiaAdapter -->|renderToString| ReactSSR
+    InertiaAdapter -->|render| SvelteSSR
     Elysia -->|SQL| bun:sqlite
   end
-  ReactSSR --> Browser
+  SvelteSSR --> Browser
   Google -->|OAuth callback| Elysia
   Mail -->|reset emails| Elysia
   subgraph Assets
@@ -34,10 +34,10 @@ flowchart LR
 **Dulak** is the Banjar word for *bored* — the name is the philosophy. Every
 choice favors the next maintainer — human or AI agent — over cleverness:
 
-- **Zero-dependency where it's cheap.** Vanilla CSS instead of Tailwind, a
-  hand-rolled rate limiter and OAuth client instead of packages that pin the
-  stack, raw `bun:sqlite` instead of an ORM. Dependencies are a liability;
-  when a hand-rolled 60-line module does the job, it ships.
+- **Zero-dependency where it's cheap.** Tailwind CSS v4 (via `@tailwindcss/cli`,
+  no PostCSS), a hand-rolled rate limiter and OAuth client instead of packages
+  that pin the stack, raw `bun:sqlite` instead of an ORM. Dependencies are a
+  liability; when a hand-rolled 60-line module does the job, it ships.
 - **One obvious way to do things.** A single structural convention (codified
   in `AGENTS.md`): routes in `routes/<feature>.routes.ts` with handlers
   inline, shared logic as flat modules, all SQL in `db.ts`, schema in
@@ -69,12 +69,13 @@ choice favors the next maintainer — human or AI agent — over cleverness:
 # Scaffold a new project (downloads template, installs deps, creates .env)
 bunx create-dulak my-app
 cd my-app
-bun run dev          # http://localhost:3000
+bun run dev          # http://localhost:3000 (run dev:css in another terminal)
 
 # Or clone manually:
 bun install
 cp .env.example .env
-bun run dev
+bun run dev:css      # Tailwind watch (separate terminal)
+bun run dev          # http://localhost:3000
 bun test --isolate   # 46-test E2E suite against an in-memory DB
 bun run db:seed      # demo user: demo@example.com / password123 (role: user)
 bun run db:seed admin@example.com admin123 admin   # role: admin
@@ -83,13 +84,13 @@ bun run db:seed admin@example.com admin123 admin   # role: admin
 ### Scripts
 
 | Command             | What it does                                              |
-| ------------------- | --------------------------------------------------------- |
 | `bun run dev`       | Watch mode; rebuilds client assets on restart             |
+| `bun run dev:css`   | Tailwind v4 watch mode (`@tailwindcss/cli --watch`)       |
 | `bun run build`     | Prebuild client assets → `dist/` (+ `manifest.json`)      |
 | `bun run start`     | Serve prebuilt assets (`NODE_ENV=production`)             |
 | `bun run test`      | E2E suite (auth, roles, reset flow, Inertia protocol, tus) |
 | `bun run db:seed`   | Create a demo user (`[email] [password] [role]` args)     |
-| `bun run typecheck` | `tsc --noEmit`                                            |
+| `bun run typecheck` | `svelte-check --tsconfig ./tsconfig.json`                 |
 
 ## Features
 
@@ -165,13 +166,15 @@ src/
 │   ├── db.ts               # bun:sqlite: connection, prepared statements
 │   ├── migrations.ts       # SQL migration runner
 │   ├── auth.ts             # argon2id, sessions, flash, cookies, reset tokens, guards
-│   ├── inertia.ts          # Inertia v3 server adapter (SSR shell, XHR, 409)
+│   ├── inertia.ts          # Inertia v3 server adapter (SSR via dist/ssr.js, XHR, 409)
 │   ├── inertia-plugin.ts   # store declarations + per-request session resolve
 │   ├── mailer.ts           # mail drivers: log / resend / mailtrap
 │   ├── rate-limit.ts       # in-memory fixed-window rate limiter
 │   ├── logger.ts           # request logging + x-request-id
 │   ├── security.ts         # CSRF origin check + security headers
-│   ├── assets.ts           # Bun.build pipeline + manifest + static serving
+│   ├── svelte-plugin.ts    # Bun.build plugin: compile .svelte + .svelte.js (Svelte 5 runes)
+│   ├── ssr.d.ts            # type decl for lazy-imported dist/ssr.js
+│   ├── assets.ts           # Tailwind v4 compile + Bun.build (client+SSR) + manifest + static serving
 │   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
 │   ├── tus-storage.ts      # tus upload bytes on disk (data/uploads)
 │   └── routes/
@@ -181,13 +184,14 @@ src/
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
 │       └── uploads.routes.ts      # /uploads* (tus resumable upload)
 ├── client/
-│   ├── app.tsx             # Inertia client bootstrap (hydrate or render)
-│   ├── ssr.tsx             # in-process SSR renderer (react-dom/server)
+│   ├── app.ts              # Inertia client bootstrap (hydrate or mount)
+│   ├── ssr.ts              # SSR entry (pre-built to dist/ssr.js, svelte/server render)
 │   ├── pages.ts            # explicit page registry (shared by SSR + bundle)
 │   ├── pages/              # Login, Register, Dashboard, ForgotPassword,
-│   │                       # ResetPassword, Admin, NotFound
-│   ├── components/         # Layout, AuthLayout, Field
-│   └── styles.css          # plain CSS, light/dark
+│   │                       # ResetPassword, Admin, NotFound (.svelte)
+│   ├── components/         # Layout, AuthLayout, Field (.svelte)
+│   ├── tailwind.css        # Tailwind v4 entry (@import + theme tokens → .tailwind.css)
+│   └── styles.css          # custom CSS (overrides Tailwind via cascade, light/dark)
 ├── shared/
 │   ├── types.ts            # User, Role, FlashData, SharedPageProps, Paginated
 │   └── inertia.d.ts        # InertiaConfig augmentation → typed props.auth
@@ -213,10 +217,12 @@ src/
 - **Inertia v3 protocol** (`inertia.ts`): full HTML with SSR markup +
   `data-page` JSON for browser visits; JSON page payloads for XHR;
   `409 + X-Inertia-Location` on asset-version mismatch; partial reloads via
-  `X-Inertia-Partial-*`; one-shot flash and shared props merged per page.
-- **SSR + hydration**: `renderPage()` renders with
-  `createInertiaApp({ page, render: renderToString })`; the client hydrates
-  when `data-server-rendered` is present. Same page registry on both sides.
+- **SSR + hydration**: `ssr.ts` is pre-built to `dist/ssr.js` by
+  `buildClientAssets()` and lazy-imported by `inertia.ts` (a static import
+  fails when `dist/` is empty on a fresh clone). It renders with
+  `createInertiaApp` + `svelte/server`'s `render()`; the client hydrates via
+  `svelte`'s `hydrate()` when `data-server-rendered` is present, otherwise
+  `mount()`. Same page registry on both sides.
 - **Asset versioning**: `Bun.build` emits content-hashed files; the hash is
   the Inertia `version`. Stale clients get a 409 and reload.
 - **Validation**: TypeBox schemas at the route level; `onError` maps failures
@@ -281,15 +287,16 @@ gracefully).
 
 ## Styling
 
-**Vanilla CSS by design** (`src/client/styles.css`, ~6KB): design tokens via CSS
-variables, light/dark via `prefers-color-scheme`, no framework. Chosen to keep
-the starter zero-dependency and zero extra build steps — the CSS is bundled and
-content-hashed by the same `Bun.build` pipeline as the JS.
+**Tailwind CSS v4** (`src/client/tailwind.css`): compiled via `@tailwindcss/cli`
+(no PostCSS) as a pre-build step in `assets.ts` — `tailwind.css` is the entry
+(`@import "tailwindcss"` + theme token bridges), compiled to `.tailwind.css`
+and bundled by the same `Bun.build` pipeline as the JS. Design tokens (CSS
+variables for colors, radius, etc.) are bridged into Tailwind's `@theme` so
+light/dark mode via `[data-theme]` keeps working. `src/client/styles.css`
+holds custom overrides that cascade after Tailwind utilities.
 
-Adding **Tailwind v4** is a per-project decision — the boilerplate stays
-vanilla CSS by design. It is verified to work without PostCSS using only
-`@tailwindcss/cli` as a pre-build step; dark mode and existing CSS variables
-bridge cleanly. See the
+Run `bun run dev:css` alongside `bun run dev` for live Tailwind compilation
+during development. The `default` template uses vanilla CSS instead — see the
 [Tailwind v4 setup guide](.llm-wiki/wiki/concepts/tailwind-v4-setup.md).
 
 ## Notes / decisions
@@ -309,7 +316,7 @@ bridge cleanly. See the
   payload as inline JSON; external script injection is still blocked.
 - `X-Forwarded-For` is trusted for rate limiting — only run behind a proxy
   that sets it.
-- Want Svelte instead of React? Swap `@inertiajs/react` for
-  `@inertiajs/svelte` — the server side is adapter-agnostic. A verified
-  migration guide (Bun.build Svelte plugin, SSR, API mapping) is in the
+- Want React instead of Svelte? Use the `default` or `react-tailwind`
+  template — the server side is adapter-agnostic. A verified migration guide
+  (Bun.build Svelte plugin, SSR, API mapping) is in the
   [Svelte 5 migration guide](.llm-wiki/wiki/concepts/svelte-5-migration.md).
