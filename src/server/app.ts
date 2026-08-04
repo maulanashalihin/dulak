@@ -120,6 +120,12 @@ export function createApp(assets: InertiaAssets) {
 			return { status: "ok", uptime: process.uptime() };
 		})
 		.get("/assets/*", ({ params }) => serveAsset(params["*"]))
+		// Browser/DevTools well-known probes (e.g. Chrome DevTools JSON) —
+		// return a plain 404 so they never reach onError / Inertia SSR.
+		.get("/.well-known/*", ({ set }) => {
+			set.status = 404;
+			return "";
+		})
 		.use(uploadsRoutes())
 		.use(authRoutes(assets))
 		.use(googleOauthRoutes(assets))

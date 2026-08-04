@@ -199,6 +199,14 @@ describe("inertia protocol", () => {
 		expect(res.status).toBe(404);
 		expect((await page(res)).component).toBe("NotFound");
 	});
+	it("returns plain 404 for .well-known DevTools probes", async () => {
+		const res = await call("/.well-known/appspecific/com.chrome.devtools.json", {
+			headers: xhr,
+		});
+		expect(res.status).toBe(404);
+		const body = await res.text();
+		expect(body).toBe("");
+	});
 
 	it("serves full SSR HTML with security headers for browsers", async () => {
 		const res = await call("/login");
