@@ -34,10 +34,10 @@ flowchart LR
 **Dulak** is the Banjar word for *bored* — the name is the philosophy. Every
 choice favors the next maintainer — human or AI agent — over cleverness:
 
-- **Zero-dependency where it's cheap.** Vanilla CSS instead of Tailwind, a
-  hand-rolled rate limiter and OAuth client instead of packages that pin the
-  stack, raw `bun:sqlite` instead of an ORM. Dependencies are a liability;
-  when a hand-rolled 60-line module does the job, it ships.
+- **Zero-dependency where it's cheap.** Tailwind CSS v4 (via `@tailwindcss/cli`,
+  no PostCSS), a hand-rolled rate limiter and OAuth client instead of packages
+  that pin the stack, raw `bun:sqlite` instead of an ORM. Dependencies are a
+  liability; when a hand-rolled 60-line module does the job, it ships.
 - **One obvious way to do things.** A single structural convention (codified
   in `AGENTS.md`): routes in `routes/<feature>.routes.ts` with handlers
   inline, shared logic as flat modules, all SQL in `db.ts`, schema in
@@ -69,12 +69,13 @@ choice favors the next maintainer — human or AI agent — over cleverness:
 # Scaffold a new project (downloads template, installs deps, creates .env)
 bunx create-dulak my-app
 cd my-app
-bun run dev          # http://localhost:3000
+bun run dev          # http://localhost:3000 (run dev:css in another terminal)
 
 # Or clone manually:
 bun install
 cp .env.example .env
-bun run dev
+bun run dev:css      # Tailwind watch (separate terminal)
+bun run dev          # http://localhost:3000
 bun test --isolate   # 46-test E2E suite against an in-memory DB
 bun run db:seed      # demo user: demo@example.com / password123 (role: user)
 bun run db:seed admin@example.com admin123 admin   # role: admin
@@ -83,8 +84,8 @@ bun run db:seed admin@example.com admin123 admin   # role: admin
 ### Scripts
 
 | Command             | What it does                                              |
-| ------------------- | --------------------------------------------------------- |
 | `bun run dev`       | Watch mode; rebuilds client assets on restart             |
+| `bun run dev:css`   | Tailwind v4 watch mode (`@tailwindcss/cli --watch`)       |
 | `bun run build`     | Prebuild client assets → `dist/` (+ `manifest.json`)      |
 | `bun run start`     | Serve prebuilt assets (`NODE_ENV=production`)             |
 | `bun run test`      | E2E suite (auth, roles, reset flow, Inertia protocol, tus) |
@@ -170,8 +171,7 @@ src/
 │   ├── mailer.ts           # mail drivers: log / resend / mailtrap
 │   ├── rate-limit.ts       # in-memory fixed-window rate limiter
 │   ├── logger.ts           # request logging + x-request-id
-│   ├── security.ts         # CSRF origin check + security headers
-│   ├── assets.ts           # Bun.build pipeline + manifest + static serving
+│   ├── assets.ts           # Tailwind v4 compile + Bun.build pipeline + manifest + static serving
 │   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
 │   ├── tus-storage.ts      # tus upload bytes on disk (data/uploads)
 │   └── routes/
@@ -187,7 +187,8 @@ src/
 │   ├── pages/              # Login, Register, Dashboard, ForgotPassword,
 │   │                       # ResetPassword, Admin, NotFound
 │   ├── components/         # Layout, AuthLayout, Field
-│   └── styles.css          # plain CSS, light/dark
+│   ├── tailwind.css        # Tailwind v4 entry (@import + theme tokens → .tailwind.css)
+│   └── styles.css          # custom CSS (overrides Tailwind via cascade, light/dark)
 ├── shared/
 │   ├── types.ts            # User, Role, FlashData, SharedPageProps, Paginated
 │   └── inertia.d.ts        # InertiaConfig augmentation → typed props.auth
@@ -281,15 +282,16 @@ gracefully).
 
 ## Styling
 
-**Vanilla CSS by design** (`src/client/styles.css`, ~6KB): design tokens via CSS
-variables, light/dark via `prefers-color-scheme`, no framework. Chosen to keep
-the starter zero-dependency and zero extra build steps — the CSS is bundled and
-content-hashed by the same `Bun.build` pipeline as the JS.
+**Tailwind CSS v4** (`src/client/tailwind.css`): compiled via `@tailwindcss/cli`
+(no PostCSS) as a pre-build step in `assets.ts` — `tailwind.css` is the entry
+(`@import "tailwindcss"` + theme token bridges), compiled to `.tailwind.css`
+and bundled by the same `Bun.build` pipeline as the JS. Design tokens (CSS
+variables for colors, radius, etc.) are bridged into Tailwind's `@theme` so
+light/dark mode via `[data-theme]` keeps working. `src/client/styles.css`
+holds custom overrides that cascade after Tailwind utilities.
 
-Adding **Tailwind v4** is a per-project decision — the boilerplate stays
-vanilla CSS by design. It is verified to work without PostCSS using only
-`@tailwindcss/cli` as a pre-build step; dark mode and existing CSS variables
-bridge cleanly. See the
+Run `bun run dev:css` alongside `bun run dev` for live Tailwind compilation
+during development. The `default` template uses vanilla CSS instead — see the
 [Tailwind v4 setup guide](.llm-wiki/wiki/concepts/tailwind-v4-setup.md).
 
 ## Notes / decisions
