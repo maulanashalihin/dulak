@@ -8,9 +8,9 @@ The Banjar word for *bored* — a deliberately boring full-stack starter.
 
 A production-shaped, full-stack boilerplate: **Elysia** (HTTP) + **bun:sqlite**
 (database) + **Inertia v3 / React 19** (server-driven UI with in-process SSR),
-running entirely on **Bun**. Auth (register / login / dashboard / logout /
-forgot-password / Google OAuth), roles, rate limiting, tests, and Docker are
-wired end to end.
+running entirely on **Bun**. Auth (register / login / logout / forgot-password /
+Google OAuth), roles, rate limiting, tus uploads, migrations, tests, and Docker
+are wired end to end.
 
 ```mermaid
 flowchart LR
