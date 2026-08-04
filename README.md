@@ -66,9 +66,15 @@ choice favors the next maintainer — human or AI agent — over cleverness:
 ## Quick start
 
 ```bash
+# Scaffold a new project (downloads template, installs deps, creates .env)
+bunx create-dulak my-app
+cd my-app
+bun run dev          # http://localhost:3000
+
+# Or clone manually:
 bun install
 cp .env.example .env
-bun run dev          # http://localhost:3000
+bun run dev
 bun test --isolate   # 46-test E2E suite against an in-memory DB
 bun run db:seed      # demo user: demo@example.com / password123 (role: user)
 bun run db:seed admin@example.com admin123 admin   # role: admin
