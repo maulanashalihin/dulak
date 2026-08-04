@@ -62,3 +62,9 @@
 ## [2026-08-04T06:25:31.477Z] observe
 - slug: "obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation", title: "Sidebar full-reload cause: Inertia dev version negotiation", relevance: "medium"
 
+## [2026-08-04T10:05:52.023Z] retro
+- title: "Tailwind CSS v4 integration with Bun.build (no PostCSS)", category: "uncategorized"
+
+## [2026-08-04T10:06:21.120Z] ensure_page
+- page_type: "guide", title: "Tailwind CSS v4 integration with Bun.build (no PostCSS)", path: "concepts/tailwind-css-v4-integration-with-bunbuild-no-postcss"
+

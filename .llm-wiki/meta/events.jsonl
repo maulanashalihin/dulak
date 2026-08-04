@@ -18,3 +18,5 @@
 {"timestamp":"2026-08-04T04:26:16.783Z","kind":"observe","slug":"obs-2026-08-04-profile-page-with-tus-avatar-upload","title":"Profile page with tus avatar upload","relevance":"high"}
 {"timestamp":"2026-08-04T05:54:57.628Z","kind":"observe","slug":"obs-2026-08-04-professional-profile-page-with-info-and-password-forms","title":"Professional profile page with info and password forms","relevance":"high"}
 {"timestamp":"2026-08-04T06:25:31.477Z","kind":"observe","slug":"obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation","title":"Sidebar full-reload cause: Inertia dev version negotiation","relevance":"medium"}
+{"timestamp":"2026-08-04T10:05:52.023Z","kind":"retro","title":"Tailwind CSS v4 integration with Bun.build (no PostCSS)","category":"uncategorized"}
+{"timestamp":"2026-08-04T10:06:21.120Z","kind":"ensure_page","page_type":"guide","title":"Tailwind CSS v4 integration with Bun.build (no PostCSS)","path":"concepts/tailwind-css-v4-integration-with-bunbuild-no-postcss"}
