@@ -32,6 +32,7 @@
 
 ## Pages
 
+- [[concepts/swapping-react-for-svelte-5-in-the-dulak-boilerplate]] — swapping-react-for-svelte-5-in-the-dulak-boilerplate *(created: 2026-08-04)*
 - [[concepts/tailwind-css-v4-integration-with-bunbuild-no-postcss]] — tailwind-css-v4-integration-with-bunbuild-no-postcss *(created: 2026-08-04)*
 - [[entities/elysia-inertia-boilerplate]] — elysia-inertia-boilerplate *(created: 2026-08-04)*
 
@@ -54,7 +55,6 @@
 - [[sources/obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation]] — "Observation: Sidebar full-reload cause: Inertia dev version negotiation" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-04-tus-uploads-restructured-to-flat-convention]] — "Observation: tus uploads restructured to flat convention" *(created: 2026-08-04)*
 - [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-04)*
-- [[sources/undefined]] — "Tailwind CSS v4 integration with Bun.build (no PostCSS)" *(created: 2026-08-04)*
 
 ---
-*Last updated: 2026-08-04T10:06:21.122Z* | *Total pages: 42*
+*Last updated: 2026-08-04T10:20:16.806Z* | *Total pages: 42*

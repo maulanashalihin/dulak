@@ -68,3 +68,6 @@
 ## [2026-08-04T10:06:21.120Z] ensure_page
 - page_type: "guide", title: "Tailwind CSS v4 integration with Bun.build (no PostCSS)", path: "concepts/tailwind-css-v4-integration-with-bunbuild-no-postcss"
 
+## [2026-08-04T10:20:16.795Z] ensure_page
+- page_type: "guide", title: "Swapping React for Svelte 5 in the Dulak boilerplate", path: "concepts/swapping-react-for-svelte-5-in-the-dulak-boilerplate"
+

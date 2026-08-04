@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-04T10:06:21.122Z",
+  "last_updated": "2026-08-04T10:20:16.806Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -89,6 +89,12 @@
         "[[sources/SRC-2026-08-03-001]]"
       ]
     },
+    "concepts/swapping-react-for-svelte-5-in-the-dulak-boilerplate": {
+      "type": "page",
+      "title": "swapping-react-for-svelte-5-in-the-dulak-boilerplate",
+      "created": "2026-08-04",
+      "updated": "2026-08-04"
+    },
     "concepts/asset-version-negotiation": {
       "type": "concept",
       "title": "asset-version-negotiation",
@@ -114,14 +120,6 @@
         "architecture"
       ],
       "source_context": "\"Restructuring src/server/tus/ per README convention\""
-    },
-    "sources/undefined": {
-      "type": "source",
-      "title": "\"Tailwind CSS v4 integration with Bun.build (no PostCSS)\"",
-      "created": "2026-08-04",
-      "updated": "2026-08-04",
-      "slug": "undefined",
-      "status": "insight"
     },
     "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": {
       "type": "source",
