@@ -6,6 +6,7 @@
 
 :root,
 [data-theme="light"] {
+	color-scheme: light;
 	--bg: #f6f7fb;
 	--surface: #ffffff;
 	--border: #e4e7ef;
@@ -22,6 +23,7 @@
 }
 
 [data-theme="dark"] {
+	color-scheme: dark;
 	--bg: #0f1117;
 	--surface: #171a23;
 	--border: #2d3444;
