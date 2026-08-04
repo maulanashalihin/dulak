@@ -27,6 +27,36 @@ flowchart LR
   end
 ```
 
+## Philosophy
+
+This starter is deliberately boring. Every choice favors the next maintainer
+— human or AI agent — over cleverness:
+
+- **Zero-dependency where it's cheap.** Vanilla CSS instead of Tailwind, a
+  hand-rolled rate limiter and OAuth client instead of packages that pin the
+  stack, raw `bun:sqlite` instead of an ORM. Dependencies are a liability;
+  when a hand-rolled 60-line module does the job, it ships.
+- **One obvious way to do things.** A single structural convention (codified
+  in `AGENTS.md`): routes in `routes/<feature>.routes.ts` with handlers
+  inline, shared logic as flat modules, all SQL in `db.ts`, schema in
+  versioned migrations. No feature folders, no second way to do the same
+  thing.
+- **Discoverability as a contract.** Given any URL you can derive the file
+  that owns it: `src/server/routes/` mirrors URL namespaces, every URL lives
+  in exactly one file (GET renders + POST actions together), and new
+  features get their own `<feature>.routes.ts`. Tests run deterministically
+  (`bun test --isolate`). The repo is built to be extended safely by anyone.
+- **Production-shaped, not production.** Migrations, CSRF, rate limiting,
+  security headers, session rotation, graceful shutdown, CI, and Docker are
+  wired from day one — but only what you need is pre-built. Features beyond
+  auth are meant to be *added by following the conventions*, not included.
+- **Boring versions, current versions.** Elysia 1.4 (2.x is beta and changes
+  hook APIs), Bun 1.3. Upgrades are deliberate decisions, not defaults.
+- **Correctness over cleverness.** Synchronous, explicitly typed,
+  parameterized queries, fail-fast config, documented decisions (see
+  "Notes / decisions" below). If a piece can't be explained in one sentence,
+  it doesn't belong in a starter.
+
 ## Quick start
 
 ```bash
