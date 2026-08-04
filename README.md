@@ -233,6 +233,9 @@ Rules:
 - **Never edit an applied migration** — add a new numbered file instead.
 - SQLite `ALTER TABLE ADD COLUMN` with `NOT NULL` requires a `DEFAULT`.
 - A failed migration rolls back and aborts startup.
+- Edited an applied migration anyway (e.g. while prototyping)? Applied
+  migrations are never re-run, so delete `data/app.sqlite*` and re-start to
+  rebuild the dev database from scratch.
 
 ## Testing
 
