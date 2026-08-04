@@ -358,12 +358,3 @@ React Inertia has a `<Head>` component. Svelte Inertia does not export `Head` �
 | Bun.build with `conditions: ['svelte']` | ✅ Resolves `.svelte.js` modules with runes |
 | Bun.build plugin `onLoad` for `.svelte` + `.svelte.js` | ✅ |
 | SSR: compile → bundle → render → HTML | ✅ `<h1>Hello Dulak!</h1>` |
-
-## Alternative: Vite instead of Bun.build
-
-If the custom Svelte plugin feels too complex, the alternative is to use Vite with `@sveltejs/vite-plugin-svelte`:
-```sh
-bun add -D vite @sveltejs/vite-plugin-svelte
-```
-
-Vite handles Svelte compilation, HMR, and SSR natively. But this changes the entire build pipeline of the boilerplate — `assets.ts` no longer uses `Bun.build`, and the dev server needs Vite middleware. Heavier but more standard for the Svelte ecosystem.
