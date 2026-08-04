@@ -11,9 +11,9 @@
 	--border: #e4e7ef;
 	--text: #1a1d27;
 	--muted: #6b7280;
-	--primary: #4f46e5;
-	--primary-hover: #4338ca;
-	--primary-soft: #eef2ff;
+	--primary: #059669;
+	--primary-hover: #047857;
+	--primary-soft: #ecfdf5;
 	--danger: #dc2626;
 	--success: #16a34a;
 	--radius: 12px;
@@ -27,9 +27,9 @@
 	--border: #2d3444;
 	--text: #e8eaf2;
 	--muted: #9aa1b2;
-	--primary: #6366f1;
-	--primary-hover: #818cf8;
-	--primary-soft: #1e2340;
+	--primary: #10b981;
+	--primary-hover: #34d399;
+	--primary-soft: #06281f;
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.5);
 }
 

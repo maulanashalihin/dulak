@@ -149,7 +149,7 @@ export class Inertia {
     const titleTag = hasTitle ? '' : '<title>Elysia Inertia</title>'
     const cssTag = this.assets.css ? `<link rel="stylesheet" href="/assets/${this.assets.css}" />` : ''
     const favicon = `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="%234f46e5"/><path d="M17.8 5.6 8.4 18h5.2l-1.2 8.4 9.2-12h-5.2z" fill="white"/></svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="%23059669"/><path d="M17.8 5.6 8.4 18h5.2l-1.2 8.4 9.2-12h-5.2z" fill="white"/></svg>',
     )}" />`
     // Inline script: set data-theme on <html> before CSS paints to avoid FOUC.
     // Reads localStorage('theme'), falls back to prefers-color-scheme, defaults light.

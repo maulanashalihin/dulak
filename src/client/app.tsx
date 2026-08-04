@@ -22,5 +22,5 @@ createInertiaApp({
     }
   },
   title: (title: string) => (title ? `${title} — Elysia Inertia` : 'Elysia Inertia'),
-  progress: { color: '#4f46e5' },
+  progress: { color: '#059669' },
 })
