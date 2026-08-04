@@ -331,8 +331,34 @@ describe('infrastructure', () => {
     expect((await res.json()).status).toBe('ok')
   })
 
-  it('disables Google OAuth when not configured', async () => {
-    const res = await call('/auth/google')
-    expect(res.status).toBe(400)
+  it('returns 400 when Google OAuth is not configured', async () => {
+    const { config } = await import('../src/server/config')
+    const savedId = config.google.clientId
+    const savedSecret = config.google.clientSecret
+    config.google.clientId = null
+    config.google.clientSecret = null
+    try {
+      const res = await call('/auth/google')
+      expect(res.status).toBe(400)
+    } finally {
+      config.google.clientId = savedId
+      config.google.clientSecret = savedSecret
+    }
+  })
+
+  it('redirects to Google when OAuth is configured', async () => {
+    const { config } = await import('../src/server/config')
+    const savedId = config.google.clientId
+    const savedSecret = config.google.clientSecret
+    config.google.clientId = 'test-client-id'
+    config.google.clientSecret = 'test-client-secret'
+    try {
+      const res = await call('/auth/google')
+      expect(res.status).toBe(302)
+      expect(res.headers.get('location')).toContain('accounts.google.com')
+    } finally {
+      config.google.clientId = savedId
+      config.google.clientSecret = savedSecret
+    }
   })
 })

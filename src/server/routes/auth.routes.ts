@@ -11,6 +11,7 @@ import {
   clearSessionCookie,
   createPasswordReset,
   createSession,
+  deleteSessionByToken,
   hashPassword,
   requireAuth,
   setFlash,
@@ -19,7 +20,7 @@ import {
   verifyPasswordReset,
 } from '../auth'
 import { config } from '../config'
-import { createUser, deleteSession, findUserByEmail, updateUserPassword } from '../db'
+import { createUser, findUserByEmail, updateUserPassword } from '../db'
 import { inertiaPlugin, makePopulateStore, type InertiaStore } from '../inertia-plugin'
 import { sendMail } from '../mailer'
 import type { InertiaAssets } from '../inertia'
@@ -83,6 +84,8 @@ export const authRoutes = (assets: InertiaAssets) =>
         const passwordHash = await hashPassword(body.password)
         const user = createUser.get(body.name, body.email, passwordHash)
         if (!user) return page.error('Register', { email: 'Could not create your account.' })
+        // Rotate the session cookie if one exists (session fixation defense).
+        if (store.sessionToken) deleteSessionByToken(store.sessionToken)
         const session = createSession(user.id)
         setSessionCookie(cookie.session, session.token, session.expiresAt)
         return page.redirect('/dashboard')
@@ -97,6 +100,8 @@ export const authRoutes = (assets: InertiaAssets) =>
         if (!user || !(await verifyPassword(body.password, user.passwordHash))) {
           return page.error('Login', { email: 'These credentials do not match our records.' })
         }
+        // Rotate the session cookie if one exists (session fixation defense).
+        if (store.sessionToken) deleteSessionByToken(store.sessionToken)
         const session = createSession(user.id)
         setSessionCookie(cookie.session, session.token, session.expiresAt)
         setFlash(session.token, { success: `Welcome back, ${user.name}!` })
@@ -107,7 +112,7 @@ export const authRoutes = (assets: InertiaAssets) =>
     .post(
       '/logout',
       ({ store, cookie }: { store: InertiaStore; cookie: CookieJar }) => {
-        if (store.sessionToken) deleteSession.run(store.sessionToken)
+        if (store.sessionToken) deleteSessionByToken(store.sessionToken)
         clearSessionCookie(cookie.session)
         return store.inertia.redirect('/login')
       },

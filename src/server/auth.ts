@@ -42,23 +42,29 @@ export interface SessionInfo {
   expiresAt: Date
 }
 
-/** 256-bit random token; it is never logged and only lives in the cookie. */
+/** 256-bit random token; it is never logged and only lives in the cookie.
+ *  The DB stores only its SHA-256 hash so a DB leak cannot expose valid tokens. */
 export function createSession(userId: number): SessionInfo {
   const token = randomBytes(32).toString('hex')
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
-  insertSession.run(token, userId, expiresAt.toISOString())
+  insertSession.run(hashToken(token), userId, expiresAt.toISOString())
   return { token, expiresAt }
 }
 
 export function resolveUser(token: string | null | undefined): UserRow | null {
   if (!token) return null
-  const session = findSession.get(token)
+  const session = findSession.get(hashToken(token))
   if (!session) return null
   if (Date.now() > new Date(session.expiresAt).getTime()) {
-    deleteSession.run(token) // lazy cleanup of expired sessions
+    deleteSessionByToken(token) // lazy cleanup of expired sessions
     return null
   }
   return findUserById.get(session.userId) ?? null
+}
+
+/** Delete a session by its raw (cookie) token — hashes before hitting the DB. */
+export function deleteSessionByToken(token: string): void {
+  deleteSession.run(hashToken(token))
 }
 
 // ---------------------------------------------------------------------------
@@ -67,7 +73,7 @@ export function resolveUser(token: string | null | undefined): UserRow | null {
 
 export function readFlash(token: string | null | undefined): FlashData {
   if (!token) return {}
-  const session = findSession.get(token)
+  const session = findSession.get(hashToken(token))
   if (!session) return {}
   try {
     const parsed: unknown = JSON.parse(session.flash)
@@ -78,11 +84,11 @@ export function readFlash(token: string | null | undefined): FlashData {
 }
 
 export function setFlash(token: string, flash: FlashData): void {
-  updateSessionFlash.run(JSON.stringify(flash), token)
+  updateSessionFlash.run(JSON.stringify(flash), hashToken(token))
 }
 
 export function clearFlash(token: string | null | undefined): void {
-  if (token) updateSessionFlash.run('{}', token)
+  if (token) updateSessionFlash.run('{}', hashToken(token))
 }
 
 // ---------------------------------------------------------------------------

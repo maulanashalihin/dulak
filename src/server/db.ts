@@ -22,7 +22,7 @@ export interface UserRow {
 }
 
 export interface SessionRow {
-  token: string
+  tokenHash: string
   userId: number
   flash: string
   expiresAt: string
@@ -91,14 +91,14 @@ export const recentUsers = db.query<UserRow, [number]>(
 )
 
 export const insertSession = db.query<null, [string, number, string]>(
-  `INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)`,
+  `INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)`,
 )
 export const findSession = db.query<SessionRow, [string]>(
-  `SELECT token, user_id AS userId, flash, expires_at AS expiresAt, created_at AS createdAt FROM sessions WHERE token = ?`,
+  `SELECT token_hash AS tokenHash, user_id AS userId, flash, expires_at AS expiresAt, created_at AS createdAt FROM sessions WHERE token_hash = ?`,
 )
-export const deleteSession = db.query<null, [string]>(`DELETE FROM sessions WHERE token = ?`)
+export const deleteSession = db.query<null, [string]>(`DELETE FROM sessions WHERE token_hash = ?`)
 export const updateSessionFlash = db.query<null, [string, string]>(
-  `UPDATE sessions SET flash = ? WHERE token = ?`,
+  `UPDATE sessions SET flash = ? WHERE token_hash = ?`,
 )
 
 export const insertPasswordReset = db.query<null, [string, string, string]>(
