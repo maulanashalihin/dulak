@@ -100,7 +100,8 @@ bun run db:seed admin@example.com admin123 admin   # role: admin
   negotiation (409 + reload), partial reloads, flash messages, shared props.
 - **Resumable uploads**: tus protocol v1 at `/uploads` (creation,
   creation-with-upload, termination, expiration, checksum) with SQLite state
-  and on-disk storage.
+  and on-disk storage — demonstrated end to end by the avatar upload on the
+  profile page.
 - **Migrations**: versioned SQL files applied at startup in transactions.
 - **Ops**: request logging with correlation id, security headers (CSP,
   nosniff, frame denial), `/health`, graceful shutdown, Docker.
@@ -170,6 +171,7 @@ src/
 │       ├── auth.routes.ts         # /login /register /logout /forgot/reset (GET+POST)
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
 │       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
+│       ├── profile.routes.ts      # /profile page + /profile/avatar
 │       └── uploads.routes.ts      # /uploads* (tus resumable upload)
 ├── client/
 │   ├── app.tsx             # Inertia client bootstrap (hydrate or render)

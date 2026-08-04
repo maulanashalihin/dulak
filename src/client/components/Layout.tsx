@@ -28,6 +28,17 @@ const NAV_ITEMS: NavItem[] = [
     match: (p) => p === '/dashboard' || p.startsWith('/dashboard'),
   },
   {
+    href: '/profile',
+    label: 'Profile',
+    icon: (
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    ),
+    match: (p) => p === '/profile' || p.startsWith('/profile'),
+  },
+  {
     href: '/admin',
     label: 'Admin',
     roles: ['admin'],
@@ -276,7 +287,11 @@ export default function Layout({ children }: { children: ReactNode }) {
                   aria-expanded={menuOpen}
                   onClick={() => setMenuOpen((v) => !v)}
                 >
-                  <span className="avatar" aria-hidden="true">{initials(user.name)}</span>
+                  {user.avatarUrl ? (
+                    <img className="avatar avatar-img" src={user.avatarUrl} alt="" />
+                  ) : (
+                    <span className="avatar" aria-hidden="true">{initials(user.name)}</span>
+                  )}
                   <span className="user-menu-meta">
                     <span className="user-menu-name">{user.name}</span>
                     <span className="user-menu-role">{user.role}</span>
@@ -287,7 +302,11 @@ export default function Layout({ children }: { children: ReactNode }) {
                 {menuOpen ? (
                   <div className="user-menu-panel" role="menu">
                     <div className="user-menu-head">
-                      <span className="avatar avatar-lg" aria-hidden="true">{initials(user.name)}</span>
+                      {user.avatarUrl ? (
+                        <img className="avatar avatar-lg avatar-img" src={user.avatarUrl} alt="" />
+                      ) : (
+                        <span className="avatar avatar-lg" aria-hidden="true">{initials(user.name)}</span>
+                      )}
                       <div className="user-menu-head-meta">
                         <span className="user-menu-head-name">{user.name}</span>
                         <span className="user-menu-head-email">{user.email}</span>

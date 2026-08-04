@@ -29,7 +29,7 @@ import {
 	insertUpload,
 	listExpired,
 } from "../db";
-import { appendBytes, fileSize, removeFile, uploadPath } from "../tus-storage";
+import { appendBytes, fileSize, readBytes, removeFile, uploadPath } from "../tus-storage";
 
 const UPLOAD_PREFIX = "/uploads/";
 
@@ -291,6 +291,33 @@ export function sweepExpired(): void {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// GET — serve stored upload bytes (protocol extension, not in the tus spec).
+// Used by <img> tags for avatars. Ids are 128-bit random, so files are
+// effectively unguessable; content-type comes from the Upload-Metadata.
+// ---------------------------------------------------------------------------
+
+async function handleGetFile(id: string): Promise<Response> {
+	const row = findUpload.get(id);
+	if (!row) return errorResponse(404, "Upload not found");
+	let filetype = "application/octet-stream";
+	try {
+		const meta = JSON.parse(row.metadata) as Record<string, string>;
+		if (typeof meta.filetype === "string" && meta.filetype) filetype = meta.filetype;
+	} catch {
+		/* metadata may be empty or malformed */
+	}
+	const bytes = await readBytes(id);
+	return new Response(new Uint8Array(bytes), {
+		status: 200,
+		headers: {
+			"content-type": filetype,
+			"cache-control": "private, max-age=86400",
+			"content-length": String(bytes.byteLength),
+		},
+	});
+}
+
 /** Apply X-HTTP-Method-Override by re-dispatching to the right handler. */
 async function dispatch(
 	req: Request,
@@ -302,6 +329,7 @@ async function dispatch(
 	if (method === "OPTIONS") return handleOptions();
 	if (method === "POST" && !id) return handlePost(req, body);
 	if (method === "HEAD" && id) return handleHead(req, id);
+	if (method === "GET" && id) return handleGetFile(id);
 	if (method === "PATCH" && id) return handlePatch(req, id, body);
 	if (method === "DELETE" && id) return handleDelete(req, id);
 	return new Response(JSON.stringify({ error: "Method not allowed" }), {
@@ -323,8 +351,11 @@ export const uploadsRoutes = () =>
 		.post("/*", ({ request, params, body }) =>
 			dispatch(request, (params["*"] as string) ?? null, body as ArrayBuffer),
 		)
-		// /uploads/:id — HEAD / PATCH / DELETE
+		// /uploads/:id — HEAD / GET / PATCH / DELETE
 		.head("/*", ({ request, params }) =>
+			dispatch(request, (params["*"] as string) ?? null, undefined),
+		)
+		.get("/*", ({ request, params }) =>
 			dispatch(request, (params["*"] as string) ?? null, undefined),
 		)
 		.patch("/*", ({ request, params, body }) =>

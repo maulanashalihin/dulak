@@ -40,6 +40,7 @@ src/
 │       ├── auth.routes.ts         # /login /register /logout /forgot-password /reset-password (GET+POST)
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
 │       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
+│       ├── profile.routes.ts      # /profile page + /profile/avatar
 │       └── uploads.routes.ts      # /uploads* (tus protocol)
 ├── client/                 # React + Inertia (pages/, components/, styles.css)
 ├── shared/                 # types.ts, inertia.d.ts (client+server shared)

@@ -36,16 +36,14 @@ export interface PasswordResetRow {
 }
 
 /** The user shape that may leave the server (never includes passwordHash). */
-export type PublicUser = Omit<
-	UserRow,
-	"passwordHash" | "googleId" | "avatarUrl"
->;
+export type PublicUser = Omit<UserRow, "passwordHash" | "googleId">;
 
 export const toPublicUser = (row: UserRow): PublicUser => ({
 	id: row.id,
 	name: row.name,
 	email: row.email,
 	role: row.role,
+	avatarUrl: row.avatarUrl,
 	createdAt: row.createdAt,
 });
 
@@ -94,6 +92,9 @@ export const linkGoogleAccount = db.query<null, [string, number]>(
 );
 export const updateUserPassword = db.query<null, [string, number]>(
 	`UPDATE users SET password_hash = ? WHERE id = ?`,
+);
+export const updateUserAvatar = db.query<null, [string, number]>(
+	`UPDATE users SET avatar_url = ? WHERE id = ?`,
 );
 export const countUsers = db.query<{ n: number }, []>(
 	`SELECT COUNT(*) AS n FROM users`,

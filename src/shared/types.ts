@@ -11,6 +11,8 @@ export interface User {
   name: string
   email: string
   role: Role
+  /** Relative path to the avatar image (served from /uploads), null when unset. */
+  avatarUrl: string | null
   createdAt: string
 }
 

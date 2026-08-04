@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
+import Profile from './pages/Profile'
 import Register from './pages/Register'
 import ResetPassword from './pages/ResetPassword'
 
@@ -22,6 +23,7 @@ export const pages: Record<string, PageModule> = {
   './pages/ForgotPassword.tsx': { default: ForgotPassword },
   './pages/Login.tsx': { default: Login },
   './pages/NotFound.tsx': { default: NotFound },
+  './pages/Profile.tsx': { default: Profile },
   './pages/Register.tsx': { default: Register },
   './pages/ResetPassword.tsx': { default: ResetPassword },
 }

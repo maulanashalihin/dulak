@@ -864,6 +864,63 @@ a:hover {
   font-size: 0.95rem;
 }
 
+.avatar-img {
+  object-fit: cover;
+}
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.avatar-row-name {
+  margin: 0;
+}
+
+.upload-zone {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 1.25rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.upload-file {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.upload-error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.upload-done {
+  color: #15803d;
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+
+.progress {
+  margin-top: 1rem;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+  transition: width 120ms ease;
+}
+
 .user-menu-meta {
   display: flex;
   flex-direction: column;

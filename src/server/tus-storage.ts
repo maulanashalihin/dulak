@@ -3,7 +3,7 @@
  * created lazily on the first PATCH (or on POST when creation-with-upload
  * sends a body). Appending is done with `node:fs/promises` `appendFile`.
  */
-import { appendFile } from "node:fs/promises";
+import { appendFile, readFile } from "node:fs/promises";
 import {
 	mkdirSync as mkdirSyncSync,
 	rmSync as rmSyncSync,
@@ -31,6 +31,11 @@ export async function appendBytes(
 ): Promise<number> {
 	await appendFile(uploadPath(id), data);
 	return data.byteLength;
+}
+
+/** Read the stored bytes of an upload (used to serve the file back). */
+export async function readBytes(id: string): Promise<Buffer> {
+	return readFile(uploadPath(id));
 }
 
 /** Current size of the stored file (used to reconcile offset on HEAD). */

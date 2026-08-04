@@ -12,6 +12,7 @@ import { logAfter, logBefore, logError, type LogState } from "./logger";
 import { authRoutes, VALIDATION_MESSAGES } from "./routes/auth.routes";
 import { googleOauthRoutes } from "./routes/google-oauth.routes";
 import { pageRoutes } from "./routes/pages.routes";
+import { profileRoutes } from "./routes/profile.routes";
 import { checkOrigin, securityHeaders } from "./security";
 import { uploadsRoutes } from "./routes/uploads.routes";
 
@@ -112,5 +113,6 @@ export function createApp(assets: InertiaAssets) {
 		.use(uploadsRoutes())
 		.use(authRoutes(assets))
 		.use(googleOauthRoutes(assets))
-		.use(pageRoutes(assets));
+		.use(pageRoutes(assets))
+		.use(profileRoutes(assets));
 }
