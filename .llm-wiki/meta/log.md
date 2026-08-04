@@ -50,3 +50,6 @@
 ## [2026-08-04T03:26:28.554Z] observe
 - slug: "obs-2026-08-04-route-conventions-url-first-file-naming", title: "Route conventions: URL-first file naming", relevance: "high"
 
+## [2026-08-04T03:39:22.676Z] observe
+- slug: "obs-2026-08-04-project-renamed-to-dulak", title: "Project renamed to Dulak", relevance: "high"
+

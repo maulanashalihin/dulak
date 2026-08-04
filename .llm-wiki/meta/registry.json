@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-04T03:26:28.561Z",
+  "last_updated": "2026-08-04T03:39:22.717Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -159,6 +159,24 @@
         "sqlite"
       ],
       "source_context": "\"Adding migration support to elysia-inertia-boilerplate\""
+    },
+    "sources/obs-2026-08-04-project-renamed-to-dulak": {
+      "type": "source",
+      "title": "\"Observation: Project renamed to Dulak\"",
+      "created": "2026-08-04",
+      "updated": "2026-08-04",
+      "slug": "obs-2026-08-04-project-renamed-to-dulak",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-04T03:39:22.675Z",
+      "tags": [
+        "dulak",
+        "branding",
+        "rename",
+        "banjar",
+        "boilerplate"
+      ],
+      "source_context": "\"Naming the boilerplate framework\""
     },
     "sources/elysia-14-vs-2-benchmark-raw-speed": {
       "type": "source",
