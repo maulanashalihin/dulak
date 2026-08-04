@@ -11,8 +11,13 @@ import type { InertiaAssets } from './inertia'
 const DIST_DIR = 'dist'
 const ASSETS_DIR = `${DIST_DIR}/assets`
 const MANIFEST_PATH = `${DIST_DIR}/manifest.json`
+const TAILWIND_INPUT = 'src/client/tailwind.css'
+const TAILWIND_OUTPUT = 'src/client/.tailwind.css'
 
 export async function buildClientAssets(): Promise<void> {
+  // Compile Tailwind v4 → static CSS (no PostCSS needed).
+  await Bun.$`bunx @tailwindcss/cli -i ${TAILWIND_INPUT} -o ${TAILWIND_OUTPUT} --minify`.quiet()
+
   const result = await Bun.build({
     entrypoints: ['src/client/app.tsx'],
     outdir: ASSETS_DIR,

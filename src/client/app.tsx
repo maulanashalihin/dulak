@@ -6,7 +6,8 @@
 import { createInertiaApp } from "@inertiajs/react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { notFoundPage, pages } from "./pages";
-import "./styles.css";
+import "./.tailwind.css"; // Tailwind output (preflight + utilities)
+import "./styles.css";     // custom CSS (overrides Tailwind via cascade)
 
 const resolve = (name: string) =>
 	pages[`./pages/${name}.tsx`]?.default ?? notFoundPage!;
