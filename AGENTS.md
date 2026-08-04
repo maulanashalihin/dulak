@@ -12,9 +12,11 @@ contributions broke the architecture by inventing their own layout.
   changes hook APIs. Do not upgrade casually.
 - **bun:sqlite** — synchronous, zero-ORM. Schema lives in `migrations/`
   (versioned SQL applied at startup, see `migrations.ts`).
-- **Inertia v3 + React 19** — in-process SSR; page registry in
+- **Inertia v3 + Svelte 5** — in-process SSR; page registry in
   `src/client/pages.ts` with explicit imports.
-- **Vanilla CSS** — no CSS framework (see README "Styling").
+- **Tailwind CSS v4** — compiled via `@tailwindcss/cli` (no PostCSS) as a
+  pre-build step in `assets.ts`; see README "Styling". Run `bun run dev:css`
+  alongside `bun run dev` for live Tailwind compilation in development.
 
 ## Layout
 
@@ -27,13 +29,14 @@ src/
 │   ├── db.ts               # bun:sqlite: connection + ALL prepared statements
 │   ├── migrations.ts       # SQL migration runner
 │   ├── auth.ts             # argon2id, sessions, flash, cookies, guards
-│   ├── inertia.ts          # Inertia v3 server adapter
+│   ├── inertia.ts          # Inertia v3 server adapter (SSR via pre-built dist/ssr.js, XHR, 409)
 │   ├── inertia-plugin.ts   # store declarations + per-request session resolve
 │   ├── mailer.ts           # mail drivers: log / resend / mailtrap
 │   ├── rate-limit.ts       # in-memory fixed-window rate limiter
 │   ├── logger.ts           # request logging + x-request-id
-│   ├── security.ts         # CSRF origin check + security headers
-│   ├── assets.ts           # Bun.build pipeline + manifest + static serving
+│   ├── svelte-plugin.ts    # Bun.build plugin: compile .svelte + .svelte.js (Svelte 5 runes)
+│   ├── ssr.d.ts            # type decl for lazy-imported dist/ssr.js
+│   ├── assets.ts           # Tailwind v4 compile + Bun.build (client+SSR) + manifest + static serving
 │   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
 │   ├── tus-storage.ts      # tus upload bytes on disk
 │   └── routes/
@@ -41,8 +44,7 @@ src/
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
 │       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
-│       └── uploads.routes.ts      # /uploads* (tus protocol)
-├── client/                 # React + Inertia (pages/, components/, styles.css)
+├── client/                 # Svelte + Inertia (pages/, components/, tailwind.css, styles.css)
 ├── shared/                 # types.ts, inertia.d.ts (client+server shared)
 ├── migrations/             # versioned SQL schema files (0001, 0002, …)
 └── tests/                  # bun:test E2E suite (in-memory DB)
@@ -79,7 +81,9 @@ src/
 
 6. **TypeScript**: `strict` + `noUncheckedIndexedAccess` +
    `verbatimModuleSyntax` are on. Type-only imports MUST use `import type`.
-   No ORM, no loose `any`; queries are parameterized.
+   No ORM, no loose `any`; queries are parameterized. Type-checking uses
+   `svelte-check` (not `tsc`) because `.svelte` components need the Svelte
+   language server; there is no `jsx` tsconfig key (Svelte compiles JSX).
 
 ## Route conventions
 
@@ -94,7 +98,7 @@ src/
   via `.use(<feature>Routes(assets))` in `app.ts`; Elysia instance names are
   `<feature>-routes`.
 
-## Elysia 1.4 quirks (do not "fix")
+## Elysia 1.4 + Svelte 5 quirks (do not "fix")
 
 - Hooks apply in registration order; the global `onError` must precede the
   routes it covers.
@@ -104,6 +108,15 @@ src/
   in `rate-limit.ts`.
 - `import.meta.glob` was removed from Bun 1.3 — the page registry uses
   explicit imports.
+- Svelte 5 runes (`$state`, `$props`, `$derived`, `$effect`) are compiler
+  macros, not runtime JS. `svelte-plugin.ts` compiles `.svelte` and
+  `.svelte.js` (the latter ships in `@inertiajs/svelte`) — without it Bun
+  errors "`$state` is not defined".
+- SSR is pre-built to `dist/ssr.js` by `buildClientAssets()` and
+  lazy-imported by `inertia.ts`. A static import fails at module load when
+  `dist/` is empty (fresh clone); the `svelte` export condition that
+  `@inertiajs/svelte` requires is resolvable by `Bun.build` via
+  `conditions: ['svelte']` but not by the Bun runtime.
 
 ## Testing
 
@@ -116,12 +129,14 @@ src/
   in `beforeAll` BEFORE importing the app module — mirror
   `tests/app.test.ts` and `tests/tus.test.ts`.
 - Suite must stay green (46 tests): run `bun run typecheck` and
-  `bun run test` before finishing. `tsc` only covers `src/` and `scripts/`.
+  `bun run test` before finishing. `svelte-check` covers `src/` and
+  `scripts/` (it understands `.svelte` components; `tsc` does not).
 
 ## Style
-
-- Match the dominant repo style in new files: 2-space indent, single quotes,
-  no semicolons (as in `auth.routes.ts` and `tests/`). When editing an
-  existing file, match that file's formatting.
+- Match the dominant repo style in new files: tab indent, double quotes,
+  semicolons for `.ts` server/test files (as in `auth.routes.ts` and
+  `tests/`); 2-space indent, single quotes, no semicolons for `.svelte`
+  components (as in `pages/Login.svelte`). When editing an existing file,
+  match that file's formatting.
 - Keep changes minimal and conventional; delete dead code rather than
   leaving shims or aliases behind a rename.
