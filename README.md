@@ -46,10 +46,14 @@ This starter is deliberately boring. Every choice favors the next maintainer
   in exactly one file (GET renders + POST actions together), and new
   features get their own `<feature>.routes.ts`. Tests run deterministically
   (`bun test --isolate`). The repo is built to be extended safely by anyone.
-- **Production-shaped, not production.** Migrations, CSRF, rate limiting,
-  security headers, session rotation, graceful shutdown, CI, and Docker are
-  wired from day one — but only what you need is pre-built. Features beyond
-  auth are meant to be *added by following the conventions*, not included.
+- **Production-shaped, not production.** The guardrails a deployed app needs
+  — migrations, CSRF, rate limiting, security headers, session rotation,
+  graceful shutdown, CI, Docker — are wired from day one, so you start with a
+  skeleton that is *shaped* like a production app. But it is not one: the
+  only pre-built feature is auth, and anything deployment-specific
+  (Redis-backed rate limiting for horizontal scaling, CDN, observability) is
+  a deliberate swap point. The product is yours to add by following the
+  conventions.
 - **Boring versions, current versions.** Elysia 1.4 (2.x is beta and changes
   hook APIs), Bun 1.3. Upgrades are deliberate decisions, not defaults.
 - **Correctness over cleverness.** Synchronous, explicitly typed,
