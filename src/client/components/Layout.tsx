@@ -1,5 +1,5 @@
 import { Link, router, usePage } from "@inertiajs/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Role, SharedPageProps } from "../../shared/types";
 import Brand from "./Brand";
@@ -256,15 +256,25 @@ export default function Layout({ children }: { children: ReactNode }) {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
+	// Skip the apply effect on initial mount — the inline head script
+	// (themeBoot) already set data-theme + background-color on <html>.
+	const skipApply = useRef(true);
 
-	// Sync React state from the <html data-theme> the inline head script set,
-	// so the toggle reflects the active theme on first paint (no FOUC).
-	useEffect(() => {
+	// Sync React state from <html data-theme> BEFORE paint so the toggle
+	// icon matches the active theme immediately. useLayoutEffect runs
+	// synchronously after commit, before the browser paints — preventing
+	// a flash where the apply effect would briefly set "light" on the DOM.
+	useLayoutEffect(() => {
 		setTheme(getInitialTheme());
 	}, []);
 
-	// Persist + apply theme whenever the toggle changes it.
+	// Persist + apply theme whenever the toggle changes it. Skipped on
+	// initial mount (DOM already correct); only user-initiated toggles apply.
 	useEffect(() => {
+		if (skipApply.current) {
+			skipApply.current = false;
+			return;
+		}
 		const el = document.documentElement;
 		el.setAttribute("data-theme", theme);
 		el.style.backgroundColor = theme === "dark" ? "#0f1117" : "#f6f7fb";
