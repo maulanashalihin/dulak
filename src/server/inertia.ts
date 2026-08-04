@@ -9,9 +9,20 @@
  */
 import type { Page } from "@inertiajs/core";
 import type { Context } from "elysia";
-import { renderPage } from "../client/ssr";
 import type { FlashData, SharedPageProps } from "../shared/types";
 import { clearFlash } from "./auth";
+
+/** Lazy-loaded SSR renderer. dist/ssr.js is built by buildClientAssets()
+ *  before any request is served, but a static import would fail at module
+ *  load time when dist/ is empty (fresh clone / clean dev start). */
+let renderPageFn: ((page: Page) => Promise<{ head: string[]; body: string }>) | null = null;
+async function renderPage(page: Page): Promise<{ head: string[]; body: string }> {
+	if (!renderPageFn) {
+		const mod = await import("../../dist/ssr.js");
+		renderPageFn = mod.renderPage;
+	}
+	return renderPageFn(page);
+}
 
 export interface InertiaAssets {
 	/** Asset version used for cache busting + Inertia version negotiation. */

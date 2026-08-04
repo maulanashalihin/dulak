@@ -7,3 +7,4 @@ dist/
 data/uploads/
 .playwright-mcp/
 *.png
+src/client/.tailwind.css
