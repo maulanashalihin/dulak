@@ -32,7 +32,7 @@
 
 ## Pages
 
-- [[entities/elysia-inertia-boilerplate]] — elysia-inertia-boilerplate *(created: 2026-08-03)*
+- [[entities/elysia-inertia-boilerplate]] — elysia-inertia-boilerplate *(created: 2026-08-04)*
 
 ## Sources
 
@@ -44,7 +44,11 @@
 - [[sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt]] — "Observation: Session design: SQLite-backed, not JWT" *(created: 2026-08-03)*
 - [[sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite]] — "Observation: SQL migration runner for bun:sqlite" *(created: 2026-08-03)*
 - [[sources/obs-2026-08-03-styling-decision-vanilla-css-final]] — "Observation: Styling decision: vanilla CSS, final" *(created: 2026-08-03)*
-- [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-03)*
+- [[sources/obs-2026-08-04-agents-md-created-codifying-repo-architecture]] — "Observation: AGENTS.md created codifying repo architecture" *(created: 2026-08-04)*
+- [[sources/obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision]] — "Observation: db.ts stays single file — agent-preference decision" *(created: 2026-08-04)*
+- [[sources/obs-2026-08-04-route-conventions-url-first-file-naming]] — "Observation: Route conventions: URL-first file naming" *(created: 2026-08-04)*
+- [[sources/obs-2026-08-04-tus-uploads-restructured-to-flat-convention]] — "Observation: tus uploads restructured to flat convention" *(created: 2026-08-04)*
+- [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-04)*
 
 ---
-*Last updated: 2026-08-03T11:02:26.039Z* | *Total pages: 32*
+*Last updated: 2026-08-04T03:26:28.561Z* | *Total pages: 36*

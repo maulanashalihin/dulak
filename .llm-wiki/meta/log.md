@@ -38,3 +38,15 @@
 ## [2026-08-03T11:02:26.032Z] retro
 - slug: "boilerplate-v010-released-and-pat-workflow-scope", title: "Boilerplate v0.1.0 released + PAT workflow-scope gotcha", category: "project"
 
+## [2026-08-04T02:55:40.021Z] observe
+- slug: "obs-2026-08-04-tus-uploads-restructured-to-flat-convention", title: "tus uploads restructured to flat convention", relevance: "high"
+
+## [2026-08-04T03:08:14.932Z] observe
+- slug: "obs-2026-08-04-agents-md-created-codifying-repo-architecture", title: "AGENTS.md created codifying repo architecture", relevance: "high"
+
+## [2026-08-04T03:17:10.742Z] observe
+- slug: "obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision", title: "db.ts stays single file — agent-preference decision", relevance: "high"
+
+## [2026-08-04T03:26:28.554Z] observe
+- slug: "obs-2026-08-04-route-conventions-url-first-file-naming", title: "Route conventions: URL-first file naming", relevance: "high"
+

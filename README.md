@@ -33,7 +33,7 @@ flowchart LR
 bun install
 cp .env.example .env
 bun run dev          # http://localhost:3000
-bun test             # 20-test E2E suite against an in-memory DB
+bun test --isolate   # 46-test E2E suite against an in-memory DB
 bun run db:seed      # demo user: demo@example.com / password123 (role: user)
 bun run db:seed admin@example.com admin123 admin   # role: admin
 ```
@@ -45,7 +45,7 @@ bun run db:seed admin@example.com admin123 admin   # role: admin
 | `bun run dev`       | Watch mode; rebuilds client assets on restart             |
 | `bun run build`     | Prebuild client assets → `dist/` (+ `manifest.json`)      |
 | `bun run start`     | Serve prebuilt assets (`NODE_ENV=production`)             |
-| `bun test`          | E2E suite (auth, roles, reset flow, Inertia protocol)     |
+| `bun run test`      | E2E suite (auth, roles, reset flow, Inertia protocol, tus) |
 | `bun run db:seed`   | Create a demo user (`[email] [password] [role]` args)     |
 | `bun run typecheck` | `tsc --noEmit`                                            |
 
@@ -62,6 +62,9 @@ bun run db:seed admin@example.com admin123 admin   # role: admin
 - **Rate limiting** on auth endpoints (in-memory fixed window, per IP).
 - **Inertia v3**: full SSR on first load, SPA navigation after, asset-version
   negotiation (409 + reload), partial reloads, flash messages, shared props.
+- **Resumable uploads**: tus protocol v1 at `/uploads` (creation,
+  creation-with-upload, termination, expiration, checksum) with SQLite state
+  and on-disk storage.
 - **Migrations**: versioned SQL files applied at startup in transactions.
 - **Ops**: request logging with correlation id, security headers (CSP,
   nosniff, frame denial), `/health`, graceful shutdown, Docker.
@@ -81,6 +84,9 @@ bun run db:seed admin@example.com admin123 admin   # role: admin
 | `MAILTRAP_INBOX_ID` | — | use the sandbox endpoint when set |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
 | `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `10` / `60` | requests per window on auth endpoints |
+| `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
+| `TUS_MAX_SIZE` | `0` | max upload size in bytes (`0` = unlimited) |
+| `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL in seconds (`0` = no expiry) |
 
 Invalid/incomplete config fails fast at startup with a clear message
 (`src/server/config.ts`).
@@ -103,6 +109,9 @@ Invalid/incomplete config fails fast at startup with a clear message
 
 ## Architecture
 
+AI agents: follow [`AGENTS.md`](AGENTS.md) — it codifies the layout rules
+below so new code stays structurally consistent.
+
 ```
 src/
 ├── index.ts                # entry: build assets (dev), listen, graceful shutdown
@@ -119,10 +128,13 @@ src/
 │   ├── logger.ts           # request logging + x-request-id
 │   ├── security.ts         # CSRF origin check + security headers
 │   ├── assets.ts           # Bun.build pipeline + manifest + static serving
+│   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
+│   ├── tus-storage.ts      # tus upload bytes on disk (data/uploads)
 │   └── routes/
-│       ├── auth.routes.ts  # register/login/logout/forgot/reset + schemas
-│       ├── oauth.routes.ts # Google OAuth
-│       └── pages.routes.ts # GET pages incl. /admin (paginated)
+│       ├── auth.routes.ts         # /login /register /logout /forgot/reset (GET+POST)
+│       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
+│       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
+│       └── uploads.routes.ts      # /uploads* (tus resumable upload)
 ├── client/
 │   ├── app.tsx             # Inertia client bootstrap (hydrate or render)
 │   ├── ssr.tsx             # in-process SSR renderer (react-dom/server)
@@ -181,6 +193,7 @@ bun run dev   # migration runs on boot
 ```
 
 Rules:
+
 - **Never edit an applied migration** — add a new numbered file instead.
 - SQLite `ALTER TABLE ADD COLUMN` with `NOT NULL` requires a `DEFAULT`.
 - A failed migration rolls back and aborts startup.
@@ -188,13 +201,20 @@ Rules:
 ## Testing
 
 ```bash
-bun test
+bun test --isolate   # or: bun run test
 ```
 
-The suite boots the full app against an in-memory SQLite database and drives
-it through `app.handle()`: registration/login/logout, guards and roles,
-password reset end to end (via the log mail driver), Inertia protocol
-(409/404/SSR), CSRF, and `/health`.
+46 tests. The suite boots the full app against an in-memory SQLite database
+and drives it through `app.handle()`: registration/login/logout, guards and
+roles, password reset end to end (via the log mail driver), Inertia protocol
+(409/404/SSR), CSRF, `/health`, and the tus resumable-upload flow (creation,
+resume, checksum, termination, ownership).
+
+`--isolate` gives each test file fresh globals. It is required: the files
+are written as independent suites — each sets its env (`DATABASE_PATH`,
+`UPLOAD_DIR`, …) in `beforeAll` before importing the app, and `db.close()`s
+in `afterAll` — so running them in one shared process would let one file's
+teardown finalize the next file's prepared statements.
 
 ## Deployment
 

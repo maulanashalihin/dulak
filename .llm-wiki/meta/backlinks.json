@@ -1,101 +1,20 @@
 {
-  "sources/obs-2026-08-03-styling-decision-vanilla-css-final": [
-    "sources/boilerplate-v010-released-and-pat-workflow-scope"
-  ],
-  "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": [
-    "entities/elysia-inertia-boilerplate"
-  ],
-  "sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt": [
-    "entities/elysia-inertia-boilerplate"
-  ],
-  "sources/elysia-14-vs-2-benchmark-raw-speed": [],
-  "sources/elysia-14-hook-order-and-plugin-quirks": [
-    "sources/elysia-2-vs-14-differences",
-    "entities/elysia-inertia-boilerplate"
-  ],
-  "sources/elysia-2-vs-14-differences": [
-    "sources/elysia-14-vs-2-benchmark-raw-speed",
-    "sources/boilerplate-v010-released-and-pat-workflow-scope"
-  ],
-  "sources/boilerplate-v010-released-and-pat-workflow-scope": [],
-  "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": [
-    "entities/elysia-inertia-boilerplate"
-  ],
-  "sources/SRC-2026-08-03-001": [
-    "sources/SRC-2026-08-03-001",
-    "entities/elysia",
-    "entities/docker",
-    "entities/mailtrap",
-    "entities/typebox",
-    "entities/google-oauth",
-    "entities/inertiajsreact",
-    "entities/bun",
-    "entities/bunsqlite",
-    "entities/resend",
-    "entities/inertia-v3",
-    "entities/elysia-inertia-boilerplate",
-    "entities/bunpassword",
-    "entities/react-19",
-    "concepts/csrf-origin-check",
-    "concepts/partial-reloads",
-    "concepts/asset-version-negotiation",
-    "concepts/route-guards-beforehandle",
-    "concepts/one-shot-flash-messages",
-    "concepts/fixed-window-rate-limiting",
-    "concepts/in-process-ssr",
-    "concepts/server-driven-ui",
-    "concepts/correlation-id-logging",
-    "concepts/versioned-sql-migrations"
-  ],
-  "entities/elysia": [
-    "sources/elysia-14-vs-2-benchmark-raw-speed",
-    "sources/elysia-2-vs-14-differences",
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/docker": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/mailtrap": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/typebox": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/google-oauth": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/inertiajsreact": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/bun": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/bunsqlite": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/resend": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/inertia-v3": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/elysia-inertia-boilerplate": [
-    "sources/elysia-14-hook-order-and-plugin-quirks",
-    "sources/boilerplate-v010-released-and-pat-workflow-scope"
-  ],
-  "entities/bunpassword": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "entities/react-19": [
+  "concepts/server-driven-ui": [
     "sources/SRC-2026-08-03-001"
   ],
   "concepts/csrf-origin-check": [
     "sources/SRC-2026-08-03-001"
   ],
+  "concepts/correlation-id-logging": [
+    "sources/SRC-2026-08-03-001"
+  ],
   "concepts/partial-reloads": [
     "sources/SRC-2026-08-03-001"
   ],
-  "concepts/asset-version-negotiation": [
+  "concepts/in-process-ssr": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "concepts/fixed-window-rate-limiting": [
     "sources/SRC-2026-08-03-001"
   ],
   "concepts/route-guards-beforehandle": [
@@ -104,19 +23,104 @@
   "concepts/one-shot-flash-messages": [
     "sources/SRC-2026-08-03-001"
   ],
-  "concepts/fixed-window-rate-limiting": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "concepts/in-process-ssr": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "concepts/server-driven-ui": [
-    "sources/SRC-2026-08-03-001"
-  ],
-  "concepts/correlation-id-logging": [
-    "sources/SRC-2026-08-03-001"
-  ],
   "concepts/versioned-sql-migrations": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "concepts/asset-version-negotiation": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "sources/obs-2026-08-04-tus-uploads-restructured-to-flat-convention": [],
+  "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": [
+    "entities/elysia-inertia-boilerplate"
+  ],
+  "sources/elysia-14-hook-order-and-plugin-quirks": [
+    "sources/elysia-2-vs-14-differences",
+    "entities/elysia-inertia-boilerplate"
+  ],
+  "sources/boilerplate-v010-released-and-pat-workflow-scope": [],
+  "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": [
+    "entities/elysia-inertia-boilerplate"
+  ],
+  "sources/elysia-14-vs-2-benchmark-raw-speed": [],
+  "sources/SRC-2026-08-03-001": [
+    "concepts/server-driven-ui",
+    "concepts/csrf-origin-check",
+    "concepts/correlation-id-logging",
+    "concepts/partial-reloads",
+    "concepts/in-process-ssr",
+    "concepts/fixed-window-rate-limiting",
+    "concepts/route-guards-beforehandle",
+    "concepts/one-shot-flash-messages",
+    "concepts/versioned-sql-migrations",
+    "concepts/asset-version-negotiation",
+    "sources/SRC-2026-08-03-001",
+    "entities/resend",
+    "entities/bun",
+    "entities/inertiajsreact",
+    "entities/mailtrap",
+    "entities/typebox",
+    "entities/bunsqlite",
+    "entities/elysia",
+    "entities/inertia-v3",
+    "entities/docker",
+    "entities/elysia-inertia-boilerplate",
+    "entities/react-19",
+    "entities/bunpassword",
+    "entities/google-oauth"
+  ],
+  "sources/elysia-2-vs-14-differences": [
+    "sources/boilerplate-v010-released-and-pat-workflow-scope",
+    "sources/elysia-14-vs-2-benchmark-raw-speed"
+  ],
+  "sources/obs-2026-08-03-styling-decision-vanilla-css-final": [
+    "sources/boilerplate-v010-released-and-pat-workflow-scope"
+  ],
+  "sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt": [
+    "entities/elysia-inertia-boilerplate"
+  ],
+  "sources/obs-2026-08-04-agents-md-created-codifying-repo-architecture": [],
+  "sources/obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision": [],
+  "sources/obs-2026-08-04-route-conventions-url-first-file-naming": [],
+  "entities/resend": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/bun": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/inertiajsreact": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/mailtrap": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/typebox": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/bunsqlite": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/elysia": [
+    "sources/elysia-14-vs-2-benchmark-raw-speed",
+    "sources/SRC-2026-08-03-001",
+    "sources/elysia-2-vs-14-differences"
+  ],
+  "entities/inertia-v3": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/docker": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/elysia-inertia-boilerplate": [
+    "sources/elysia-14-hook-order-and-plugin-quirks",
+    "sources/boilerplate-v010-released-and-pat-workflow-scope"
+  ],
+  "entities/react-19": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/bunpassword": [
+    "sources/SRC-2026-08-03-001"
+  ],
+  "entities/google-oauth": [
     "sources/SRC-2026-08-03-001"
   ]
 }

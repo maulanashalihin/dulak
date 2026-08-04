@@ -42,6 +42,14 @@ export const config = {
   /** Absolute base URL — used for email links and OAuth redirect URIs. */
   appUrl: pick(process.env.APP_URL, 'http://localhost:3000').replace(/\/+$/, ''),
   dbPath: pick(process.env.DATABASE_PATH, './data/app.sqlite'),
+  upload: {
+    /** Directory where tus upload chunks are stored on disk. */
+    dir: pick(process.env.UPLOAD_DIR, './data/uploads'),
+    /** Maximum total upload size in bytes (Tus-Max-Size). 0 = unlimited. */
+    maxSize: Number(pick(process.env.TUS_MAX_SIZE, '0')),
+    /** Seconds after which an unfinished upload may be swept (Expiration). 0 = no expiry. */
+    expirationSeconds: Number(pick(process.env.TUS_EXPIRATION_SECONDS, '0')),
+  },
   mail: {
     driver: mailDriver,
     from: pick(process.env.MAIL_FROM, 'no-reply@example.com'),
