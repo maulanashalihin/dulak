@@ -664,7 +664,10 @@ describe("profile info & password", () => {
 		});
 		expect(res.status).toBe(303);
 
-		const dash = await tus("/dashboard", { headers: { "x-inertia": "true" }, cookie });
+		const dash = await tus("/dashboard", {
+			headers: { "x-inertia": "true" },
+			cookie,
+		});
 		const page = (await dash.json()) as {
 			props: { auth: { user: { name: string; email: string } } };
 		};
@@ -677,11 +680,16 @@ describe("profile info & password", () => {
 		const res = await tus("/profile", {
 			method: "PATCH",
 			headers: { "x-inertia": "true", "content-type": "application/json" },
-			body: JSON.stringify({ name: "New Name", email: "taken-email@example.com" }),
+			body: JSON.stringify({
+				name: "New Name",
+				email: "taken-email@example.com",
+			}),
 			cookie,
 		});
 		expect(res.status).toBe(422);
-		const data = (await res.json()) as { props: { errors: Record<string, string> } };
+		const data = (await res.json()) as {
+			props: { errors: Record<string, string> };
+		};
 		expect(data.props.errors.email).toBe("That email is already registered.");
 	});
 
@@ -696,7 +704,9 @@ describe("profile info & password", () => {
 			}),
 			cookie,
 		});
-		const data = (await res.json()) as { props: { errors: Record<string, string> } };
+		const data = (await res.json()) as {
+			props: { errors: Record<string, string> };
+		};
 		expect(data.props.errors.currentPassword).toBe(
 			"Your current password is incorrect.",
 		);

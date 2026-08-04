@@ -3,22 +3,22 @@
  * password changes. Avatar bytes travel through the tus protocol at /uploads
  * (see uploads.routes.ts), then are linked to the user by upload id here.
  */
-import { Elysia, t, type Static } from 'elysia'
+import { Elysia, t, type Static } from "elysia";
 import {
-  deleteOtherSessionsByToken,
-  hashPassword,
-  requireAuth,
-  setFlash,
-  verifyPassword,
-} from '../auth'
+	deleteOtherSessionsByToken,
+	hashPassword,
+	requireAuth,
+	setFlash,
+	verifyPassword,
+} from "../auth";
 import {
-  findUpload,
-  findUserByEmail,
-  findUserById,
-  updateUserAvatar,
-  updateUserPassword,
-  updateUserProfile,
-} from '../db'
+	findUpload,
+	findUserByEmail,
+	findUserById,
+	updateUserAvatar,
+	updateUserPassword,
+	updateUserProfile,
+} from "../db";
 import {
 	inertiaPlugin,
 	makePopulateStore,

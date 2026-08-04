@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-04T04:26:16.840Z",
+  "last_updated": "2026-08-04T05:54:57.685Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -186,6 +186,24 @@
       "slug": "elysia-14-vs-2-benchmark-raw-speed",
       "status": "insight",
       "category": "performance"
+    },
+    "sources/obs-2026-08-04-professional-profile-page-with-info-and-password-forms": {
+      "type": "source",
+      "title": "\"Observation: Professional profile page with info and password forms\"",
+      "created": "2026-08-04",
+      "updated": "2026-08-04",
+      "slug": "obs-2026-08-04-professional-profile-page-with-info-and-password-forms",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-04T05:54:57.628Z",
+      "tags": [
+        "dulak",
+        "profile",
+        "forms",
+        "password",
+        "sessions"
+      ],
+      "source_context": "\"Professional profile page\""
     },
     "sources/SRC-2026-08-03-001": {
       "type": "source",

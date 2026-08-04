@@ -12,7 +12,10 @@ import { logAfter, logBefore, logError, type LogState } from "./logger";
 import { authRoutes, VALIDATION_MESSAGES } from "./routes/auth.routes";
 import { googleOauthRoutes } from "./routes/google-oauth.routes";
 import { pageRoutes } from "./routes/pages.routes";
-import { profileRoutes, PROFILE_VALIDATION_MESSAGES } from "./routes/profile.routes";
+import {
+	profileRoutes,
+	PROFILE_VALIDATION_MESSAGES,
+} from "./routes/profile.routes";
 import { checkOrigin, securityHeaders } from "./security";
 import { uploadsRoutes } from "./routes/uploads.routes";
 

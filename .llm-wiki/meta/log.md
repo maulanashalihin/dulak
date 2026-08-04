@@ -56,3 +56,6 @@
 ## [2026-08-04T04:26:16.783Z] observe
 - slug: "obs-2026-08-04-profile-page-with-tus-avatar-upload", title: "Profile page with tus avatar upload", relevance: "high"
 
+## [2026-08-04T05:54:57.628Z] observe
+- slug: "obs-2026-08-04-professional-profile-page-with-info-and-password-forms", title: "Professional profile page with info and password forms", relevance: "high"
+

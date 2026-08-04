@@ -3,75 +3,82 @@
  * httpOnly cookie helpers, flash messages, password-reset tokens,
  * Google OAuth state, and route guards (requireAuth / guestOnly / requireRole).
  */
-import { createHash, randomBytes } from 'node:crypto'
-import type { Cookie } from 'elysia'
-import type { FlashData, Role, User } from '../shared/types'
+import { createHash, randomBytes } from "node:crypto";
+import type { Cookie } from "elysia";
+import type { FlashData, Role, User } from "../shared/types";
 import {
-  deleteOtherSessions,
-  deletePasswordResetsByEmail,
-  deleteSession,
-  findPasswordReset,
-  findSession,
-  findUserById,
-  insertPasswordReset,
-  insertSession,
-  updateSessionFlash,
-  type UserRow,
-} from './db'
+	deleteOtherSessions,
+	deletePasswordResetsByEmail,
+	deleteSession,
+	findPasswordReset,
+	findSession,
+	findUserById,
+	insertPasswordReset,
+	insertSession,
+	updateSessionFlash,
+	type UserRow,
+} from "./db";
 
-export const SESSION_COOKIE = 'session'
-export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
-export const RESET_TOKEN_TTL_MS = 60 * 60 * 1000 // 1 hour
-const isProd = process.env.NODE_ENV === 'production'
+export const SESSION_COOKIE = "session";
+export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+export const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+const isProd = process.env.NODE_ENV === "production";
 
 // ---------------------------------------------------------------------------
 // Passwords (argon2id — OWASP-recommended)
 // ---------------------------------------------------------------------------
 
 export const hashPassword = (password: string) =>
-  Bun.password.hash(password, { algorithm: 'argon2id', memoryCost: 19456, timeCost: 2 })
+	Bun.password.hash(password, {
+		algorithm: "argon2id",
+		memoryCost: 19456,
+		timeCost: 2,
+	});
 
 export const verifyPassword = (password: string, hash: string) =>
-  Bun.password.verify(password, hash)
+	Bun.password.verify(password, hash);
 
 // ---------------------------------------------------------------------------
 // Sessions
 // ---------------------------------------------------------------------------
 
 export interface SessionInfo {
-  token: string
-  expiresAt: Date
+	token: string;
+	expiresAt: Date;
 }
 
 /** 256-bit random token; it is never logged and only lives in the cookie.
  *  The DB stores only its SHA-256 hash so a DB leak cannot expose valid tokens. */
 export function createSession(userId: number): SessionInfo {
-  const token = randomBytes(32).toString('hex')
-  const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
-  insertSession.run(hashToken(token), userId, expiresAt.toISOString())
-  return { token, expiresAt }
+	const token = randomBytes(32).toString("hex");
+	const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+	insertSession.run(hashToken(token), userId, expiresAt.toISOString());
+	return { token, expiresAt };
 }
 
 export function resolveUser(token: string | null | undefined): UserRow | null {
-  if (!token) return null
-  const session = findSession.get(hashToken(token))
-  if (!session) return null
-  if (Date.now() > new Date(session.expiresAt).getTime()) {
-    deleteSessionByToken(token) // lazy cleanup of expired sessions
-    return null
-  }
-  return findUserById.get(session.userId) ?? null
+	if (!token) return null;
+	const session = findSession.get(hashToken(token));
+	if (!session) return null;
+	if (Date.now() > new Date(session.expiresAt).getTime()) {
+		deleteSessionByToken(token); // lazy cleanup of expired sessions
+		return null;
+	}
+	return findUserById.get(session.userId) ?? null;
 }
 
 /** Delete a session by its raw (cookie) token — hashes before hitting the DB. */
 export function deleteSessionByToken(token: string): void {
-  deleteSession.run(hashToken(token))
+	deleteSession.run(hashToken(token));
 }
 
 /** Delete every session for `userId` except the one owning `token` (password
  *  changes invalidate other devices; the current session stays signed in). */
-export function deleteOtherSessionsByToken(token: string, userId: number): void {
-  deleteOtherSessions.run(userId, hashToken(token))
+export function deleteOtherSessionsByToken(
+	token: string,
+	userId: number,
+): void {
+	deleteOtherSessions.run(userId, hashToken(token));
 }
 
 // ---------------------------------------------------------------------------
@@ -79,47 +86,52 @@ export function deleteOtherSessionsByToken(token: string, userId: number): void 
 // ---------------------------------------------------------------------------
 
 export function readFlash(token: string | null | undefined): FlashData {
-  if (!token) return {}
-  const session = findSession.get(hashToken(token))
-  if (!session) return {}
-  try {
-    const parsed: unknown = JSON.parse(session.flash)
-    return parsed && typeof parsed === 'object' ? (parsed as FlashData) : {}
-  } catch {
-    return {}
-  }
+	if (!token) return {};
+	const session = findSession.get(hashToken(token));
+	if (!session) return {};
+	try {
+		const parsed: unknown = JSON.parse(session.flash);
+		return parsed && typeof parsed === "object" ? (parsed as FlashData) : {};
+	} catch {
+		return {};
+	}
 }
 
 export function setFlash(token: string, flash: FlashData): void {
-  updateSessionFlash.run(JSON.stringify(flash), hashToken(token))
+	updateSessionFlash.run(JSON.stringify(flash), hashToken(token));
 }
 
 export function clearFlash(token: string | null | undefined): void {
-  if (token) updateSessionFlash.run('{}', hashToken(token))
+	if (token) updateSessionFlash.run("{}", hashToken(token));
 }
 
 // ---------------------------------------------------------------------------
 // Password reset tokens (hashed at rest; the raw token goes in the email)
 // ---------------------------------------------------------------------------
 
-export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex')
+export const hashToken = (token: string) =>
+	createHash("sha256").update(token).digest("hex");
 
 /** Create a reset token for `email` and return the raw token to email out. */
 export function createPasswordReset(email: string): string {
-  const token = randomBytes(32).toString('hex')
-  insertPasswordReset.run(email, hashToken(token), new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString())
-  return token
+	const token = randomBytes(32).toString("hex");
+	insertPasswordReset.run(
+		email,
+		hashToken(token),
+		new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString(),
+	);
+	return token;
 }
 
 /** Verify a raw reset token for `email` (consumes nothing; caller deletes). */
 export function verifyPasswordReset(email: string, token: string): boolean {
-  const row = findPasswordReset.get(hashToken(token))
-  if (!row || row.email.toLowerCase() !== email.toLowerCase()) return false
-  return Date.now() <= new Date(row.expiresAt).getTime()
+	const row = findPasswordReset.get(hashToken(token));
+	if (!row || row.email.toLowerCase() !== email.toLowerCase()) return false;
+	return Date.now() <= new Date(row.expiresAt).getTime();
 }
 
 export function clearPasswordResets(email: string): void {
-  deletePasswordResetsByEmail.run(email)
+	deletePasswordResetsByEmail.run(email);
 }
 
 // ---------------------------------------------------------------------------
@@ -127,42 +139,47 @@ export function clearPasswordResets(email: string): void {
 // ---------------------------------------------------------------------------
 
 export function setSessionCookie(
-  cookie: Cookie<unknown> | undefined,
-  token: string,
-  expiresAt: Date,
+	cookie: Cookie<unknown> | undefined,
+	token: string,
+	expiresAt: Date,
 ): void {
-  if (!cookie) return
-  cookie.set({
-    value: token,
-    httpOnly: true,
-    sameSite: 'lax', // blocks cross-site POSTs (CSRF baseline, see security.ts)
-    secure: isProd,
-    path: '/',
-    maxAge: SESSION_TTL_MS / 1000,
-    expires: expiresAt,
-  })
+	if (!cookie) return;
+	cookie.set({
+		value: token,
+		httpOnly: true,
+		sameSite: "lax", // blocks cross-site POSTs (CSRF baseline, see security.ts)
+		secure: isProd,
+		path: "/",
+		maxAge: SESSION_TTL_MS / 1000,
+		expires: expiresAt,
+	});
 }
 
 export function clearSessionCookie(cookie: Cookie<unknown> | undefined): void {
-  cookie?.remove()
+	cookie?.remove();
 }
 
-export const OAUTH_STATE_COOKIE = 'oauth_state'
+export const OAUTH_STATE_COOKIE = "oauth_state";
 
 /** Short-lived state cookie protecting the OAuth callback from CSRF. */
-export function setOAuthStateCookie(cookie: Cookie<unknown> | undefined, state: string): void {
-  cookie?.set({
-    value: state,
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: isProd,
-    path: '/',
-    maxAge: 600, // 10 minutes
-  })
+export function setOAuthStateCookie(
+	cookie: Cookie<unknown> | undefined,
+	state: string,
+): void {
+	cookie?.set({
+		value: state,
+		httpOnly: true,
+		sameSite: "lax",
+		secure: isProd,
+		path: "/",
+		maxAge: 600, // 10 minutes
+	});
 }
 
-export function clearOAuthStateCookie(cookie: Cookie<unknown> | undefined): void {
-  cookie?.remove()
+export function clearOAuthStateCookie(
+	cookie: Cookie<unknown> | undefined,
+): void {
+	cookie?.remove();
 }
 
 // ---------------------------------------------------------------------------
@@ -170,25 +187,32 @@ export function clearOAuthStateCookie(cookie: Cookie<unknown> | undefined): void
 // ---------------------------------------------------------------------------
 
 interface GuardContext {
-  store: { user: User | null }
-  request: Request
+	store: { user: User | null };
+	request: Request;
 }
 
 const redirectTo = (request: Request, path: string) =>
-  Response.redirect(new URL(path, request.url).toString())
+	Response.redirect(new URL(path, request.url).toString());
 
-export const requireAuth = ({ store, request }: GuardContext): Response | undefined => {
-  if (!store.user) return redirectTo(request, '/login')
-}
+export const requireAuth = ({
+	store,
+	request,
+}: GuardContext): Response | undefined => {
+	if (!store.user) return redirectTo(request, "/login");
+};
 
-export const guestOnly = ({ store, request }: GuardContext): Response | undefined => {
-  if (store.user) return redirectTo(request, '/dashboard')
-}
+export const guestOnly = ({
+	store,
+	request,
+}: GuardContext): Response | undefined => {
+	if (store.user) return redirectTo(request, "/dashboard");
+};
 
 /** Guard factory: e.g. `requireRole('admin')` — non-admins go to /dashboard. */
 export const requireRole =
-  (...roles: Role[]) =>
-  ({ store, request }: GuardContext): Response | undefined => {
-    if (!store.user) return redirectTo(request, '/login')
-    if (!roles.includes(store.user.role)) return redirectTo(request, '/dashboard')
-  }
+	(...roles: Role[]) =>
+	({ store, request }: GuardContext): Response | undefined => {
+		if (!store.user) return redirectTo(request, "/login");
+		if (!roles.includes(store.user.role))
+			return redirectTo(request, "/dashboard");
+	};

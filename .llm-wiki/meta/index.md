@@ -46,6 +46,7 @@
 - [[sources/obs-2026-08-03-styling-decision-vanilla-css-final]] — "Observation: Styling decision: vanilla CSS, final" *(created: 2026-08-03)*
 - [[sources/obs-2026-08-04-agents-md-created-codifying-repo-architecture]] — "Observation: AGENTS.md created codifying repo architecture" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision]] — "Observation: db.ts stays single file — agent-preference decision" *(created: 2026-08-04)*
+- [[sources/obs-2026-08-04-professional-profile-page-with-info-and-password-forms]] — "Observation: Professional profile page with info and password forms" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-04-profile-page-with-tus-avatar-upload]] — "Observation: Profile page with tus avatar upload" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-04-project-renamed-to-dulak]] — "Observation: Project renamed to Dulak" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-04-route-conventions-url-first-file-naming]] — "Observation: Route conventions: URL-first file naming" *(created: 2026-08-04)*
@@ -53,4 +54,4 @@
 - [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-04)*
 
 ---
-*Last updated: 2026-08-04T04:26:16.840Z* | *Total pages: 38*
+*Last updated: 2026-08-04T05:54:57.685Z* | *Total pages: 39*
