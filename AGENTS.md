@@ -14,7 +14,9 @@ contributions broke the architecture by inventing their own layout.
   (versioned SQL applied at startup, see `migrations.ts`).
 - **Inertia v3 + React 19** — in-process SSR; page registry in
   `src/client/pages.ts` with explicit imports.
-- **Vanilla CSS** — no CSS framework (see README "Styling").
+- **Tailwind CSS v4** — compiled via `@tailwindcss/cli` (no PostCSS) as a
+  pre-build step in `assets.ts`; see README "Styling". Run `bun run dev:css`
+  alongside `bun run dev` for live Tailwind compilation in development.
 
 ## Layout
 
@@ -33,7 +35,7 @@ src/
 │   ├── rate-limit.ts       # in-memory fixed-window rate limiter
 │   ├── logger.ts           # request logging + x-request-id
 │   ├── security.ts         # CSRF origin check + security headers
-│   ├── assets.ts           # Bun.build pipeline + manifest + static serving
+│   ├── assets.ts           # Tailwind v4 compile + Bun.build pipeline + manifest + static serving
 │   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
 │   ├── tus-storage.ts      # tus upload bytes on disk
 │   └── routes/
@@ -42,7 +44,7 @@ src/
 │       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
 │       └── uploads.routes.ts      # /uploads* (tus protocol)
-├── client/                 # React + Inertia (pages/, components/, styles.css)
+├── client/                 # React + Inertia (pages/, components/, tailwind.css, styles.css)
 ├── shared/                 # types.ts, inertia.d.ts (client+server shared)
 ├── migrations/             # versioned SQL schema files (0001, 0002, …)
 └── tests/                  # bun:test E2E suite (in-memory DB)
@@ -120,8 +122,8 @@ src/
 
 ## Style
 
-- Match the dominant repo style in new files: 2-space indent, single quotes,
-  no semicolons (as in `auth.routes.ts` and `tests/`). When editing an
+- Match the dominant repo style in new files: tab indent, double quotes,
+  semicolons (as in `auth.routes.ts` and `tests/`). When editing an
   existing file, match that file's formatting.
 - Keep changes minimal and conventional; delete dead code rather than
   leaving shims or aliases behind a rename.
