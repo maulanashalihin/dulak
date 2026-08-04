@@ -59,3 +59,6 @@
 ## [2026-08-04T05:54:57.628Z] observe
 - slug: "obs-2026-08-04-professional-profile-page-with-info-and-password-forms", title: "Professional profile page with info and password forms", relevance: "high"
 
+## [2026-08-04T06:25:31.477Z] observe
+- slug: "obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation", title: "Sidebar full-reload cause: Inertia dev version negotiation", relevance: "medium"
+

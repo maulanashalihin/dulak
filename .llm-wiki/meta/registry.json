@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-04T05:54:57.685Z",
+  "last_updated": "2026-08-04T06:26:05.550Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -186,6 +186,24 @@
       "slug": "elysia-14-vs-2-benchmark-raw-speed",
       "status": "insight",
       "category": "performance"
+    },
+    "sources/obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation": {
+      "type": "source",
+      "title": "\"Observation: Sidebar full-reload cause: Inertia dev version negotiation\"",
+      "created": "2026-08-04",
+      "updated": "2026-08-04",
+      "slug": "obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation",
+      "status": "observation",
+      "relevance": "medium",
+      "observed_at": "2026-08-04T06:25:31.477Z",
+      "tags": [
+        "dulak",
+        "inertia",
+        "dev",
+        "versioning",
+        "reload"
+      ],
+      "source_context": "\"Diagnosing sidebar full reload\""
     },
     "sources/obs-2026-08-04-professional-profile-page-with-info-and-password-forms": {
       "type": "source",

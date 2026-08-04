@@ -296,6 +296,10 @@ Inertia version negotiation then work unchanged.
   the limiter is hand-rolled instead.
 - `import.meta.glob` was removed from Bun 1.3 — the page registry uses
   explicit imports.
+- In dev, `bun --watch` rebuilds client assets on every change, so the
+  Inertia version changes; an already-open tab does one 409 + full page
+  reload after a rebuild (version negotiation), then settles back to SPA
+  navigation. Refresh after a server restart if you see a one-off reload.
 - CSP uses `script-src 'unsafe-inline'` because Inertia embeds the page
   payload as inline JSON; external script injection is still blocked.
 - `X-Forwarded-For` is trusted for rate limiting — only run behind a proxy

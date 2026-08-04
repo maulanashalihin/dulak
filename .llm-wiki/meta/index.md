@@ -50,8 +50,9 @@
 - [[sources/obs-2026-08-04-profile-page-with-tus-avatar-upload]] — "Observation: Profile page with tus avatar upload" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-04-project-renamed-to-dulak]] — "Observation: Project renamed to Dulak" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-04-route-conventions-url-first-file-naming]] — "Observation: Route conventions: URL-first file naming" *(created: 2026-08-04)*
+- [[sources/obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation]] — "Observation: Sidebar full-reload cause: Inertia dev version negotiation" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-04-tus-uploads-restructured-to-flat-convention]] — "Observation: tus uploads restructured to flat convention" *(created: 2026-08-04)*
 - [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-04)*
 
 ---
-*Last updated: 2026-08-04T05:54:57.685Z* | *Total pages: 39*
+*Last updated: 2026-08-04T06:26:05.550Z* | *Total pages: 40*
