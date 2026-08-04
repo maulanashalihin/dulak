@@ -32,10 +32,10 @@ const TEMPLATES = [
 /** Files/dirs to strip from the scaffolded project. */
 const CLEANUP = [
   '.playwright-mcp',
+  'create-dulak',
   'data',
   'dashboard-light.png',
   '.env',
-  '.llm-wiki',
 ]
 
 // --- ANSI helpers (no deps) --------------------------------------------------

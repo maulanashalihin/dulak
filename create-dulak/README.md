@@ -42,7 +42,7 @@ bunx create-dulak my-app --template svelte-tailwind
 
 1. Prompts for a template (or uses `--template`).
 2. Downloads the selected template branch from GitHub.
-3. Strips dev-only files (`.llm-wiki`, screenshots, etc.).
+3. Strips dev-only files (`create-dulak/`, screenshots, `.env`, etc.).
 4. Creates `data/` for SQLite and copies `.env.example` → `.env`.
 5. Runs `bun install` (unless `--no-install`).
 
