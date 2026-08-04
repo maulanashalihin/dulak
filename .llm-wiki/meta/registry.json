@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-04T10:22:27.918Z",
+  "last_updated": "2026-08-04T10:23:21.954Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -11,9 +11,9 @@
         "[[sources/SRC-2026-08-03-001]]"
       ]
     },
-    "concepts/tailwind-css-v4-integration-with-bunbuild-no-postcss": {
+    "concepts/tailwind-v4-setup": {
       "type": "page",
-      "title": "tailwind-css-v4-integration-with-bunbuild-no-postcss",
+      "title": "tailwind-v4-setup",
       "created": "2026-08-04",
       "updated": "2026-08-04"
     },
@@ -34,6 +34,12 @@
       "sources": [
         "[[sources/SRC-2026-08-03-001]]"
       ]
+    },
+    "concepts/svelte-5-migration": {
+      "type": "page",
+      "title": "svelte-5-migration",
+      "created": "2026-08-04",
+      "updated": "2026-08-04"
     },
     "concepts/partial-reloads": {
       "type": "concept",
@@ -88,12 +94,6 @@
       "sources": [
         "[[sources/SRC-2026-08-03-001]]"
       ]
-    },
-    "concepts/swapping-react-for-svelte-5-in-the-dulak-boilerplate": {
-      "type": "page",
-      "title": "swapping-react-for-svelte-5-in-the-dulak-boilerplate",
-      "created": "2026-08-04",
-      "updated": "2026-08-04"
     },
     "concepts/asset-version-negotiation": {
       "type": "concept",

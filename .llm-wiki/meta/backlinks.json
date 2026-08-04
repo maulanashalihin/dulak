@@ -2,13 +2,14 @@
   "concepts/server-driven-ui": [
     "sources/SRC-2026-08-03-001"
   ],
-  "concepts/tailwind-css-v4-integration-with-bunbuild-no-postcss": [],
+  "concepts/tailwind-v4-setup": [],
   "concepts/csrf-origin-check": [
     "sources/SRC-2026-08-03-001"
   ],
   "concepts/correlation-id-logging": [
     "sources/SRC-2026-08-03-001"
   ],
+  "concepts/svelte-5-migration": [],
   "concepts/partial-reloads": [
     "sources/SRC-2026-08-03-001"
   ],
@@ -27,7 +28,6 @@
   "concepts/versioned-sql-migrations": [
     "sources/SRC-2026-08-03-001"
   ],
-  "concepts/swapping-react-for-svelte-5-in-the-dulak-boilerplate": [],
   "concepts/asset-version-negotiation": [
     "sources/SRC-2026-08-03-001"
   ],

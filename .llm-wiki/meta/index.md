@@ -32,8 +32,8 @@
 
 ## Pages
 
-- [[concepts/swapping-react-for-svelte-5-in-the-dulak-boilerplate]] — swapping-react-for-svelte-5-in-the-dulak-boilerplate *(created: 2026-08-04)*
-- [[concepts/tailwind-css-v4-integration-with-bunbuild-no-postcss]] — tailwind-css-v4-integration-with-bunbuild-no-postcss *(created: 2026-08-04)*
+- [[concepts/svelte-5-migration]] — svelte-5-migration *(created: 2026-08-04)*
+- [[concepts/tailwind-v4-setup]] — tailwind-v4-setup *(created: 2026-08-04)*
 - [[entities/elysia-inertia-boilerplate]] — elysia-inertia-boilerplate *(created: 2026-08-04)*
 
 ## Sources
@@ -57,4 +57,4 @@
 - [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-04)*
 
 ---
-*Last updated: 2026-08-04T10:22:27.918Z* | *Total pages: 42*
+*Last updated: 2026-08-04T10:23:21.954Z* | *Total pages: 42*
