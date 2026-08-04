@@ -6,14 +6,14 @@ export default function Brand({ href, className }: { href: string; className?: s
     <Link href={href} className={className ? `brand ${className}` : 'brand'}>
       <svg
         className="brand-mark"
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
+        viewBox="0 0 32 32"
+        width="28"
+        height="28"
         fill="none"
         aria-hidden="true"
       >
-        <rect x="1" y="1" width="22" height="22" rx="6" fill="currentColor" opacity="0.92" />
-        <path d="M13.2 4.2 6.8 13.4h4l-1 6.4 6.4-9.2h-4z" fill="#fff" />
+        <rect width="32" height="32" rx="8" fill="currentColor" />
+        <path d="M17.8 5.6 8.4 18h5.2l-1.2 8.4 9.2-12h-5.2z" fill="white" />
       </svg>
       <span>
         Elysia <em>Inertia</em>

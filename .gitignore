@@ -4,3 +4,5 @@ dist/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+.playwright-mcp/
+*.png
