@@ -1,12 +1,12 @@
 {
-  "name": "elysia-inertia-boilerplate",
+  "name": "dulak",
   "version": "0.1.0",
   "license": "MIT",
   "description": "Full-stack boilerplate: Elysia + bun:sqlite + Inertia v3 (React 19) with auth, roles, SSR, migrations, tests and Docker.",
-  "keywords": ["elysia", "bun", "inertia", "react", "sqlite", "boilerplate", "ssr"],
+  "keywords": ["dulak", "elysia", "bun", "inertia", "react", "sqlite", "boilerplate", "ssr"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/maulanashalihin/elysia-inertia-boilerplate.git"
+    "url": "https://github.com/maulanashalihin/dulak.git"
   },
   "engines": {
     "bun": ">=1.3.0"

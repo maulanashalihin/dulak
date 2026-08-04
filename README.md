@@ -1,6 +1,8 @@
-# Elysia + Inertia v3 Boilerplate
+# Dulak
 
-[![CI](https://github.com/maulanashalihin/elysia-inertia-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/maulanashalihin/elysia-inertia-boilerplate/actions/workflows/ci.yml)
+The Banjar word for *bored* — a deliberately boring full-stack starter.
+
+[![CI](https://github.com/maulanashalihin/dulak/actions/workflows/ci.yml/badge.svg)](https://github.com/maulanashalihin/dulak/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Bun](https://img.shields.io/badge/runtime-Bun_1.3-black?logo=bun&logoColor=white)](https://bun.sh)
 
@@ -29,8 +31,8 @@ flowchart LR
 
 ## Philosophy
 
-This starter is deliberately boring. Every choice favors the next maintainer
-— human or AI agent — over cleverness:
+**Dulak** is the Banjar word for *bored* — the name is the philosophy. Every
+choice favors the next maintainer — human or AI agent — over cleverness:
 
 - **Zero-dependency where it's cheap.** Vanilla CSS instead of Tailwind, a
   hand-rolled rate limiter and OAuth client instead of packages that pin the
