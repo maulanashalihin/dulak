@@ -265,7 +265,9 @@ export default function Layout({ children }: { children: ReactNode }) {
 
 	// Persist + apply theme whenever the toggle changes it.
 	useEffect(() => {
-		document.documentElement.setAttribute("data-theme", theme);
+		const el = document.documentElement;
+		el.setAttribute("data-theme", theme);
+		el.style.backgroundColor = theme === "dark" ? "#0f1117" : "#f6f7fb";
 		try {
 			localStorage.setItem("theme", theme);
 		} catch {

@@ -177,9 +177,10 @@ export class Inertia {
 		const favicon = `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
 			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="%23059669"/><path d="M17.8 5.6 8.4 18h5.2l-1.2 8.4 9.2-12h-5.2z" fill="white"/></svg>',
 		)}" />`;
-		// Inline script: set data-theme on <html> before CSS paints to avoid FOUC.
+		// Inline script: set data-theme + background-color on <html> before the
+		// external stylesheet loads, so the page paints dark immediately (no FOUC).
 		// Reads localStorage('theme'), falls back to prefers-color-scheme, defaults light.
-		const themeBoot = `<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>`;
+		const themeBoot = `<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var el=document.documentElement;el.setAttribute('data-theme',t);el.style.backgroundColor=t==='dark'?'#0f1117':'#f6f7fb';}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>`;
 		const doc = `<!DOCTYPE html>
 <html lang="en">
 <head>
