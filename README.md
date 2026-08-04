@@ -286,12 +286,11 @@ variables, light/dark via `prefers-color-scheme`, no framework. Chosen to keep
 the starter zero-dependency and zero extra build steps — the CSS is bundled and
 content-hashed by the same `Bun.build` pipeline as the JS.
 
-Adding **Tailwind v4** later is a per-project decision, not a boilerplate
-rewrite: `@tailwindcss/cli` has no Bun.build plugin, so wire it as a step
-before the build — process `src/client/styles.css` (`@import "tailwindcss"`)
-into a generated file, import that in `src/client/app.tsx`, and keep the
-content scan pointed at `src/client/**/*.tsx`. The hashed-asset manifest and
-Inertia version negotiation then work unchanged.
+Adding **Tailwind v4** is a per-project decision — the boilerplate stays
+vanilla CSS by design. It is verified to work without PostCSS using only
+`@tailwindcss/cli` as a pre-build step; dark mode and existing CSS variables
+bridge cleanly. See the
+[Tailwind v4 setup guide](.llm-wiki/wiki/concepts/tailwind-v4-setup.md).
 
 ## Notes / decisions
 
@@ -310,5 +309,7 @@ Inertia version negotiation then work unchanged.
   payload as inline JSON; external script injection is still blocked.
 - `X-Forwarded-For` is trusted for rate limiting — only run behind a proxy
   that sets it.
-- Want Vue/Svelte instead of React? Swap `@inertiajs/react` for the
-  corresponding v3 adapter — the server side is adapter-agnostic.
+- Want Svelte instead of React? Swap `@inertiajs/react` for
+  `@inertiajs/svelte` — the server side is adapter-agnostic. A verified
+  migration guide (Bun.build Svelte plugin, SSR, API mapping) is in the
+  [Svelte 5 migration guide](.llm-wiki/wiki/concepts/svelte-5-migration.md).
