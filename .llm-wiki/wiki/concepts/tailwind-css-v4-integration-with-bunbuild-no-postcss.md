@@ -1,22 +1,24 @@
 # Tailwind CSS v4 integration with Bun.build (no PostCSS)
 
-Tailwind v4 dapat diintegrasikan ke boilerplate Dulak (Elysia + Bun + Inertia) **tanpa PostCSS sama sekali**, hanya dengan `@tailwindcss/cli`. Pendekatan ini terverifikasi working: utility classes ter-generate, dark mode auto-switch via `[data-theme]`, dan build pipeline tetap menghasilkan content-hashed CSS.
+Tailwind v4 can be integrated into the Dulak boilerplate (Elysia + Bun + Inertia) **without any PostCSS**, using only `@tailwindcss/cli`. Verified working: utility classes generate, dark mode auto-switches via `[data-theme]`, and the build pipeline still produces content-hashed CSS.
 
-## Prasyarat
+## Prerequisites
 
 - Bun >= 1.3
 - Build pipeline: `src/server/assets.ts` → `Bun.build()` → `dist/assets/*` + `manifest.json`
-- CSS variables sudah ada di `src/client/styles.css` (`--primary`, `--muted`, `--danger`, dll.)
-- Dark mode via `[data-theme="dark"]` di `<html>`
+- CSS variables in `src/client/styles.css` (`--primary`, `--muted`, `--danger`, etc.)
+- Dark mode via `[data-theme="dark"]` on `<html>`
 
-## Langkah instalasi
+## Installation steps
 
 ### 1. Install package
+
 ```sh
 bun add -D tailwindcss @tailwindcss/cli
 ```
 
-### 2. Buat `src/client/tailwind.css` (input file)
+### 2. Create `src/client/tailwind.css` (input file)
+
 ```css
 @import "tailwindcss";
 
@@ -39,11 +41,13 @@ bun add -D tailwindcss @tailwindcss/cli
 }
 ```
 
-### 3. Modifikasi `buildClientAssets()` di `src/server/assets.ts`
-Tambahkan Tailwind CLI step sebelum `Bun.build`:
+### 3. Modify `buildClientAssets()` in `src/server/assets.ts`
+
+Add the Tailwind CLI step before `Bun.build`:
+
 ```ts
 export async function buildClientAssets(): Promise<void> {
-  // 1. Compile Tailwind v4 → src/client/.tailwind.css (no PostCSS needed).
+  // Compile Tailwind v4 → src/client/.tailwind.css (no PostCSS needed).
   await Bun.$`bunx @tailwindcss/cli -i src/client/tailwind.css -o src/client/.tailwind.css --minify`.quiet()
   const result = await Bun.build({
     entrypoints: ['src/client/app.tsx'],
@@ -53,62 +57,68 @@ export async function buildClientAssets(): Promise<void> {
 }
 ```
 
-### 4. Import `.tailwind.css` di `src/client/app.tsx`
+### 4. Import `.tailwind.css` in `src/client/app.tsx`
+
 ```ts
 import "./.tailwind.css";  // Tailwind output (preflight + utilities)
 import "./styles.css";     // custom CSS (overrides Tailwind via cascade)
 ```
-Import `.tailwind.css` **sebelum** `styles.css` supaya custom CSS boilerplate menang saat specificity sama.
 
-### 5. Tambah `src/client/.tailwind.css` ke `.gitignore`
+Import `.tailwind.css` **before** `styles.css` so custom CSS wins on equal specificity.
+
+### 5. Add `src/client/.tailwind.css` to `.gitignore`
+
 ```
 src/client/.tailwind.css
 ```
 
-### 6. Tambah dev scripts ke `package.json`
+### 6. Add dev scripts to `package.json`
+
 ```json
 "dev:css": "bunx @tailwindcss/cli -i src/client/tailwind.css -o src/client/.tailwind.css --watch",
 "dev:all": "bunx @tailwindcss/cli -i src/client/tailwind.css -o src/client/.tailwind.css --watch & bun --watch src/index.ts"
 ```
-Dev workflow: jalankan `bun run dev:css` di terminal terpisah, atau `bun run dev:all` untuk sekali command.
 
-## Kenapa tidak butuh PostCSS?
+## Why no PostCSS is needed
 
-Bun.build **tidak memproses** `@import "tailwindcss"` — dia treat sebagai CSS file import resolution (cari file), bukan PostCSS directive. Jadi `postcss.config.mjs` + `@tailwindcss/postcss` approach (yang dipakai Vite/Next.js) tidak work di Bun.build.
+Bun.build does not process `@import "tailwindcss"` — it treats it as CSS file import resolution, not a PostCSS directive. So the `postcss.config.mjs` + `@tailwindcss/postcss` approach (used by Vite/Next.js) does not work with Bun.build.
 
-Solusinya: `@tailwindcss/cli` compile Tailwind ke CSS file statis (`.tailwind.css`), lalu Bun.build bundle file itu seperti CSS biasa. No PostCSS runtime needed.
+Instead, `@tailwindcss/cli` compiles Tailwind to a static CSS file (`.tailwind.css`), then Bun.build bundles it like regular CSS. No PostCSS runtime required.
 
-## Temuan penting
+## Key findings
 
-### 1. Cascade layers: custom CSS override Tailwind utilities
-Tailwind v4 pakai `@layer utilities` untuk utility classes. Custom CSS boilerplate (`.auth-sub`, `.btn`, `.panel`) tidak di layer manapun = unlayered = **menang** atas Tailwind utilities dengan specificity sama.
+### 1. Cascade layers: custom CSS overrides Tailwind utilities
 
-Contoh: `.auth-sub { color: var(--muted) }` akan override `text-primary` utility pada element yang sama. Ini **expected** dan bagus untuk migrasi bertahap — existing styles tetap working.
+Tailwind v4 uses `@layer utilities` for utility classes. Custom CSS (`.auth-sub`, `.btn`, `.panel`) is unlayered, so it **wins** over Tailwind utilities with equal specificity. This is expected and allows gradual migration — existing styles keep working.
 
 ### 2. `@theme inline` = runtime CSS variable resolution
-Dengan `@theme inline { --color-primary: var(--primary) }`, utility `text-primary` compile ke `color: var(--primary)`. Karena `var()` di-evaluate runtime, dark mode auto-switch tanpa duplikasi nilai.
 
-### 3. `@custom-variant dark` = map ke `[data-theme]`
-Default Tailwind v4 dark mode pakai `prefers-color-scheme`. Override dengan:
+With `@theme inline { --color-primary: var(--primary) }`, the `text-primary` utility compiles to `color: var(--primary)`. Since `var()` is evaluated at runtime, dark mode auto-switches without duplicating values.
+
+### 3. `@custom-variant dark` maps to `[data-theme]`
+
+Tailwind v4 defaults to `prefers-color-scheme` for dark mode. Override it:
+
 ```css
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 ```
-Hasil: `dark:text-danger` → `dark\:text-danger:where([data-theme=dark],[data-theme=dark] *) { color: var(--danger) }`.
 
-### 4. Content detection otomatis
-Tailwind v4 CLI otomatis scan source files untuk class names. Tidak perlu `content: [...]` config seperti v3. Tapi: class yang hanya di-inject via JavaScript runtime (tidak ada di source file) **tidak akan ter-generate**.
+Result: `dark:text-danger` → `dark\:text-danger:where([data-theme=dark],[data-theme=dark] *) { color: var(--danger) }`.
 
-## Verifikasi (2026-08-04)
+### 4. Automatic content detection
+
+Tailwind v4 CLI automatically scans source files for class names — no `content: [...]` config needed (unlike v3). Classes only injected via JavaScript at runtime (not present in source files) will **not** be generated.
+
+## Verification (2026-08-04)
 
 | Test | Light | Dark | Status |
 |---|---|---|---|
 | `text-primary` | `#059669` | `#10b981` | ✅ Auto-switch via var() |
 | `dark:text-danger` | `#059669` (primary) | `#dc2626` (danger) | ✅ Dark variant works |
 | `[data-theme="dark"]` selector | — | match | ✅ Custom variant |
-| Tailwind banner in CSS | present | — | ✅ |
 | Build pipeline | CLI → Bun.build → manifest | — | ✅ |
 
-## Arsitektur setelah integrasi
+## Architecture after integration
 
 ```
 src/client/tailwind.css  (input: @import, @theme, @custom-variant)
