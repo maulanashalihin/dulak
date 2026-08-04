@@ -7,6 +7,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import type { Cookie } from 'elysia'
 import type { FlashData, Role, User } from '../shared/types'
 import {
+  deleteOtherSessions,
   deletePasswordResetsByEmail,
   deleteSession,
   findPasswordReset,
@@ -65,6 +66,12 @@ export function resolveUser(token: string | null | undefined): UserRow | null {
 /** Delete a session by its raw (cookie) token — hashes before hitting the DB. */
 export function deleteSessionByToken(token: string): void {
   deleteSession.run(hashToken(token))
+}
+
+/** Delete every session for `userId` except the one owning `token` (password
+ *  changes invalidate other devices; the current session stays signed in). */
+export function deleteOtherSessionsByToken(token: string, userId: number): void {
+  deleteOtherSessions.run(userId, hashToken(token))
 }
 
 // ---------------------------------------------------------------------------

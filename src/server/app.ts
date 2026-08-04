@@ -12,7 +12,7 @@ import { logAfter, logBefore, logError, type LogState } from "./logger";
 import { authRoutes, VALIDATION_MESSAGES } from "./routes/auth.routes";
 import { googleOauthRoutes } from "./routes/google-oauth.routes";
 import { pageRoutes } from "./routes/pages.routes";
-import { profileRoutes } from "./routes/profile.routes";
+import { profileRoutes, PROFILE_VALIDATION_MESSAGES } from "./routes/profile.routes";
 import { checkOrigin, securityHeaders } from "./security";
 import { uploadsRoutes } from "./routes/uploads.routes";
 
@@ -22,6 +22,13 @@ const COMPONENT_BY_PATH: Record<string, string> = {
 	"/login": "Login",
 	"/forgot-password": "ForgotPassword",
 	"/reset-password": "ResetPassword",
+	"/profile": "Profile",
+	"/profile/password": "Profile",
+};
+
+const VALIDATION_MESSAGES_ALL = {
+	...VALIDATION_MESSAGES,
+	...PROFILE_VALIDATION_MESSAGES,
 };
 
 /**
@@ -82,7 +89,7 @@ export function createApp(assets: InertiaAssets) {
 				for (const item of error.all) {
 					const field = item.path.replace(/^\//, "");
 					if (field && !errors[field])
-						errors[field] = VALIDATION_MESSAGES[item.path] ?? item.message;
+						errors[field] = VALIDATION_MESSAGES_ALL[item.path] ?? item.message;
 				}
 				if (!component) {
 					set.status = 422;

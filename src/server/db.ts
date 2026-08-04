@@ -96,6 +96,9 @@ export const updateUserPassword = db.query<null, [string, number]>(
 export const updateUserAvatar = db.query<null, [string, number]>(
 	`UPDATE users SET avatar_url = ? WHERE id = ?`,
 );
+export const updateUserProfile = db.query<null, [string, string, number]>(
+	`UPDATE users SET name = ?, email = ? WHERE id = ?`,
+);
 export const countUsers = db.query<{ n: number }, []>(
 	`SELECT COUNT(*) AS n FROM users`,
 );
@@ -118,6 +121,9 @@ export const findSession = db.query<SessionRow, [string]>(
 );
 export const deleteSession = db.query<null, [string]>(
 	`DELETE FROM sessions WHERE token_hash = ?`,
+);
+export const deleteOtherSessions = db.query<null, [number, string]>(
+	`DELETE FROM sessions WHERE user_id = ? AND token_hash != ?`,
 );
 export const updateSessionFlash = db.query<null, [string, string]>(
 	`UPDATE sessions SET flash = ? WHERE token_hash = ?`,

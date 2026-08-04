@@ -622,12 +622,17 @@ describe("google oauth stores a local avatar", () => {
 			{ cookie: `oauth_state=${state}` },
 		);
 		expect(cb.status).toBe(302);
-		expect(new URL(cb.headers.get("location") ?? "").pathname).toBe("/dashboard");
+		expect(new URL(cb.headers.get("location") ?? "").pathname).toBe(
+			"/dashboard",
+		);
 		const cookie = sessionCookie(cb);
 		expect(cookie).not.toBe("");
 
 		// Shared props carry a local avatar URL, not the external Google URL.
-		const dash = await tus("/dashboard", { headers: { "x-inertia": "true" }, cookie });
+		const dash = await tus("/dashboard", {
+			headers: { "x-inertia": "true" },
+			cookie,
+		});
 		const page = (await dash.json()) as {
 			props: { auth: { user: { avatarUrl: string | null } } };
 		};
@@ -639,5 +644,90 @@ describe("google oauth stores a local avatar", () => {
 		expect(img.status).toBe(200);
 		expect(img.headers.get("content-type")).toBe("image/jpeg");
 		expect(new Uint8Array(await img.arrayBuffer())).toEqual(PICTURE);
+	});
+});
+
+describe("profile info & password", () => {
+	let cookie: string;
+	const EMAIL = "profile-form@example.com";
+
+	beforeAll(async () => {
+		cookie = await registerUser(EMAIL);
+	});
+
+	it("updates the name", async () => {
+		const res = await tus("/profile", {
+			method: "PATCH",
+			headers: { "x-inertia": "true", "content-type": "application/json" },
+			body: JSON.stringify({ name: "New Name", email: EMAIL }),
+			cookie,
+		});
+		expect(res.status).toBe(303);
+
+		const dash = await tus("/dashboard", { headers: { "x-inertia": "true" }, cookie });
+		const page = (await dash.json()) as {
+			props: { auth: { user: { name: string; email: string } } };
+		};
+		expect(page.props.auth.user.name).toBe("New Name");
+		expect(page.props.auth.user.email).toBe(EMAIL);
+	});
+
+	it("rejects a duplicate email with a field error", async () => {
+		await registerUser("taken-email@example.com");
+		const res = await tus("/profile", {
+			method: "PATCH",
+			headers: { "x-inertia": "true", "content-type": "application/json" },
+			body: JSON.stringify({ name: "New Name", email: "taken-email@example.com" }),
+			cookie,
+		});
+		expect(res.status).toBe(422);
+		const data = (await res.json()) as { props: { errors: Record<string, string> } };
+		expect(data.props.errors.email).toBe("That email is already registered.");
+	});
+
+	it("rejects a wrong current password", async () => {
+		const res = await tus("/profile/password", {
+			method: "POST",
+			headers: { "x-inertia": "true", "content-type": "application/json" },
+			body: JSON.stringify({
+				currentPassword: "wrongpass",
+				password: "newpass123",
+				passwordConfirmation: "newpass123",
+			}),
+			cookie,
+		});
+		const data = (await res.json()) as { props: { errors: Record<string, string> } };
+		expect(data.props.errors.currentPassword).toBe(
+			"Your current password is incorrect.",
+		);
+	});
+
+	it("changes the password and invalidates the old one", async () => {
+		const res = await tus("/profile/password", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				currentPassword: "password123",
+				password: "newpass123",
+				passwordConfirmation: "newpass123",
+			}),
+			cookie,
+		});
+		expect(res.status).toBe(303);
+
+		// Old password no longer works; the new one does.
+		await tus("/logout", { method: "POST", cookie });
+		const oldLogin = await tus("/login", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ email: EMAIL, password: "password123" }),
+		});
+		expect(oldLogin.status).not.toBe(303);
+		const newLogin = await tus("/login", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ email: EMAIL, password: "newpass123" }),
+		});
+		expect(newLogin.status).toBe(303);
 	});
 });

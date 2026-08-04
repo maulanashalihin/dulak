@@ -84,7 +84,8 @@ async function storeGoogleAvatar(
 	if (!res.ok) throw new Error(`Avatar download failed (${res.status})`);
 	const bytes = new Uint8Array(await res.arrayBuffer());
 	const id = generateUploadId();
-	const filetype = res.headers.get("content-type")?.split(";")[0] || "image/jpeg";
+	const filetype =
+		res.headers.get("content-type")?.split(";")[0] || "image/jpeg";
 	await writeBytes(id, bytes);
 	insertUpload.run(
 		id,
