@@ -53,3 +53,6 @@
 ## [2026-08-04T03:39:22.676Z] observe
 - slug: "obs-2026-08-04-project-renamed-to-dulak", title: "Project renamed to Dulak", relevance: "high"
 
+## [2026-08-04T04:26:16.783Z] observe
+- slug: "obs-2026-08-04-profile-page-with-tus-avatar-upload", title: "Profile page with tus avatar upload", relevance: "high"
+

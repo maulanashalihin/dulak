@@ -92,7 +92,8 @@ bun run db:seed admin@example.com admin123 admin   # role: admin
 - **Forgot / reset password** with email delivery (see Mail below) and
   hashed reset tokens (60-minute expiry).
 - **Google OAuth** register-or-login (zero-dep, plain fetch; button hidden
-  when not configured).
+  when not configured). The profile picture is downloaded and stored locally
+  (the CSP blocks external images), so avatars always load from our origin.
 - **Roles**: `user` / `admin`, `requireRole('admin')` guard, `/admin` page
   with paginated user list.
 - **Rate limiting** on auth endpoints (in-memory fixed window, per IP).

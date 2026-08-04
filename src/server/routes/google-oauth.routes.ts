@@ -16,9 +16,13 @@ import {
 	createGoogleUser,
 	findUserByEmail,
 	findUserByGoogleId,
+	insertUpload,
 	linkGoogleAccount,
+	updateUserAvatar,
 	type UserRow,
 } from "../db";
+import { generateUploadId } from "../tus-protocol";
+import { uploadPath, writeBytes } from "../tus-storage";
 import { inertiaPlugin, makePopulateStore } from "../inertia-plugin";
 import type { InertiaAssets } from "../inertia";
 
@@ -67,6 +71,30 @@ async function fetchProfile(accessToken: string): Promise<GoogleProfile> {
 		name: data.name?.trim() || data.email.split("@")[0]!,
 		picture: data.picture ?? null,
 	};
+}
+
+/** Download the Google profile picture and store a local copy in the uploads
+ *  store. The CSP (img-src 'self') blocks external images, so avatars must
+ *  live on our own origin; returns the local URL (/uploads/<id>). */
+async function storeGoogleAvatar(
+	pictureUrl: string,
+	userId: number,
+): Promise<string> {
+	const res = await fetch(pictureUrl);
+	if (!res.ok) throw new Error(`Avatar download failed (${res.status})`);
+	const bytes = new Uint8Array(await res.arrayBuffer());
+	const id = generateUploadId();
+	const filetype = res.headers.get("content-type")?.split(";")[0] || "image/jpeg";
+	await writeBytes(id, bytes);
+	insertUpload.run(
+		id,
+		bytes.byteLength,
+		JSON.stringify({ filetype }),
+		userId,
+		uploadPath(id),
+		null,
+	);
+	return `/uploads/${id}`;
 }
 
 /** Find or create a local user for the Google profile (links by email). */
@@ -142,6 +170,16 @@ export const googleOauthRoutes = (assets: InertiaAssets) =>
 				const accessToken = await exchangeCode(code);
 				const profile = await fetchProfile(accessToken);
 				const user = await findOrCreateGoogleUser(profile);
+				// Store a local copy of the Google picture (CSP blocks external
+				// images); also upgrades legacy external avatar URLs on re-login.
+				if (profile.picture && !user.avatarUrl?.startsWith("/uploads/")) {
+					try {
+						const avatarUrl = await storeGoogleAvatar(profile.picture, user.id);
+						updateUserAvatar.run(avatarUrl, user.id);
+					} catch (err) {
+						console.error("[google-oauth] avatar download failed:", err);
+					}
+				}
 				const session = createSession(user.id);
 				setSessionCookie(cookie.session, session.token, session.expiresAt);
 				return Response.redirect(new URL("/dashboard", request.url).toString());

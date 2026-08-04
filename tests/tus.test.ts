@@ -21,6 +21,8 @@ beforeAll(async () => {
 	process.env.NODE_ENV = "test";
 	process.env.RATE_LIMIT_AUTH_MAX = "1000";
 	process.env.TUS_MAX_SIZE = "0"; // unlimited
+	process.env.GOOGLE_CLIENT_ID = "test-client-id";
+	process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
 	const { createApp } = await import("../src/server/app");
 	app = createApp({ version: "test-version", js: "app.js", css: "app.css" });
 });
@@ -445,14 +447,19 @@ describe("tus 404 paths", () => {
 describe("profile page & avatar upload", () => {
 	let cookie: string;
 	let otherCookie: string;
-	const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01, 0x02, 0x03]);
+	const PNG = new Uint8Array([
+		0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01, 0x02, 0x03,
+	]);
 
 	beforeAll(async () => {
 		cookie = await registerUser("avatar-owner@example.com");
 		otherCookie = await registerUser("avatar-other@example.com");
 	});
 
-	async function uploadImage(uploaderCookie: string, filetype: string): Promise<string> {
+	async function uploadImage(
+		uploaderCookie: string,
+		filetype: string,
+	): Promise<string> {
 		const create = await tus("/uploads", {
 			method: "POST",
 			headers: {
@@ -483,7 +490,10 @@ describe("profile page & avatar upload", () => {
 	});
 
 	it("renders the Profile page for authenticated users", async () => {
-		const res = await tus("/profile", { headers: { "x-inertia": "true" }, cookie });
+		const res = await tus("/profile", {
+			headers: { "x-inertia": "true" },
+			cookie,
+		});
 		expect(res.status).toBe(200);
 		const data = (await res.json()) as { component: string };
 		expect(data.component).toBe("Profile");
@@ -500,8 +510,13 @@ describe("profile page & avatar upload", () => {
 		expect(res.status).toBe(204);
 
 		// Shared props expose the new avatar to the client.
-		const dash = await tus("/dashboard", { headers: { "x-inertia": "true" }, cookie });
-		const page = (await dash.json()) as { props: { auth: { user: { avatarUrl: string | null } } } };
+		const dash = await tus("/dashboard", {
+			headers: { "x-inertia": "true" },
+			cookie,
+		});
+		const page = (await dash.json()) as {
+			props: { auth: { user: { avatarUrl: string | null } } };
+		};
 		expect(page.props.auth.user.avatarUrl).toBe(`/uploads/${id}`);
 
 		// The stored bytes are served back with the declared content type.
@@ -547,5 +562,82 @@ describe("profile page & avatar upload", () => {
 			cookie,
 		});
 		expect(res.status).toBe(400);
+	});
+});
+
+describe("google oauth stores a local avatar", () => {
+	const PICTURE = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]); // JPEG magic
+	const realFetch = globalThis.fetch;
+
+	beforeAll(() => {
+		// Bun's fetch type carries extra statics (preconnect); only the call
+		// signature is overridden, so the cast is safe.
+		globalThis.fetch = (async (
+			input: string | URL | Request,
+		): Promise<Response> => {
+			const u = String(input);
+			if (u.includes("oauth2.googleapis.com/token")) {
+				return new Response(JSON.stringify({ access_token: "test-token" }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			}
+			if (u.includes("www.googleapis.com/oauth2/v2/userinfo")) {
+				return new Response(
+					JSON.stringify({
+						id: "google-1",
+						email: "google-avatar@example.com",
+						name: "Google Avatar",
+						picture: "https://lh3.googleusercontent.com/avatar",
+					}),
+					{ status: 200, headers: { "content-type": "application/json" } },
+				);
+			}
+			if (u.includes("lh3.googleusercontent.com")) {
+				return new Response(PICTURE, {
+					status: 200,
+					headers: { "content-type": "image/jpeg" },
+				});
+			}
+			return new Response("not mocked", { status: 404 });
+		}) as typeof fetch;
+	});
+
+	afterAll(() => {
+		globalThis.fetch = realFetch;
+	});
+
+	it("downloads the Google picture and serves it locally", async () => {
+		// Start the flow to obtain the CSRF state cookie.
+		const start = await tus("/auth/google");
+		expect(start.status).toBe(302);
+		const setCookie = start.headers.get("set-cookie") ?? "";
+		const state = decodeURIComponent(
+			(setCookie.match(/oauth_state=([^;]+)/) ?? [])[1] ?? "",
+		);
+		expect(state).not.toBe("");
+
+		const cb = await tus(
+			`/auth/google/callback?code=test-code&state=${encodeURIComponent(state)}`,
+			{ cookie: `oauth_state=${state}` },
+		);
+		expect(cb.status).toBe(302);
+		expect(new URL(cb.headers.get("location") ?? "").pathname).toBe("/dashboard");
+		const cookie = sessionCookie(cb);
+		expect(cookie).not.toBe("");
+
+		// Shared props carry a local avatar URL, not the external Google URL.
+		const dash = await tus("/dashboard", { headers: { "x-inertia": "true" }, cookie });
+		const page = (await dash.json()) as {
+			props: { auth: { user: { avatarUrl: string | null } } };
+		};
+		const avatarUrl = page.props.auth.user.avatarUrl;
+		expect(avatarUrl).toMatch(/^\/uploads\//);
+
+		// The local copy is served back with the downloaded content type.
+		const img = await tus(avatarUrl ?? "", { method: "GET" });
+		expect(img.status).toBe(200);
+		expect(img.headers.get("content-type")).toBe("image/jpeg");
+		expect(new Uint8Array(await img.arrayBuffer())).toEqual(PICTURE);
 	});
 });

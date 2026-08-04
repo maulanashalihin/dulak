@@ -29,7 +29,13 @@ import {
 	insertUpload,
 	listExpired,
 } from "../db";
-import { appendBytes, fileSize, readBytes, removeFile, uploadPath } from "../tus-storage";
+import {
+	appendBytes,
+	fileSize,
+	readBytes,
+	removeFile,
+	uploadPath,
+} from "../tus-storage";
 
 const UPLOAD_PREFIX = "/uploads/";
 
@@ -303,7 +309,8 @@ async function handleGetFile(id: string): Promise<Response> {
 	let filetype = "application/octet-stream";
 	try {
 		const meta = JSON.parse(row.metadata) as Record<string, string>;
-		if (typeof meta.filetype === "string" && meta.filetype) filetype = meta.filetype;
+		if (typeof meta.filetype === "string" && meta.filetype)
+			filetype = meta.filetype;
 	} catch {
 		/* metadata may be empty or malformed */
 	}

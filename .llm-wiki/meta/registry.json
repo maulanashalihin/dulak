@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-04T03:39:22.717Z",
+  "last_updated": "2026-08-04T04:26:16.840Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -274,6 +274,24 @@
         "agents"
       ],
       "source_context": "\"Deciding db.ts split after tus restructure\""
+    },
+    "sources/obs-2026-08-04-profile-page-with-tus-avatar-upload": {
+      "type": "source",
+      "title": "\"Observation: Profile page with tus avatar upload\"",
+      "created": "2026-08-04",
+      "updated": "2026-08-04",
+      "slug": "obs-2026-08-04-profile-page-with-tus-avatar-upload",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-04T04:26:16.782Z",
+      "tags": [
+        "dulak",
+        "tus",
+        "avatar",
+        "profile",
+        "upload"
+      ],
+      "source_context": "\"Building profile avatar upload on tus\""
     },
     "sources/obs-2026-08-04-route-conventions-url-first-file-naming": {
       "type": "source",

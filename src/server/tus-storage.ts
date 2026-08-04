@@ -3,7 +3,7 @@
  * created lazily on the first PATCH (or on POST when creation-with-upload
  * sends a body). Appending is done with `node:fs/promises` `appendFile`.
  */
-import { appendFile, readFile } from "node:fs/promises";
+import { appendFile, readFile, writeFile } from "node:fs/promises";
 import {
 	mkdirSync as mkdirSyncSync,
 	rmSync as rmSyncSync,
@@ -31,6 +31,11 @@ export async function appendBytes(
 ): Promise<number> {
 	await appendFile(uploadPath(id), data);
 	return data.byteLength;
+}
+
+/** Write a complete file in one shot (used for server-side downloaded avatars). */
+export async function writeBytes(id: string, data: Uint8Array): Promise<void> {
+	await writeFile(uploadPath(id), data);
 }
 
 /** Read the stored bytes of an upload (used to serve the file back). */
