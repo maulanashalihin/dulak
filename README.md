@@ -34,10 +34,11 @@ flowchart LR
 **Dulak** is the Banjar word for *bored* — the name is the philosophy. Every
 choice favors the next maintainer — human or AI agent — over cleverness:
 
-- **Zero-dependency where it's cheap.** Vanilla CSS instead of Tailwind, a
-  hand-rolled rate limiter and OAuth client instead of packages that pin the
-  stack, raw `bun:sqlite` instead of an ORM. Dependencies are a liability;
-  when a hand-rolled 60-line module does the job, it ships.
+- **Zero-dependency where it's cheap.** Vanilla CSS by default (Tailwind v4
+  available as a template), a hand-rolled rate limiter and OAuth client
+  instead of packages that pin the stack, raw `bun:sqlite` instead of an
+  ORM. Dependencies are a liability; when a hand-rolled 60-line module does
+  the job, it ships.
 - **One obvious way to do things.** A single structural convention (codified
   in `AGENTS.md`): routes in `routes/<feature>.routes.ts` with handlers
   inline, shared logic as flat modules, all SQL in `db.ts`, schema in
@@ -66,19 +67,27 @@ choice favors the next maintainer — human or AI agent — over cleverness:
 ## Quick start
 
 ```bash
-# Scaffold a new project (downloads template, installs deps, creates .env)
+# Scaffold a new project (prompts for template, installs deps, creates .env)
 bunx create-dulak my-app
 cd my-app
 bun run dev          # http://localhost:3000
 
-# Or clone manually:
-bun install
-cp .env.example .env
-bun run dev
-bun test --isolate   # 46-test E2E suite against an in-memory DB
-bun run db:seed      # demo user: demo@example.com / password123 (role: user)
-bun run db:seed admin@example.com admin123 admin   # role: admin
+# Or pick a template directly:
+bunx create-dulak my-app --template svelte-tailwind
 ```
+
+### Templates
+
+| Template          | Stack                              | Branch                    |
+| ----------------- | ---------------------------------- | ------------------------- |
+| `default`         | React 19 + vanilla CSS             | `main`                    |
+| `svelte-tailwind` | Svelte 5 + Tailwind CSS v4         | `template/svelte-tailwind`|
+| `react-tailwind`  | React 19 + Tailwind CSS v4         | `template/react-tailwind` |
+
+The `default` template (this branch) uses React 19 with vanilla CSS — no
+CSS framework. The `svelte-tailwind` and `react-tailwind` templates add
+Tailwind CSS v4 (via `@tailwindcss/cli`, no PostCSS) with the same auth,
+roles, SSR, and test suite.
 
 ### Scripts
 
@@ -309,7 +318,8 @@ bridge cleanly. See the
   payload as inline JSON; external script injection is still blocked.
 - `X-Forwarded-For` is trusted for rate limiting — only run behind a proxy
   that sets it.
-- Want Svelte instead of React? Swap `@inertiajs/react` for
-  `@inertiajs/svelte` — the server side is adapter-agnostic. A verified
-  migration guide (Bun.build Svelte plugin, SSR, API mapping) is in the
+- Prefer Svelte or Tailwind? `bunx create-dulak my-app --template svelte-tailwind`
+  (or `react-tailwind`). The server side is adapter-agnostic — Inertia v3
+  works with React, Svelte, or Vue. A verified Svelte 5 migration guide
+  (Bun.build plugin, SSR, API mapping) is in the
   [Svelte 5 migration guide](.llm-wiki/wiki/concepts/svelte-5-migration.md).
