@@ -390,6 +390,21 @@ describe("infrastructure", () => {
 		expect((await res.json()).status).toBe("ok");
 	});
 
+	it("serves built asset files from /assets/*", async () => {
+		const { mkdirSync, rmSync, writeFileSync } = await import("node:fs");
+		mkdirSync("dist/assets", { recursive: true });
+		const file = "dist/assets/__route_test__.css";
+		writeFileSync(file, "body{}");
+		try {
+			const res = await call("/assets/__route_test__.css");
+			expect(res.status).toBe(200);
+			expect(res.headers.get("content-type")).toBe("text/css; charset=utf-8");
+			expect(await res.text()).toBe("body{}");
+		} finally {
+			rmSync(file, { force: true });
+		}
+	});
+
 	it("returns 400 when Google OAuth is not configured", async () => {
 		const { config } = await import("../src/server/config");
 		const savedId = config.google.clientId;

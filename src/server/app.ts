@@ -10,7 +10,7 @@ import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { serveAsset } from "./assets";
-import { db, pingDb, toPublicUser } from "./db";
+import { pingDb, toPublicUser } from "./db";
 import { Inertia, type InertiaAssets } from "./inertia";
 import { inertiaMiddleware, type AppEnv } from "./inertia-middleware";
 import { logError, requestLogger } from "./logger";
@@ -145,7 +145,12 @@ export function createApp(assets: InertiaAssets) {
 		pingDb.get();
 		return c.json({ status: "ok", uptime: process.uptime() });
 	});
-	app.get("/assets/*", (c) => serveAsset(c.req.param("*")));
+	// Hono's tail wildcard produces no named param — derive the relative
+	// path from c.req.path (see uploads.routes.ts for the same pattern).
+	app.get("/assets/*", (c) => {
+		const relPath = c.req.path.slice("/assets/".length);
+		return serveAsset(relPath);
+	});
 	// Browser/DevTools well-known probes (e.g. Chrome DevTools JSON) —
 	// return a plain 404 so they never reach the Inertia not-found handler.
 	app.get("/.well-known/*", () => new Response(null, { status: 404 }));
