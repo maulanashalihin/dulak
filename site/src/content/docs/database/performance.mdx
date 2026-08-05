@@ -23,8 +23,9 @@ Methodology:
 - **Direct matrix:** 50K single-row inserts + 50K point reads per config,
   fresh DB file per config, `busy_timeout = 5000` fixed, only
   `journal_mode` / `synchronous` varied.
-- **Full-stack:** Hono + `bun:sqlite`, concurrent load (50 workers for
-  reads, 20 for writes), JSON responses, 10K–50K requests per endpoint.
+- **Full-stack:** Hono + `bun:sqlite`, concurrent load (20 workers for
+  reads, 10 for writes), JSON responses, 2K–5K requests per endpoint.
+  Concurrency matched to the Laravel comparison below.
 
 ## The settings
 
@@ -68,22 +69,23 @@ consistency but skips the per-commit fsync → ~95K writes/s on NVMe.
 
 Through a real HTTP server (Hono + `bun:sqlite`, concurrent load, JSON
 endpoints), the same tuning gives:
-
 | Endpoint | req/s | p50 latency | p99 latency |
 | --- | ---: | ---: | ---: |
-| Point read (`GET /users/:id`) | 71,011 | 0.63ms | 1.40ms |
-| List 20 rows (`GET /users?limit=20`) | 37,610 | 1.26ms | 2.58ms |
-| Create (`POST /users`) | 22,485 | 0.68ms | 3.13ms |
-| Update (`PUT /users/:id`) | 26,424 | 0.61ms | 2.53ms |
-| Delete (`DELETE /users/:id`) | 28,878 | 0.55ms | 2.24ms |
+| Point read (`GET /users/:id`) | 41,241 | 0.35ms | 2.03ms |
+| List 20 rows (`GET /users?limit=20`) | 26,527 | 0.61ms | 2.09ms |
+| Create (`POST /users`) | 11,764 | 0.42ms | 10.91ms |
+| Update (`PUT /users/:id`) | 16,642 | 0.37ms | 3.38ms |
+| Delete (`DELETE /users/:id`) | 18,888 | 0.48ms | 1.43ms |
 
-The gap between direct (95K) and HTTP (22K) writes is request handling —
-routing, JSON parsing, response serialization — which is ~4× the raw
-commit cost. Reads drop ~7× (526K → 71K) because the per-request HTTP
+The gap between direct (95K) and HTTP (12K) writes is request handling —
+routing, JSON parsing, response serialization — which is ~8× the raw
+commit cost. Reads drop ~13× (526K → 41K) because the per-request HTTP
 overhead dominates a ~2µs query.
 
-For context, the TCP kernel ceiling on this machine is ~180K req/s — the
-point-read endpoint reaches 39% of that, with the rest being Hono routing
+For context, the TCP kernel ceiling on this machine is ~180K req/s — at
+higher concurrency (c=50) the point-read endpoint reaches 74K req/s, or
+41% of that ceiling. The rest is Hono routing + JSON serialization +
+SQLite overhead.
 
 ## Dulak vs Laravel (FrankenPHP)
 
