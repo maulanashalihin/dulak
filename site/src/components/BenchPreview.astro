@@ -1,15 +1,15 @@
 ---
 const rows = [
-  { op: "Point read via HTTP", detail: "GET /users/:id · p99 1.8ms · median of 3", value: "44K", unit: "req/s" },
+  { op: "Point read via HTTP", detail: "GET /users/:id · p99 2.9ms · median of 3", value: "52K", unit: "req/s" },
   { op: "Transactional insert", detail: "db.transaction() · 0.75µs/row", value: "1.3M", unit: "ops/s" },
   { op: "Autocommit insert", detail: "WAL + synchronous=NORMAL", value: "95K", unit: "ops/s" },
   { op: "Point read (direct)", detail: "bun:sqlite prepared stmt", value: "526K", unit: "ops/s" },
 ];
 
 const compare = [
-  { op: "Point read", dulak: "44K", laravel: "6K", x: "6.9×" },
-  { op: "List 20 rows", dulak: "29K", laravel: "5K", x: "6.2×" },
-  { op: "Delete", dulak: "20K", laravel: "5K", x: "3.7×" },
+  { op: "Point read", dulak: "52K", laravel: "6K", x: "8.1×" },
+  { op: "List 20 rows", dulak: "32K", laravel: "5K", x: "6.8×" },
+  { op: "Delete", dulak: "28K", laravel: "6K", x: "4.9×" },
 ];
 
 ---
