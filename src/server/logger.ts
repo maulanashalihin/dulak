@@ -67,5 +67,8 @@ export const requestLogger = async (c: Context<AppEnv>, next: Next) => {
 export function logError(c: Context<AppEnv>, error: unknown): void {
 	const { pathname } = safeUrl(c.req.url);
 	const requestId = c.get("requestId") || "-";
-	console.error(`[req:${requestId}] ${c.req.method} ${pathname} FAILED:`, error);
+	console.error(
+		`[req:${requestId}] ${c.req.method} ${pathname} FAILED:`,
+		error,
+	);
 }

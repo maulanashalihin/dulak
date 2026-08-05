@@ -100,7 +100,7 @@ src/
 ## Hono integration notes (do not "fix")
 
 - Middleware runs in registration order; global `app.use()` middleware must
-  precede the routes they cover (same principle as Elysia 1.4).
+  precede the routes they cover.
 - Middleware/guards MUST call `next()` to continue the chain — returning
   `undefined` without `next()` errors with "Context is not finalized".
 - Hono converts HEAD → GET (body stripped, headers kept) but `c.req.method`
@@ -124,13 +124,14 @@ src/
 - New test files must set env (`DATABASE_PATH=:memory:`, `UPLOAD_DIR`, …)
   in `beforeAll` BEFORE importing the app module — mirror
   `tests/app.test.ts` and `tests/tus.test.ts`.
-- Suite must stay green (58 tests): run `bun run typecheck` and
+- Suite must stay green (59 tests): run `bun run typecheck` and
   `bun run test` before finishing. `tsc` only covers `src/` and `scripts/`.
 
 ## Style
 
-- Match the dominant repo style in new files: 2-space indent, single quotes,
-  no semicolons (as in `auth.routes.ts` and `tests/`). When editing an
-  existing file, match that file's formatting.
+- Match the repo's current style: 2-space indent, double quotes, semicolons
+  (normalized by the editor/agent formatter; `tests/` and the route files are
+  the reference). When editing an existing file, match that file's
+  formatting.
 - Keep changes minimal and conventional; delete dead code rather than
   leaving shims or aliases behind a rename.

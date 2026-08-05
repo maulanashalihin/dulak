@@ -119,7 +119,7 @@ roles, SSR, and test suite.
   and on-disk storage — demonstrated end to end by the avatar upload on the
   profile page.
 - **Migrations**: versioned SQL files applied at startup in transactions.
-- **Ops**: request logging with correlation id, security headers (CSP,
+- **Ops**: batched request logging with correlation id, security headers (CSP,
   nosniff, frame denial), `/health`, graceful shutdown, Docker.
 - **Testing**: `bun test` — boots the app against an in-memory SQLite DB.
 
@@ -268,11 +268,11 @@ Rules:
 bun test --isolate   # or: bun run test
 ```
 
-58 tests. The suite boots the full app against an in-memory SQLite database
+59 tests. The suite boots the full app against an in-memory SQLite database
 and drives it through `app.request()`: registration/login/logout, guards and
 roles, password reset end to end (via the log mail driver), Inertia protocol
-(409/404/SSR), CSRF, `/health`, and the tus resumable-upload flow (creation,
-resume, checksum, termination, ownership).
+(409/404/SSR), CSRF, `/health`, static asset serving, and the tus
+resumable-upload flow (creation, resume, checksum, termination, ownership).
 
 `--isolate` gives each test file fresh globals. It is required: the files
 are written as independent suites — each sets its env (`DATABASE_PATH`,
