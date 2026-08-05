@@ -83,10 +83,13 @@
   "sources/obs-2026-08-03-session-design-sqlite-backed-not-jwt": [
     "entities/elysia-inertia-boilerplate"
   ],
+  "sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox": [],
   "sources/obs-2026-08-04-agents-md-created-codifying-repo-architecture": [],
+  "sources/obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source": [],
   "sources/obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision": [],
   "sources/obs-2026-08-04-profile-page-with-tus-avatar-upload": [],
   "sources/obs-2026-08-04-route-conventions-url-first-file-naming": [],
+  "sources/obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13": [],
   "entities/resend": [
     "sources/SRC-2026-08-03-001"
   ],

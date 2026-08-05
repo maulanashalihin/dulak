@@ -71,3 +71,14 @@
 ## [2026-08-04T10:20:16.795Z] ensure_page
 - page_type: "guide", title: "Swapping React for Svelte 5 in the Dulak boilerplate", path: "concepts/swapping-react-for-svelte-5-in-the-dulak-boilerplate"
 
+## [2026-08-04T10:23:21.991Z] rebuild_meta
+
+## [2026-08-05T01:14:21.414Z] observe
+- slug: "obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13", title: "Hono migration complete: Elysia swapped for Hono 4.13", relevance: "critical"
+
+## [2026-08-05T01:14:22.342Z] observe
+- slug: "obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source", title: "Hono 4.13 integration gotchas (verified from source)", relevance: "high"
+
+## [2026-08-05T01:14:22.346Z] observe
+- slug: "obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox", title: "TypeBox formats not pre-registered in plain @sinclair/typebox", relevance: "high"
+

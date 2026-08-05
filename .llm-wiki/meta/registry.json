@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-04T10:23:21.954Z",
+  "last_updated": "2026-08-05T01:14:22.347Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -14,8 +14,8 @@
     "concepts/tailwind-v4-setup": {
       "type": "page",
       "title": "tailwind-v4-setup",
-      "created": "2026-08-04",
-      "updated": "2026-08-04"
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
     },
     "concepts/csrf-origin-check": {
       "type": "concept",
@@ -38,8 +38,8 @@
     "concepts/svelte-5-migration": {
       "type": "page",
       "title": "svelte-5-migration",
-      "created": "2026-08-04",
-      "updated": "2026-08-04"
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
     },
     "concepts/partial-reloads": {
       "type": "concept",
@@ -238,7 +238,7 @@
     "sources/SRC-2026-08-03-001": {
       "type": "source",
       "title": "SRC-2026-08-03-001",
-      "created": "2026-08-04",
+      "created": "2026-08-05",
       "updated": "2026-08-03",
       "format": "markdown",
       "source_id": "SRC-2026-08-03-001",
@@ -289,6 +289,22 @@
       ],
       "source_context": "\"Building auth for elysia-inertia-boilerplate\""
     },
+    "sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox": {
+      "type": "source",
+      "title": "\"Observation: TypeBox formats not pre-registered in plain @sinclair/typebox\"",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "slug": "obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-05T01:14:22.346Z",
+      "tags": [
+        "typebox",
+        "validation",
+        "formats"
+      ],
+      "source_context": "\"Porting TypeBox validation to Hono\""
+    },
     "sources/obs-2026-08-04-agents-md-created-codifying-repo-architecture": {
       "type": "source",
       "title": "\"Observation: AGENTS.md created codifying repo architecture\"",
@@ -305,6 +321,24 @@
         "conventions"
       ],
       "source_context": "\"Creating AGENTS.md after tus restructure\""
+    },
+    "sources/obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source": {
+      "type": "source",
+      "title": "\"Observation: Hono 4.13 integration gotchas (verified from source)\"",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "slug": "obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-05T01:14:22.342Z",
+      "tags": [
+        "hono",
+        "gotchas",
+        "tus",
+        "cookies",
+        "rate-limit"
+      ],
+      "source_context": "\"Porting Elysia app to Hono 4.13\""
     },
     "sources/obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision": {
       "type": "source",
@@ -358,6 +392,23 @@
         "discoverability"
       ],
       "source_context": "\"Defining route conventions for URL-first discovery\""
+    },
+    "sources/obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13": {
+      "type": "source",
+      "title": "\"Observation: Hono migration complete: Elysia swapped for Hono 4.13\"",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "slug": "obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13",
+      "status": "observation",
+      "relevance": "critical",
+      "observed_at": "2026-08-05T01:14:21.413Z",
+      "tags": [
+        "hono",
+        "elysia",
+        "migration",
+        "architecture"
+      ],
+      "source_context": "\"Migrating boilerplate from Elysia to Hono\""
     },
     "entities/resend": {
       "type": "entity",
@@ -443,8 +494,8 @@
     "entities/elysia-inertia-boilerplate": {
       "type": "page",
       "title": "elysia-inertia-boilerplate",
-      "created": "2026-08-04",
-      "updated": "2026-08-04"
+      "created": "2026-08-05",
+      "updated": "2026-08-05"
     },
     "entities/react-19": {
       "type": "entity",
