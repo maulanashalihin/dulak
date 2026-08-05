@@ -55,9 +55,10 @@
 - [[sources/obs-2026-08-04-sidebar-full-reload-cause-inertia-dev-version-negotiation]] — "Observation: Sidebar full-reload cause: Inertia dev version negotiation" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-04-tus-uploads-restructured-to-flat-convention]] — "Observation: tus uploads restructured to flat convention" *(created: 2026-08-04)*
 - [[sources/obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source]] — "Observation: Hono 4.13 integration gotchas (verified from source)" *(created: 2026-08-05)*
+- [[sources/obs-2026-08-05-hono-dulak-pushed-to-github-elysia-version-archived-via-tags]] — "Observation: Hono dulak pushed to GitHub, Elysia version archived via tags" *(created: 2026-08-05)*
 - [[sources/obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13]] — "Observation: Hono migration complete: Elysia swapped for Hono 4.13" *(created: 2026-08-05)*
 - [[sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox]] — "Observation: TypeBox formats not pre-registered in plain @sinclair/typebox" *(created: 2026-08-05)*
 - [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-05)*
 
 ---
-*Last updated: 2026-08-05T01:14:22.347Z* | *Total pages: 45*
+*Last updated: 2026-08-05T02:58:18.008Z* | *Total pages: 46*

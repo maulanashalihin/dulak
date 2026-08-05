@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-05T01:14:22.347Z",
+  "last_updated": "2026-08-05T02:58:18.008Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -171,6 +171,24 @@
         "sqlite"
       ],
       "source_context": "\"Adding migration support to elysia-inertia-boilerplate\""
+    },
+    "sources/obs-2026-08-05-hono-dulak-pushed-to-github-elysia-version-archived-via-tags": {
+      "type": "source",
+      "title": "\"Observation: Hono dulak pushed to GitHub, Elysia version archived via tags\"",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "slug": "obs-2026-08-05-hono-dulak-pushed-to-github-elysia-version-archived-via-tags",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-05T02:58:17.947Z",
+      "tags": [
+        "dulak",
+        "github",
+        "push",
+        "templates",
+        "legacy"
+      ],
+      "source_context": "\"Pushing Hono boilerplate to GitHub, archiving Elysia era\""
     },
     "sources/obs-2026-08-04-project-renamed-to-dulak": {
       "type": "source",
