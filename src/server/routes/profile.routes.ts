@@ -77,7 +77,11 @@ export const profileRoutes = () => {
 		} catch {
 			/* metadata may be empty or malformed */
 		}
-		if (!filetype.startsWith("image/")) {
+		// Raster-only: SVG can carry inline scripts — even with the
+		// per-path script-src 'none' on /uploads, keeping avatars raster
+		// avoids serving attacker-controlled scripts from our origin.
+		const AVATAR_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+		if (!AVATAR_TYPES.includes(filetype)) {
 			return new Response("Only image uploads can be used as an avatar", {
 				status: 422,
 			});

@@ -207,6 +207,18 @@ describe("inertia protocol", () => {
 		expect(res.status).toBe(404);
 		expect((await page(res)).component).toBe("NotFound");
 	});
+	it("returns a valid JSON payload for XHR with gzip accept-encoding", async () => {
+		// Browsers always send Accept-Encoding: gzip; the compress middleware
+		// must not consume the (small) JSON body below its threshold.
+		const res = await call("/login", {
+			headers: { ...xhr, "accept-encoding": "gzip" },
+		});
+		expect(res.status).toBe(200);
+		const data = await res.json();
+		expect(data.component).toBe("Login");
+		expect(data.url).toBe("/login");
+	});
+
 	it("returns plain 404 for .well-known DevTools probes", async () => {
 		const res = await call(
 			"/.well-known/appspecific/com.chrome.devtools.json",
