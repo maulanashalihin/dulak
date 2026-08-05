@@ -1,0 +1,37 @@
+{
+  "name": "create-dulak",
+  "version": "0.2.0",
+  "license": "MIT",
+  "description": "Scaffold a new Dulak project — Elysia + bun:sqlite + Inertia v3 boilerplate with template selection (React/Svelte, vanilla CSS/Tailwind).",
+  "keywords": [
+    "dulak",
+    "elysia",
+    "bun",
+    "inertia",
+    "react",
+    "svelte",
+    "tailwind",
+    "sqlite",
+    "boilerplate",
+    "ssr",
+    "create"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maulanashalihin/dulak.git",
+    "directory": "create-dulak"
+  },
+  "bin": {
+    "create-dulak": "index.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module",
+  "dependencies": {
+    "giget": "^3.3.1"
+  }
+}

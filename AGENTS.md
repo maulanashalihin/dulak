@@ -1,0 +1,136 @@
+# AGENTS.md
+
+Guidelines for AI coding agents working on this repository. Read this before
+writing, moving, or restructuring code. The README documents features in
+depth; this file exists to keep new code structurally consistent — previous
+contributions broke the architecture by inventing their own layout.
+
+## Stack
+
+- **Bun >= 1.3** — runtime, bundler, and test runner.
+- **Hono 4.x** (HTTP). Stable, runtime-agnostic; served via `Bun.serve` with
+  `app.fetch` (Bun hands the server to fetch as its 2nd arg → `c.env`).
+- **bun:sqlite** — synchronous, zero-ORM. Schema lives in `migrations/`
+  (versioned SQL applied at startup, see `migrations.ts`).
+- **Inertia v3 + React 19** — in-process SSR; page registry in
+  `src/client/pages.ts` with explicit imports.
+- **Vanilla CSS** — no CSS framework (see README "Styling").
+
+## Layout
+
+```
+src/
+├── index.ts                # entry: build assets (dev), Bun.serve, graceful shutdown
+├── server/
+│   ├── app.ts              # composition: middleware order, onError, notFound, routes
+│   ├── config.ts           # validated env config (fails fast at startup)
+│   ├── db.ts               # bun:sqlite: connection + ALL prepared statements
+│   ├── migrations.ts       # SQL migration runner
+│   ├── auth.ts             # argon2id, sessions, flash, cookies, guards
+│   ├── inertia.ts          # Inertia v3 server adapter (framework-light)
+│   ├── inertia-middleware.ts # per-request session resolve → c.var (AppEnv)
+│   ├── validation.ts       # TypeBox JSON validation → ValidationFailed (422)
+│   ├── mailer.ts           # mail drivers: log / resend / mailtrap
+│   ├── rate-limit.ts       # in-memory fixed-window rate limiter
+│   ├── logger.ts           # request logging + x-request-id
+│   ├── security.ts         # CSRF origin check (headers via hono/secure-headers)
+│   ├── url.ts              # defensive request-URL parsing
+│   ├── assets.ts           # Bun.build pipeline + manifest + static serving
+│   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
+│   ├── tus-storage.ts      # tus upload bytes on disk
+│   └── routes/
+│       ├── auth.routes.ts         # /login /register /logout /forgot-password /reset-password (GET+POST)
+│       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
+│       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
+│       ├── profile.routes.ts      # /profile page + /profile/avatar
+│       └── uploads.routes.ts      # /uploads* (tus protocol)
+├── client/                 # React + Inertia (pages/, components/, styles.css)
+├── shared/                 # types.ts, inertia.d.ts (client+server shared)
+├── migrations/             # versioned SQL schema files (0001, 0002, …)
+└── tests/                  # bun:test E2E suite (in-memory DB)
+```
+
+## Hard rules
+
+1. **Routes live in `src/server/routes/<feature>.routes.ts`, handlers inline,
+   one file per URL.** Route-specific handler logic stays in the route file
+   (see `auth.routes.ts`, `uploads.routes.ts`); never create a `routes.ts`
+   inside a feature folder. The feature name is derived from the URL, and
+   every URL is defined in exactly one file — GET renders and POST actions
+   live together (see "Route conventions" below).
+
+2. **`src/server/` is flat except `routes/`. No feature subfolders.**
+   Shared or transport-independent logic becomes a single flat module
+   (`auth.ts`, `security.ts`, `mailer.ts`, `rate-limit.ts`, `tus-protocol.ts`,
+   `tus-storage.ts`). Extract a module only when logic is reused across
+   routes or independent of Hono's context — not just to slim a file.
+
+3. **All SQL lives in `db.ts`** as prepared statements created at module
+   load (`db.query(...)`). Schema changes are new numbered files
+   `migrations/000N_*.sql`; never edit an applied migration. Keep `db.ts`
+   a single file — one coherent module reads better than a tree of small
+   domain files; reconsider splitting by domain only past ~600–800 lines.
+
+4. **Env is read once, in `config.ts`**, which validates and fails fast.
+   Never read `process.env` in other modules. Adding a config key means
+   updating `config.ts` and the README env table.
+
+5. **Validation via TypeBox schemas** (`src/server/validation.ts`) at the
+   route level; `app.onError` maps `ValidationFailed` to Inertia 422 page
+   payloads (`VALIDATION_MESSAGES` in `auth.routes.ts`).
+
+6. **TypeScript**: `strict` + `noUncheckedIndexedAccess` +
+   `verbatimModuleSyntax` are on. Type-only imports MUST use `import type`.
+   No ORM, no loose `any`; queries are parameterized.
+
+## Route conventions
+
+- **File = URL namespace.** `/posts*` routes live in `routes/posts.routes.ts`
+  with page renders and form actions together. Given a URL, the file name
+  follows from its first segment — that is the discoverability contract.
+- **`pages.routes.ts` is the app shell only** (/, /dashboard, /admin). New
+  feature pages do not go there.
+- **Infra endpoints** (`/health`, `/assets/*`) stay in `app.ts`, not route
+  files.
+- **Exports**: `const <feature>Routes = () => new Hono<AppEnv>()...`, mounted
+  via `app.route('/', <feature>Routes())` in `app.ts`. Route factories take
+  no arguments — the Inertia adapter is a global middleware on the app, not
+  per-route state.
+
+## Hono integration notes (do not "fix")
+
+- Middleware runs in registration order; global `app.use()` middleware must
+  precede the routes they cover (same principle as Elysia 1.4).
+- Middleware/guards MUST call `next()` to continue the chain — returning
+  `undefined` without `next()` errors with "Context is not finalized".
+- Hono converts HEAD → GET (body stripped, headers kept) but `c.req.method`
+  still reports "HEAD"; tus `dispatch` relies on this.
+- `c.header()`-queued headers are dropped when a handler returns a custom
+  `Response` — cookie helpers append to `c.res.headers` instead.
+- The `/*` wildcard produces no named param — derive path segments from
+  `c.req.path` (see `uploads.routes.ts`).
+- `hono/conninfo`'s ESM build is an empty stub in 4.13 — the rate limiter
+  reads the peer IP from `c.env` (the Bun server) instead.
+- `@sinclair/typebox` does not pre-register string formats — `email` is
+  registered in `validation.ts`; add others there.
+
+## Testing
+
+- Run **`bun test --isolate`** (or `bun run test`). NEVER plain `bun test`:
+  bun 1.3 runs all test files in one shared process, but each suite sets its
+  env in `beforeAll` and calls `db.close()` in `afterAll` as if process-
+  isolated. Without `--isolate`, one file's teardown finalizes the next
+  file's prepared statements and cached `config` values leak across files.
+- New test files must set env (`DATABASE_PATH=:memory:`, `UPLOAD_DIR`, …)
+  in `beforeAll` BEFORE importing the app module — mirror
+  `tests/app.test.ts` and `tests/tus.test.ts`.
+- Suite must stay green (58 tests): run `bun run typecheck` and
+  `bun run test` before finishing. `tsc` only covers `src/` and `scripts/`.
+
+## Style
+
+- Match the dominant repo style in new files: 2-space indent, single quotes,
+  no semicolons (as in `auth.routes.ts` and `tests/`). When editing an
+  existing file, match that file's formatting.
+- Keep changes minimal and conventional; delete dead code rather than
+  leaving shims or aliases behind a rename.
