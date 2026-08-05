@@ -54,7 +54,12 @@ export async function buildClientAssets(): Promise<void> {
 export const manifestExists = (): boolean => existsSync(MANIFEST_PATH);
 
 export function loadManifest(): InertiaAssets {
-	return JSON.parse(readFileSync(MANIFEST_PATH, "utf8")) as InertiaAssets;
+  const raw = readFileSync(MANIFEST_PATH, 'utf8')
+  try {
+    return JSON.parse(raw) as InertiaAssets
+  } catch (e) {
+    throw new Error(`Corrupt manifest at ${MANIFEST_PATH}: ${String(e)}`)
+  }
 }
 
 const CONTENT_TYPES: Record<string, string> = {
