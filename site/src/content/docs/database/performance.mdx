@@ -1,6 +1,6 @@
 ---
 title: SQLite performance
-description: The benchmark data behind Dulak's DB settings — why synchronous=NORMAL, and what to expect on real hardware.
+description: The benchmark data behind Dulak's DB settings — why synchronous=NORMAL, and what to expect on Apple Silicon.
 ---
 
 Dulak ships with WAL + `synchronous = NORMAL` + `busy_timeout = 5000` +
@@ -10,22 +10,21 @@ numbers measured on the reference hardware (see
 
 ## Test environment
 
-- **Provider:** Tencent Cloud Lighthouse (VPS)
-- **CPU:** Intel Xeon Gold 6133 @ 2.50 GHz, 2 vCPU
-- **RAM:** 3.6 GiB
-- **Disk:** 59 GB cloud HDD (`rotational=1`) — the ~2.4 ms per-commit cost
-  in `FULL` mode is HDD fsync
-- **OS:** Ubuntu 24.04.4 LTS (kernel 6.8.0)
+- **Machine:** Apple MacBook Pro (M4)
+- **CPU:** Apple M4, 10 cores
+- **RAM:** 16 GiB unified memory
+- **Disk:** internal NVMe (not HDD — fsync cost is ~10µs, not ~2.4ms)
+- **OS:** macOS 15 (Darwin 25.5.0)
 - **Runtime:** Bun 1.3.14
 - **Date:** August 2026
 
 Methodology:
 
-- **Direct matrix:** 5K single-row inserts + 50K point reads per config,
-  fresh DB file per config, WAL + `busy_timeout = 5000` fixed, only
-  `synchronous` / `cache_size` / `temp_store` varied.
-- **Full-stack:** Hono + `bun:sqlite`, `hey -n 50000` per endpoint,
-  100 concurrent connections, JSON responses.
+- **Direct matrix:** 50K single-row inserts + 50K point reads per config,
+  fresh DB file per config, `busy_timeout = 5000` fixed, only
+  `journal_mode` / `synchronous` varied.
+- **Full-stack:** Hono + `bun:sqlite`, concurrent load (50 workers for
+  reads, 20 for writes), JSON responses, 10K–50K requests per endpoint.
 
 ## The settings
 
@@ -38,53 +37,74 @@ db.exec("PRAGMA foreign_keys = ON");
 
 ## Benchmark: pragma matrix
 
-Direct `bun:sqlite` prepared statements (no HTTP), 5K single-row inserts +
+Direct `bun:sqlite` prepared statements (no HTTP), 50K single-row inserts +
 50K point reads, fresh DB per config:
 
-| `synchronous` | writes/s | reads/s |
+| Config | writes/s | reads/s |
 | --- | ---: | ---: |
-| `FULL` (SQLite default) | 417 | 311K |
-| **`NORMAL`** | **20,005** | 327K |
-| `OFF` | 60,969 | 333K |
+| `rollback journal` + `FULL` (SQLite default) | 3,508 | 244K |
+| **WAL + `NORMAL`** | **94,813** | **526K** |
+| WAL + `OFF` (unsafe) | 115,325 | 538K |
 
-- **`NORMAL` is ~48× faster for writes** than the default `FULL` — that is
-  the whole point. Reads are unaffected either way (page-cache bound).
-- `OFF` is another 3× on top but risks **database corruption** on power
+- **`NORMAL` is ~27× faster for writes** than the default `FULL` — that is
+  the whole point. Reads more than double (+115%) because WAL eliminates
+  the rollback-journal lock that serialises readers.
+- `OFF` is another 22% on top but risks **database corruption** on power
   loss — never use it for real data.
-- `cache_size` and `temp_store` showed **no measurable gain** at typical
-  app dataset sizes; they were left at defaults.
+- On HDD-based VPS hardware the write gap is even wider (~48×) because
+  `FULL`-mode fsync costs ~2.4ms per commit vs ~10µs on NVMe. The ratio
+  scales with disk latency; the conclusion is the same: `NORMAL` wins.
 
 ## Why WAL alone isn't enough
 
 WAL fixes **read concurrency** (readers don't block the writer) but does
 **not** remove the per-commit fsync — that is `synchronous`'s job. With the
-SQLite default `FULL`, every commit calls `fsync` (~2.4ms on this disk),
-and because `bun:sqlite` is synchronous, commits serialize on the single
-event loop → ~400 writes/s. `NORMAL` keeps WAL's crash consistency but
-skips the per-commit fsync → ~20K writes/s.
+SQLite default (`rollback journal` + `FULL`), every commit calls `fsync`
+(~10µs on NVMe, ~2.4ms on HDD), and because `bun:sqlite` is synchronous,
+commits serialize on the single event loop. `NORMAL` keeps WAL's crash
+consistency but skips the per-commit fsync → ~95K writes/s on NVMe.
 
 ## Full-stack numbers
 
-Through a real HTTP server (Hono + `bun:sqlite`, `hey -n 50000`, 100
-concurrent connections, JSON endpoints), the same tuning gives:
+Through a real HTTP server (Hono + `bun:sqlite`, concurrent load, JSON
+endpoints), the same tuning gives:
 
-| Endpoint | req/s |
-| --- | ---: |
-| Point read (`SELECT … WHERE id = ?`) | ~22.8K |
-| List (20 rows) | ~19.6K |
-| Write (`INSERT`) | ~7.7K |
+| Endpoint | req/s | p50 latency | p99 latency |
+| --- | ---: | ---: | ---: |
+| Point read (`GET /users/:id`) | 71,011 | 0.63ms | 1.40ms |
+| List 20 rows (`GET /users?limit=20`) | 37,610 | 1.26ms | 2.58ms |
+| Create (`POST /users`) | 22,485 | 0.68ms | 3.13ms |
+| Update (`PUT /users/:id`) | 26,424 | 0.61ms | 2.53ms |
+| Delete (`DELETE /users/:id`) | 28,878 | 0.55ms | 2.24ms |
 
-The gap between direct (20K) and HTTP (7.7K) writes is request handling —
-routing, JSON parsing, response serialization — which is ~2.6× the raw
-commit cost. Reads drop ~14× (311K → 22.8K) because the per-request HTTP
-overhead dominates a ~3µs query.
+The gap between direct (95K) and HTTP (22K) writes is request handling —
+routing, JSON parsing, response serialization — which is ~4× the raw
+commit cost. Reads drop ~7× (526K → 71K) because the per-request HTTP
+overhead dominates a ~2µs query.
+
+For context, the TCP kernel ceiling on this machine is ~180K req/s — the
+point-read endpoint reaches 39% of that, with the rest being Hono routing
++ JSON serialization + SQLite overhead.
+
+## Transactional writes
+
+When inserts are batched inside a single `db.transaction()`, the per-commit
+fsync fires once at the end instead of per row:
+
+| Mode | writes/s | µs/row |
+| --- | ---: | ---: |
+| Autocommit (one fsync per row) | 94,813 | 10.5 |
+| **Single transaction** | **1,329,836** | **0.75** |
+
+That is **14× faster** — 1.3M inserts/s. Always batch bulk writes in a
+transaction; the `db.transaction()` helper is built for this.
 
 ## The tradeoff
 
 | Mode | Power-loss behavior | Writes/s |
 | --- | --- | ---: |
-| `NORMAL` | last WAL transactions may be lost; **DB never corrupts** | ~20K |
-| `FULL` | zero loss | ~400 |
+| `NORMAL` | last WAL transactions may be lost; **DB never corrupts** | ~95K |
+| `FULL` | zero loss | ~3.5K |
 
 `NORMAL` is the right default for web apps. Switch to `FULL` only for
 data where losing the last few transactions is unacceptable (financial

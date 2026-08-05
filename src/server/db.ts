@@ -51,10 +51,10 @@ mkdirSync(dirname(config.dbPath), { recursive: true });
 
 export const db = new Database(config.dbPath, { create: true });
 db.exec("PRAGMA journal_mode = WAL");
-// WAL + synchronous=NORMAL: skip fsync per commit — measured ~48× faster
-// writes (417 → 20K/s, bun:sqlite). Tradeoff: on power loss the last
-// transactions in WAL may be lost (DB stays consistent). Use FULL for
-// zero-loss requirements (e.g. financial transactions).
+// WAL + synchronous=NORMAL: skip fsync per commit — measured ~27× faster
+// writes (3.5K → 95K/s on M4 NVMe, ~48× on HDD VPS). Tradeoff: on power
+// loss the last transactions in WAL may be lost (DB stays consistent).
+// Use FULL for zero-loss requirements (e.g. financial transactions).
 db.exec("PRAGMA synchronous = NORMAL");
 // Concurrent writes (e.g. two tus PATCHes) wait up to 5s instead of
 // failing with SQLITE_BUSY.
