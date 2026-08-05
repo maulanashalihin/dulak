@@ -14,7 +14,11 @@ export default defineConfig({
 				"Deliberately boring full-stack boilerplate: Hono + bun:sqlite + Inertia v3 on Bun, with React/Svelte/Vue + Tailwind templates.",
 			favicon: "/favicon.svg",
 			social: [
-				{ icon: "github", label: "GitHub", href: "https://github.com/maulanashalihin/dulak" },
+				{
+					icon: "github",
+					label: "GitHub",
+					href: "https://github.com/maulanashalihin/dulak",
+				},
 			],
 			customCss: ["./src/styles/custom.css"],
 			sidebar: [
@@ -30,7 +34,10 @@ export default defineConfig({
 					items: [
 						{ label: "Overview", slug: "architecture/overview" },
 						{ label: "Conventions", slug: "architecture/conventions" },
-						{ label: "Request lifecycle", slug: "architecture/request-lifecycle" },
+						{
+							label: "Request lifecycle",
+							slug: "architecture/request-lifecycle",
+						},
 					],
 				},
 				{
