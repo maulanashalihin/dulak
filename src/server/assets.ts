@@ -11,8 +11,12 @@ import type { InertiaAssets } from './inertia'
 const DIST_DIR = 'dist'
 const ASSETS_DIR = `${DIST_DIR}/assets`
 const MANIFEST_PATH = `${DIST_DIR}/manifest.json`
+const TAILWIND_INPUT = 'src/client/tailwind.css'
+const TAILWIND_OUTPUT = 'src/client/.tailwind.css'
 
 export async function buildClientAssets(): Promise<void> {
+  // Compile Tailwind v4 → static CSS (no PostCSS needed).
+  await Bun.$`bunx @tailwindcss/cli -i ${TAILWIND_INPUT} -o ${TAILWIND_OUTPUT} --minify`.quiet()
   const result = await Bun.build({
     entrypoints: ['src/client/app.tsx'],
     outdir: ASSETS_DIR,
@@ -52,7 +56,12 @@ export async function buildClientAssets(): Promise<void> {
 export const manifestExists = (): boolean => existsSync(MANIFEST_PATH)
 
 export function loadManifest(): InertiaAssets {
-  return JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as InertiaAssets
+  const raw = readFileSync(MANIFEST_PATH, 'utf8')
+  try {
+    return JSON.parse(raw) as InertiaAssets
+  } catch (e) {
+    throw new Error(`Corrupt manifest at ${MANIFEST_PATH}: ${String(e)}`)
+  }
 }
 
 const CONTENT_TYPES: Record<string, string> = {

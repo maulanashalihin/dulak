@@ -31,30 +31,29 @@ function acceptsGzip(header: string | undefined): boolean {
 	return tokens.some((t) => t === "*" || t.startsWith("*;"));
 }
 
-export const compress = () =>
-	async (c: Context<AppEnv>, next: Next) => {
-		await next();
-		const res = c.res;
-		if (res.body === null) return;
-		if (res.status === 204 || res.status === 206 || res.status === 304) return;
-		if (res.headers.has("content-encoding")) return;
-		if (c.req.method === "HEAD") return;
-		const type = res.headers.get("content-type") ?? "";
-		if (!COMPRESSIBLE.test(type)) return;
-		if (!acceptsGzip(c.req.header("accept-encoding"))) return;
+export const compress = () => async (c: Context<AppEnv>, next: Next) => {
+	await next();
+	const res = c.res;
+	if (res.body === null) return;
+	if (res.status === 204 || res.status === 206 || res.status === 304) return;
+	if (res.headers.has("content-encoding")) return;
+	if (c.req.method === "HEAD") return;
+	const type = res.headers.get("content-type") ?? "";
+	if (!COMPRESSIBLE.test(type)) return;
+	if (!acceptsGzip(c.req.header("accept-encoding"))) return;
 
-		const buf = Buffer.from(await res.arrayBuffer());
-		if (buf.byteLength < THRESHOLD_BYTES) return;
-		const compressed = await gzipAsync(buf);
-		if (compressed.byteLength >= buf.byteLength) return; // not worth it
+	const buf = Buffer.from(await res.arrayBuffer());
+	if (buf.byteLength < THRESHOLD_BYTES) return;
+	const compressed = await gzipAsync(buf);
+	if (compressed.byteLength >= buf.byteLength) return; // not worth it
 
-		const vary = res.headers.get("vary");
-		if (vary && !/\baccept-encoding\b/i.test(vary)) {
-			res.headers.set("vary", `${vary}, Accept-Encoding`);
-		} else if (!vary) {
-			res.headers.set("vary", "Accept-Encoding");
-		}
-		res.headers.set("content-encoding", "gzip");
-		res.headers.delete("content-length");
-		c.res = new Response(new Uint8Array(compressed), res);
-	};
+	const vary = res.headers.get("vary");
+	if (vary && !/\baccept-encoding\b/i.test(vary)) {
+		res.headers.set("vary", `${vary}, Accept-Encoding`);
+	} else if (!vary) {
+		res.headers.set("vary", "Accept-Encoding");
+	}
+	res.headers.set("content-encoding", "gzip");
+	res.headers.delete("content-length");
+	c.res = new Response(new Uint8Array(compressed), res);
+};
