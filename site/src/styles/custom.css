@@ -24,3 +24,15 @@
 .sl-markdown-content h2 {
 	margin-top: 2.5rem;
 }
+
+/* Docs navbar logo — match the landing navbar (24px mark + 1.05rem title). */
+.site-title {
+	gap: 0.5rem;
+	font-weight: 700;
+	font-size: 1.05rem; /* same as .dl-nav-brand */
+	color: #e5e7eb; /* match the landing navbar text color */
+}
+.site-title img {
+	width: 24px;
+	height: 24px;
+}

@@ -13,6 +13,11 @@ export default defineConfig({
 			description:
 				"Deliberately boring full-stack boilerplate: Hono + bun:sqlite + Inertia v3 on Bun, with React/Svelte/Vue + Tailwind templates.",
 			favicon: "/favicon.svg",
+			logo: {
+				src: "./src/assets/logo.svg",
+				alt: "Dulak logo",
+				replacesTitle: false,
+			},
 			social: [
 				{
 					icon: "github",
