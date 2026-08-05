@@ -120,21 +120,40 @@ export default function Login() {
   <p class="dl-section-sub">Pick a frontend — the same Login page, in your framework.</p>
 
   <div class="dl-tabs">
+    <div class="dl-tab-buttons">
+      {templates.map((t, i) => (
+        <>
+          <input type="radio" name="dl-tab" id={`dl-tab-${t.id}`} class="dl-tab-input" checked={i === 0} />
+          <label class={`dl-tab-btn${i === 0 ? " active" : ""}`} for={`dl-tab-${t.id}`}>{t.label}</label>
+        </>
+      ))}
+    </div>
     {templates.map((t, i) => (
-      <>
-        <input type="radio" name="dl-tab" id={`dl-tab-${t.id}`} class="dl-tab-input" checked={i === 0} />
-        <label class="dl-tab-btn" for={`dl-tab-${t.id}`}>{t.label}</label>
-        <div class={`dl-tab-panel${i === 0 ? " show" : ""}`} id={`dl-panel-${t.id}`}>
-          <Code code={t.code} lang={t.lang} meta={`title="${t.name}"`} />
-        </div>
-      </>
+      <div class={`dl-tab-panel${i === 0 ? " show" : ""}`} id={`dl-panel-${t.id}`}>
+        <Code code={t.code} lang={t.lang} meta={`title="${t.name}"`} />
+      </div>
     ))}
   </div>
 </section>
 
+<script>
+  // Tab visibility: class-based (CSS sibling combinators show every panel
+  // after the checked input; :has() rules get dropped by Astro scoping).
+  const tabs = document.querySelectorAll(".dl-tabs .dl-tab-btn");
+  for (const btn of tabs) {
+    btn.addEventListener("click", () => {
+      const panelId = btn.getAttribute("for").replace("dl-tab-", "dl-panel-");
+      document.querySelectorAll(".dl-tab-panel").forEach((p) => p.classList.remove("show"));
+      document.getElementById(panelId)?.classList.add("show");
+      tabs.forEach((b) => b.classList.toggle("active", b === btn));
+    });
+  }
+</script>
+
 <style>
   .dl-templates { max-width: 860px; margin: 0 auto 4.5rem; padding: 0 1.5rem; }
-  .dl-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.6rem; }
+  .dl-tabs { margin-top: 1.6rem; }
+  .dl-tab-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .dl-tab-input { display: none; }
   .dl-tab-btn {
     padding: 0.45rem 1.1rem;
