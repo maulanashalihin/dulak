@@ -543,6 +543,46 @@ describe("profile page & avatar upload", () => {
 		expect(res.status).toBe(422);
 	});
 
+	it("rejects SVG uploads as avatars (stored-XSS guard)", async () => {
+		const id = await uploadImage(cookie, "image/svg+xml");
+		const res = await tus("/profile/avatar", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ uploadId: id }),
+			cookie,
+		});
+		expect(res.status).toBe(422);
+	});
+
+	it("serves upload bytes with script-src 'none' (no script execution)", async () => {
+		const create = await tus("/uploads", {
+			method: "POST",
+			headers: {
+				"Upload-Length": "4",
+				"Upload-Metadata": `filename ${Buffer.from("x.html").toString("base64")},filetype ${Buffer.from("text/html").toString("base64")}`,
+			},
+			cookie,
+		});
+		const id = (create.headers.get("Location") ?? "").replace("/uploads/", "");
+		const patch = await tus(`/uploads/${id}`, {
+			method: "PATCH",
+			headers: {
+				"Content-Type": "application/offset+octet-stream",
+				"Upload-Offset": "0",
+			},
+			body: new Uint8Array([1, 2, 3, 4]),
+			cookie,
+		});
+		expect(patch.status).toBe(204);
+
+		const res = await tus(`/uploads/${id}`, { method: "GET", cookie });
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toBe("text/html");
+		const csp = res.headers.get("content-security-policy") ?? "";
+		const scriptSrc = csp.match(/script-src ([^;]+)/)?.[1] ?? "";
+		expect(scriptSrc).toBe("'none'");
+	});
+
 	it("rejects linking someone else's upload", async () => {
 		const id = await uploadImage(cookie, "image/png");
 		const res = await tus("/profile/avatar", {
