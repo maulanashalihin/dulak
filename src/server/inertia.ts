@@ -13,9 +13,27 @@
  * here is Hono-specific beyond the type names.
  */
 import type { Page } from "@inertiajs/core";
-import { renderPage } from "../client/ssr";
 import type { FlashData, SharedPageProps } from "../shared/types";
 import { clearFlash } from "./auth";
+
+/**
+ * Lazy-loaded SSR renderer. dist/ssr.js is built by buildClientAssets()
+ * with the framework plugin (generate: 'server'); a static import of
+ * src/client/ssr.ts would fail at module load (its .svelte/.vue imports
+ * need the plugin), and a literal import of dist/ssr.js would fail to
+ * typecheck on a fresh clone (dist/ is gitignored). The variable specifier
+ * keeps tsc from resolving it while Bun loads the real path at runtime.
+ */
+type RenderPage = (page: Page) => Promise<{ head: string[]; body: string }>;
+const SSR_RENDERER = "../../dist/ssr.js";
+let renderPageFn: RenderPage | null = null;
+async function renderPage(page: Page): Promise<{ head: string[]; body: string }> {
+	if (!renderPageFn) {
+		const mod = (await import(SSR_RENDERER)) as { renderPage: RenderPage };
+		renderPageFn = mod.renderPage;
+	}
+	return renderPageFn(page);
+}
 
 export interface InertiaAssets {
 	/** Asset version used for cache busting + Inertia version negotiation. */

@@ -2,8 +2,8 @@
   "name": "dulak",
   "version": "0.1.0",
   "license": "MIT",
-  "description": "Full-stack boilerplate: Hono + bun:sqlite + Inertia v3 (React 19) with auth, roles, SSR, migrations, tests and Docker.",
-  "keywords": ["dulak", "hono", "bun", "inertia", "react", "sqlite", "boilerplate", "ssr"],
+  "description": "Full-stack boilerplate: Hono + bun:sqlite + Inertia v3 (Svelte 5) with auth, roles, SSR, Tailwind v4, migrations, tests and Docker.",
+  "keywords": ["dulak", "hono", "bun", "inertia", "svelte", "tailwind", "sqlite", "boilerplate", "ssr"],
   "repository": {
     "type": "git",
     "url": "https://github.com/maulanashalihin/dulak.git"
@@ -16,23 +16,24 @@
   "module": "src/index.ts",
   "scripts": {
     "dev": "bun --watch src/index.ts",
+    "dev:css": "bunx @tailwindcss/cli -i src/client/tailwind.css -o src/client/.tailwind.css --watch",
     "build": "bun run scripts/build.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
     "db:seed": "bun run scripts/seed.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json",
     "test": "bun test --isolate"
   },
   "dependencies": {
-    "@inertiajs/react": "^3.0.0",
+    "@inertiajs/svelte": "^3.6.1",
     "@sinclair/typebox": "^0.34.52",
     "hono": "^4.13.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "svelte": "^5.56.8"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@types/bun": "^1.2.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "svelte-check": "^4.7.4",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.8.0"
   }
 }
