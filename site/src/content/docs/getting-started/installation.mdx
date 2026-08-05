@@ -1,0 +1,49 @@
+---
+title: Installation
+description: Scaffold a project with create-dulak, or run the repository directly.
+---
+
+## Scaffold with create-dulak
+
+```bash
+bunx create-dulak my-app                # interactive template prompt
+bunx create-dulak my-app --template vue-tailwind
+bunx create-dulak .                     # scaffold into the current dir
+```
+
+Available templates:
+
+| Template | Stack |
+| --- | --- |
+| `default` | React 19 + vanilla CSS |
+| `react-tailwind` | React 19 + Tailwind CSS v4 |
+| `svelte-tailwind` | Svelte 5 + Tailwind CSS v4 |
+| `vue-tailwind` | Vue 3 + Tailwind CSS v4 |
+
+The scaffolder downloads the matching branch from GitHub, strips dev-only
+files, creates `data/` and `.env`, and runs `bun install`.
+
+## Run the repository directly
+
+```bash
+git clone https://github.com/maulanashalihin/dulak.git
+cd dulak
+bun install
+```
+
+## Scripts
+
+| Command | What it does |
+| --- | --- |
+| `bun run dev` | Watch mode; rebuilds client assets on restart |
+| `bun run dev:css` | Tailwind CLI watch (Tailwind templates) |
+| `bun run build` | Prebuild client assets → `dist/` (+ `manifest.json`) |
+| `bun run start` | Serve prebuilt assets (`NODE_ENV=production`) |
+| `bun run test` | E2E suite (62 tests) |
+| `bun run db:seed` | Create a demo user (`[email] [password] [role]`) |
+| `bun run typecheck` | `tsc --noEmit` (or `svelte-check` / `vue-tsc` on templates) |
+
+## Requirements
+
+- **Bun >= 1.3** (also required for the runtime)
+- Node 18+ for `create-dulak` itself (the scaffolder is a plain Node script)

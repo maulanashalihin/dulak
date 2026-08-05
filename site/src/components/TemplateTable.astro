@@ -1,0 +1,46 @@
+---
+const templates = [
+  { name: "default", stack: "React 19 + vanilla CSS", branch: "main", cmd: "" },
+  { name: "react-tailwind", stack: "React 19 + Tailwind CSS v4", branch: "template/react-tailwind", cmd: " --template react-tailwind" },
+  { name: "svelte-tailwind", stack: "Svelte 5 + Tailwind CSS v4", branch: "template/svelte-tailwind", cmd: " --template svelte-tailwind" },
+  { name: "vue-tailwind", stack: "Vue 3 + Tailwind CSS v4", branch: "template/vue-tailwind", cmd: " --template vue-tailwind" },
+];
+---
+
+<table class="template-table">
+  <thead>
+    <tr>
+      <th>Template</th>
+      <th>Stack</th>
+      <th>Branch</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+      templates.map((t) => (
+        <tr>
+          <td><code>{t.name}</code></td>
+          <td>{t.stack}</td>
+          <td><code>{t.branch}</code></td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+
+<p class="template-note">
+  All templates share the same server, auth, SSR, and test suite — only the
+  client framework and CSS pipeline differ.
+</p>
+
+<style>
+  .template-table {
+    width: 100%;
+    font-size: 0.95rem;
+  }
+  .template-note {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--sl-color-gray-2);
+  }
+</style>

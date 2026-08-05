@@ -1,0 +1,26 @@
+/* Dulak site — Starlight theme overrides. */
+
+:root {
+	--sl-color-accent-high: #047857; /* emerald-700 */
+	--sl-color-accent: #059669; /* emerald-600 */
+	--sl-color-accent-low: #d1fae5; /* emerald-100 */
+	--sl-color-bg-nav: var(--sl-color-gray-7);
+}
+
+/* Landing hero */
+.hero {
+	padding-block: 4rem 2rem;
+}
+.hero h1 {
+	font-size: clamp(2.25rem, 6vw, 3.5rem);
+	line-height: 1.1;
+}
+.hero .tagline {
+	font-size: 1.15rem;
+	max-width: 44rem;
+}
+
+/* Landing sections */
+.sl-markdown-content h2 {
+	margin-top: 2.5rem;
+}

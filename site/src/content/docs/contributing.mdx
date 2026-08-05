@@ -1,0 +1,36 @@
+---
+title: Contributing
+description: How to keep new code structurally consistent.
+---
+
+Read `AGENTS.md` at the repo root first — it codifies the layout and
+convention rules (a condensed version is on the
+[Conventions](/architecture/conventions/) page).
+
+## Before you start
+
+- Follow the structural rules: routes in `routes/<feature>.routes.ts`,
+  all SQL in `db.ts`, env only in `config.ts`, TypeBox for validation.
+- Match the repo style: 2-space indent, double quotes, semicolons.
+
+## Verification
+
+```bash
+bun run typecheck
+bun run test        # = bun test --isolate — NEVER plain bun test
+```
+
+- The suite is 62 tests and must stay green.
+- `--isolate` is required: each test file sets its env in `beforeAll` and
+  closes the DB in `afterAll` as if process-isolated.
+- `tsc` only covers `src/` and `scripts/` — template branches use
+  `svelte-check` / `vue-tsc` instead.
+
+## Committing
+
+This repository also hosts the site (`site/`, Astro + Starlight) and the
+scaffolder (`create-dulak/`). Update docs alongside code changes — the docs
+drift is the number-one contribution smell.
+
+The repository uses branch namespaces for templates (`template/*`). Tag
+archived eras with `legacy/*` tags rather than deleting history.

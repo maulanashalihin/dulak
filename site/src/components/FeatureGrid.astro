@@ -1,0 +1,68 @@
+---
+interface Feature {
+  title: string;
+  blurb: string;
+}
+
+const features: Feature[] = [
+  {
+    title: "Auth, complete",
+    blurb: "Register, login, logout, forgot/reset password and Google OAuth — argon2id hashing, DB-backed sessions, CSRF origin check, rate-limited endpoints.",
+  },
+  {
+    title: "Inertia v3 + SSR",
+    blurb: "Full HTML on first load, SPA navigation after. In-process SSR, asset-version negotiation (409 + reload), partial reloads, one-shot flash, shared props.",
+  },
+  {
+    title: "Resumable uploads",
+    blurb: "tus protocol v1 at /uploads: creation, resume, checksum, termination, expiration — demonstrated end to end by the profile avatar upload.",
+  },
+  {
+    title: "Templates",
+    blurb: "React, Svelte 5, and Vue 3 clients with Tailwind CSS v4 — one server, three frontends, same 62-test suite.",
+  },
+  {
+    title: "Migrations & SQL",
+    blurb: "Versioned SQL files applied at startup in transactions. Zero-ORM bun:sqlite with prepared statements only.",
+  },
+  {
+    title: "Production-shaped ops",
+    blurb: "Batched request logging, gzip compression, security headers, /health, graceful shutdown, multi-stage Docker, CI.",
+  },
+];
+---
+
+<div class="feature-grid">
+  {
+    features.map((f) => (
+      <div class="feature-card">
+        <h3>{f.title}</h3>
+        <p>{f.blurb}</p>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  .feature-card {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    background: var(--sl-color-gray-7);
+  }
+  .feature-card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+  }
+  .feature-card p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--sl-color-gray-2);
+  }
+</style>

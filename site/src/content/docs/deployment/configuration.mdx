@@ -1,0 +1,27 @@
+---
+title: Configuration
+description: Environment variables and fail-fast validation.
+---
+
+Env is read **once, at startup**, in `src/server/config.ts`, which validates
+and fails fast with a clear message. Never read `process.env` elsewhere.
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `PORT` | `4000` | |
+| `APP_URL` | `http://localhost:4000` | Absolute base URL (email links, OAuth redirects) |
+| `DATABASE_PATH` | `./data/app.sqlite` | |
+| `MAIL_DRIVER` | `log` | `log` \| `resend` \| `mailtrap` |
+| `MAIL_FROM` | `no-reply@example.com` | |
+| `RESEND_API_KEY` | — | required when `MAIL_DRIVER=resend` |
+| `MAILTRAP_API_TOKEN` | — | required when `MAIL_DRIVER=mailtrap` |
+| `MAILTRAP_INBOX_ID` | — | sandbox endpoint when set |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
+| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `10` / `60` | requests per window on auth endpoints |
+| `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
+| `TUS_MAX_SIZE` | `0` | max upload size (`0` = unlimited) |
+| `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL (`0` = no expiry) |
+
+Copy `.env.example` → `.env` and adjust. Invalid or incomplete config aborts
+startup with a specific message (e.g. `MAIL_DRIVER=resend requires
+RESEND_API_KEY`).
