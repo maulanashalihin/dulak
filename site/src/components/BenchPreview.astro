@@ -1,6 +1,6 @@
 ---
 const rows = [
-  { op: "Point read via HTTP", detail: "GET /users/:id · p99 2.0ms", value: "41K", unit: "req/s" },
+  { op: "Point read via HTTP", detail: "GET /users/:id · p99 1.3ms", value: "74K", unit: "req/s" },
   { op: "Transactional insert", detail: "db.transaction() · 0.75µs/row", value: "1.3M", unit: "ops/s" },
   { op: "Autocommit insert", detail: "WAL + synchronous=NORMAL", value: "95K", unit: "ops/s" },
   { op: "Point read (direct)", detail: "bun:sqlite prepared stmt", value: "526K", unit: "ops/s" },
