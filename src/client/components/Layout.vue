@@ -132,25 +132,27 @@ function handleLogout() {
 </script>
 
 <template>
-	<div class="dash">
+	<div class="grid grid-cols-[260px_1fr] min-h-screen bg-bg max-md:grid-cols-1">
 		<!-- Mobile backdrop -->
 		<div
 			v-if="sidebarOpen"
-			class="dash-backdrop"
+			class="fixed inset-0 bg-black/50 z-[25] animate-[fade-in_120ms_ease]"
 			aria-hidden="true"
 			@click="sidebarOpen = false"
 		></div>
 
 		<!-- Sidebar -->
 		<aside
-			:class="`sidebar${sidebarOpen ? ' sidebar-open' : ''}`"
+			:class="`sticky top-0 self-start h-screen flex flex-col bg-surface border-r border-border z-30 max-md:fixed max-md:top-0 max-md:left-0 max-md:w-[280px] max-md:max-w-[85vw] max-md:-translate-x-full max-md:transition-transform max-md:shadow-card${sidebarOpen ? ' max-md:translate-x-0' : ''}`"
 			aria-label="Primary"
 		>
-			<div class="sidebar-head">
+			<div
+				class="flex items-center justify-between gap-2 px-5 border-b border-border h-16 shrink-0"
+			>
 				<Brand :href="user ? '/dashboard' : '/login'" />
 				<button
 					type="button"
-					class="sidebar-close"
+					class="hidden items-center justify-center w-9 h-9 border border-border rounded-lg bg-transparent text-text cursor-pointer max-md:flex"
 					aria-label="Close navigation"
 					@click="sidebarOpen = false"
 				>
@@ -170,16 +172,22 @@ function handleLogout() {
 				</button>
 			</div>
 
-			<nav class="sidebar-nav">
-				<p class="sidebar-section">Menu</p>
-				<ul>
+			<nav class="flex-1 overflow-y-auto px-3 py-4">
+				<p
+					class="mx-3 my-2 text-xs font-bold uppercase tracking-wider text-muted"
+				>
+					Menu
+				</p>
+				<ul class="list-none m-0 p-0 flex flex-col gap-0.5">
 					<li v-for="item in items" :key="item.href">
 						<Link
 							:href="item.href"
-							:class="`sidebar-link${item.match(currentPath) ? ' sidebar-link-active' : ''}`"
+							:class="`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-text text-sm font-medium transition-colors hover:bg-primary-soft hover:no-underline${item.match(currentPath) ? ' bg-primary-soft text-primary font-semibold' : ''}`"
 							:aria-current="item.match(currentPath) ? 'page' : undefined"
 						>
-							<span class="sidebar-link-icon">
+							<span
+								:class="`inline-flex shrink-0 ${item.match(currentPath) ? 'text-primary' : 'text-muted'}`"
+							>
 								<svg
 									v-if="item.href === '/dashboard'"
 									viewBox="0 0 24 24"
@@ -234,21 +242,23 @@ function handleLogout() {
 				</ul>
 			</nav>
 
-			<div class="sidebar-foot">
-				<div class="sidebar-foot-card">
-					<p class="sidebar-foot-title">Dulak</p>
-					<p class="sidebar-foot-sub">Bun · SQLite · Inertia v3</p>
+			<div class="p-3 border-t border-border">
+				<div class="p-3.5 rounded-[10px] bg-bg border border-border">
+					<p class="m-0 text-sm font-bold">Dulak</p>
+					<p class="mt-0.5 text-xs text-muted">Bun · SQLite · Inertia v3</p>
 				</div>
 			</div>
 		</aside>
 
 		<!-- Main column -->
-		<div class="dash-main">
-			<header class="topbar">
-				<div class="topbar-left">
+		<div class="flex flex-col min-w-0">
+			<header
+				class="sticky top-0 z-20 flex items-center justify-between gap-4 px-5 py-2.5 bg-surface/88 backdrop-saturate-[1.8] backdrop-blur border-b border-border h-16 max-md:px-4"
+			>
+				<div class="flex items-center gap-3 flex-1 min-w-0">
 					<button
 						type="button"
-						class="topbar-toggle"
+						class="hidden items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 max-md:flex"
 						aria-label="Open navigation"
 						:aria-expanded="sidebarOpen"
 						@click="sidebarOpen = !sidebarOpen"
@@ -267,8 +277,10 @@ function handleLogout() {
 							<path d="M3 6h18M3 12h18M3 18h18" />
 						</svg>
 					</button>
-					<label class="topbar-search">
-						<span class="topbar-search-icon">
+					<label
+						class="relative flex items-center w-full max-w-[360px] h-10 px-2.5 border border-border rounded-lg bg-bg text-muted transition-colors focus-within:border-primary focus-within:shadow-[0_0_0_3px_var(--primary-soft)] max-[960px]:hidden"
+					>
+						<span class="inline-flex text-muted shrink-0">
 							<svg
 								viewBox="0 0 24 24"
 								width="16"
@@ -284,13 +296,26 @@ function handleLogout() {
 								<path d="m21 21-4.3-4.3" />
 							</svg>
 						</span>
-						<input type="search" placeholder="Search…" aria-label="Search" />
-						<kbd class="topbar-search-kbd">⌘K</kbd>
+						<input
+							type="search"
+							placeholder="Search…"
+							aria-label="Search"
+							class="flex-1 min-w-0 border-none outline-none bg-transparent text-text text-sm px-1 placeholder:text-muted"
+						/>
+						<kbd
+							class="font-mono text-xs px-1 py-0.5 border border-border rounded text-muted bg-surface shrink-0"
+						>
+							⌘K
+						</kbd>
 					</label>
 				</div>
 
-				<div class="topbar-right">
-					<button type="button" class="topbar-icon-btn" aria-label="Notifications">
+				<div class="flex items-center gap-2 shrink-0">
+					<button
+						type="button"
+						class="relative inline-flex items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 transition-colors hover:bg-primary-soft hover:no-underline"
+						aria-label="Notifications"
+					>
 						<svg
 							viewBox="0 0 24 24"
 							width="18"
@@ -305,12 +330,15 @@ function handleLogout() {
 							<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
 							<path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
 						</svg>
-						<span class="topbar-dot" aria-hidden="true"></span>
+						<span
+							class="absolute top-2 right-[9px] w-1.5 h-1.5 rounded-full bg-primary border-2 border-surface"
+							aria-hidden="true"
+						></span>
 					</button>
 
 					<button
 						type="button"
-						class="topbar-icon-btn"
+						class="inline-flex items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 transition-colors hover:bg-primary-soft hover:no-underline"
 						aria-label="Toggle theme"
 						@click="toggleTheme"
 					>
@@ -327,7 +355,9 @@ function handleLogout() {
 							aria-hidden="true"
 						>
 							<circle cx="12" cy="12" r="4" />
-							<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+							<path
+								d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+							/>
 						</svg>
 						<svg
 							v-else
@@ -345,28 +375,38 @@ function handleLogout() {
 						</svg>
 					</button>
 
-					<div v-if="user" ref="menuRef" class="user-menu">
+					<div v-if="user" ref="menuRef" class="relative">
 						<button
 							type="button"
-							class="user-menu-trigger"
+							class="flex items-center gap-2 h-10 px-2.5 py-1 border border-border rounded-full bg-surface text-text cursor-pointer transition-colors hover:bg-primary-soft max-md:p-1"
 							aria-haspopup="menu"
 							:aria-expanded="menuOpen"
 							@click="menuOpen = !menuOpen"
 						>
 							<img
 								v-if="user.avatarUrl"
-								class="avatar avatar-img"
+								class="w-8 h-8 rounded-full object-cover"
 								:src="user.avatarUrl"
 								alt=""
 							/>
-							<span v-else class="avatar" aria-hidden="true">
+							<span
+								v-else
+								class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-xs font-bold tracking-tight shrink-0"
+								aria-hidden="true"
+							>
 								{{ initials(user.name) }}
 							</span>
-							<span class="user-menu-meta">
-								<span class="user-menu-name">{{ user.name }}</span>
-								<span class="user-menu-role">{{ user.role }}</span>
+							<span
+								class="flex flex-col items-start leading-tight max-md:hidden"
+							>
+								<span class="text-sm font-semibold max-w-[140px] truncate">
+									{{ user.name }}
+								</span>
+								<span class="text-xs text-muted capitalize">
+									{{ user.role }}
+								</span>
 							</span>
-							<span class="user-menu-chevron">
+							<span class="inline-flex text-muted max-md:hidden">
 								<svg
 									viewBox="0 0 24 24"
 									width="14"
@@ -383,37 +423,58 @@ function handleLogout() {
 							</span>
 						</button>
 
-						<div v-if="menuOpen" class="user-menu-panel" role="menu">
-							<div class="user-menu-head">
+						<div
+							v-if="menuOpen"
+							class="absolute top-full right-0 mt-2 w-60 bg-surface border border-border rounded-xl shadow-card p-1 z-40 animate-[menu-in_120ms_ease]"
+							role="menu"
+						>
+							<div class="flex items-center gap-1.5 px-2.5 pt-2 pb-2.5">
 								<img
 									v-if="user.avatarUrl"
-									class="avatar avatar-lg avatar-img"
+									class="w-11 h-11 rounded-full object-cover"
 									:src="user.avatarUrl"
 									alt=""
 								/>
-								<span v-else class="avatar avatar-lg" aria-hidden="true">
+								<span
+									v-else
+									class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary text-white text-sm font-bold shrink-0"
+									aria-hidden="true"
+								>
 									{{ initials(user.name) }}
 								</span>
-								<div class="user-menu-head-meta">
-									<span class="user-menu-head-name">{{ user.name }}</span>
-									<span class="user-menu-head-email">{{ user.email }}</span>
+								<div class="flex flex-col min-w-0">
+									<span class="text-sm font-semibold truncate">
+										{{ user.name }}
+									</span>
+									<span class="text-xs text-muted truncate">
+										{{ user.email }}
+									</span>
 								</div>
 							</div>
-							<div class="user-menu-divider"></div>
-							<Link href="/dashboard" class="user-menu-item" role="menuitem">
+							<div class="h-px bg-border my-1.5"></div>
+							<Link
+								href="/dashboard"
+								class="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-text text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
+								role="menuitem"
+							>
 								Dashboard
 							</Link>
-							<Link v-if="user.role === 'admin'" href="/admin" class="user-menu-item" role="menuitem">
+							<Link
+								v-if="user.role === 'admin'"
+								href="/admin"
+								class="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-text text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
+								role="menuitem"
+							>
 								Admin console
 							</Link>
-							<div class="user-menu-divider"></div>
+							<div class="h-px bg-border my-1.5"></div>
 							<button
 								type="button"
-								class="user-menu-item user-menu-danger"
+								class="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-danger text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
 								role="menuitem"
 								@click="handleLogout"
 							>
-								<span class="user-menu-item-icon">
+								<span class="inline-flex text-danger">
 									<svg
 										viewBox="0 0 24 24"
 										width="16"
@@ -433,25 +494,47 @@ function handleLogout() {
 							</button>
 						</div>
 					</div>
-					<div v-else class="topbar-auth">
-						<Link href="/login" class="btn btn-ghost">Log in</Link>
-						<Link href="/register" class="btn btn-primary">Register</Link>
+					<div v-else class="flex items-center gap-2">
+						<Link
+							href="/login"
+							class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-border rounded-lg bg-transparent text-text font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
+						>
+							Log in
+						</Link>
+						<Link
+							href="/register"
+							class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-primary rounded-lg bg-primary text-white font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline"
+						>
+							Register
+						</Link>
 					</div>
 				</div>
 			</header>
 
-			<div v-if="flash?.success" class="flash flash-success">
+			<div
+				v-if="flash?.success"
+				class="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-green-200 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
+			>
 				{{ String(flash.success) }}
 			</div>
-			<div v-if="flash?.error" class="flash flash-error">
+			<div
+				v-if="flash?.error"
+				class="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
+			>
 				{{ String(flash.error) }}
 			</div>
 
-			<main class="content"><slot /></main>
+			<main
+				class="flex-1 w-full max-w-[1200px] mx-auto px-5 py-6 max-md:px-4 max-md:py-5"
+			>
+				<slot />
+			</main>
 
-			<footer class="footer">
+			<footer
+				class="mt-auto px-5 py-3.5 flex items-center justify-between gap-3 text-muted text-xs border-t border-border dark:text-[#b6bdcb] max-md:px-4 max-md:py-3"
+			>
 				<span>Dulak boilerplate</span>
-				<span class="footer-stack">Bun · Hono · bun:sqlite · Inertia v3</span>
+				<span>Bun · Hono · bun:sqlite · Inertia v3</span>
 			</footer>
 		</div>
 	</div>
