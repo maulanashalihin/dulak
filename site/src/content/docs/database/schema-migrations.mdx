@@ -1,0 +1,72 @@
+---
+title: Database & migrations
+description: The schema, the migration runner, and SQLite practices.
+---
+
+## Tables
+
+| Table | Purpose |
+| --- | --- |
+| `users` | id, name, email, password_hash, role, google_id, avatar_url, created_at |
+| `sessions` | token_hash (SHA-256 of the cookie token), user_id, flash, expires_at |
+| `password_resets` | email, token_hash, expires_at |
+| `uploads` | id, upload_length, offset, metadata, user_id, path, created_at, expires_at |
+
+Passwords are argon2id via `Bun.password`. Session and reset tokens are
+stored **hashed** — the raw token only lives in the cookie/email, so a DB
+leak cannot be replayed.
+
+## The migration runner
+
+`src/server/migrations.ts` applies SQL files from `migrations/` in
+filename order:
+
+- Each file runs **once**, inside a **transaction**, recorded in
+  `schema_migrations`.
+- **Never edit an applied migration** — add a new numbered file
+  (`0005_*.sql`, `0006_*.sql`, …).
+- A failed migration rolls back and aborts startup.
+
+```bash
+# add a column to an existing table
+cat > migrations/0005_add_last_login.sql <<'SQL'
+ALTER TABLE users ADD COLUMN last_login_at TEXT;
+SQL
+bun run dev   # migration runs on boot
+```
+
+SQLite `ALTER TABLE ADD COLUMN` with `NOT NULL` requires a `DEFAULT`.
+
+## SQLite practices
+
+- **All SQL lives in `db.ts`** as prepared statements created once after
+  migrations run (`db.query(...)`). No raw SQL in routes or handlers.
+- **WAL mode** (`PRAGMA journal_mode = WAL`) — concurrent readers don't
+  block the writer.
+- **`busy_timeout = 5000`** — concurrent writes (e.g. two tus PATCHes)
+  wait up to 5s instead of failing with `SQLITE_BUSY`.
+- **`foreign_keys = ON`** — referential integrity is enforced.
+- Queries are parameterized — no string interpolation of values.
+
+## Schema changes
+
+1. Write the new migration file.
+2. Restart — it applies on boot.
+3. Update `db.ts` statements (and `USER_COLUMNS`-style selects) for the new
+   shape.
+
+## Resetting the dev database
+
+Applied migrations never re-run, so after editing a migration during
+prototyping:
+
+```bash
+rm -f data/app.sqlite*   # rebuild from scratch on next start
+```
+
+## Production notes
+
+- Single instance: SQLite is single-writer. Horizontal scaling is a
+  deliberate swap point (external store), not a config toggle.
+- Back up `data/app.sqlite` + the uploads directory; SQLite snapshots are
+  consistent via the WAL.

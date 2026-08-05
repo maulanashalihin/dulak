@@ -74,6 +74,20 @@ export default defineConfig({
 						{ label: "vue-tailwind", slug: "templates/vue-tailwind" },
 					],
 				},
+				{
+					label: "Database",
+					items: [
+						{ label: "Schema & migrations", slug: "database/schema-migrations" },
+					],
+				},
+				{ label: "Testing", slug: "testing" },
+				{
+					label: "Extending",
+					items: [
+						{ label: "Adding a feature", slug: "extending/adding-a-feature" },
+					],
+				},
+				{ label: "Troubleshooting", slug: "troubleshooting" },
 				{ label: "Contributing", slug: "contributing" },
 			],
 		}),
