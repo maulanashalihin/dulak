@@ -4,9 +4,12 @@
   let { href, class: className = '' }: { href: string; class?: string } = $props()
 </script>
 
-<Link href={href} class={className ? `brand ${className}` : 'brand'}>
+<Link
+  href={href}
+  class={`inline-flex items-center gap-2 font-bold text-text tracking-tight hover:no-underline ${className}`}
+>
   <svg
-    class="brand-mark"
+    class="text-primary shrink-0"
     viewBox="0 0 32 32"
     width="28"
     height="28"
@@ -16,7 +19,5 @@
     <rect width="32" height="32" rx="8" fill="currentColor" />
     <path d="M17.8 5.6 8.4 18h5.2l-1.2 8.4 9.2-12h-5.2z" fill="white" />
   </svg>
-  <span>
-    Dulak
-  </span>
+  <span>Dulak</span>
 </Link>

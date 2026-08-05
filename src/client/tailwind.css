@@ -3,17 +3,40 @@
 /* Map dark mode to [data-theme="dark"] (boilerplate convention). */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Bridge existing CSS variables to Tailwind theme tokens. */
+/* Bridge existing CSS variables (defined in styles.css) to Tailwind theme
+   tokens. `inline` means utilities compile to var(--token) so dark mode
+   auto-switches at runtime without duplicating values. */
 @theme inline {
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-border: var(--border);
-  --color-text: var(--text);
-  --color-muted: var(--muted);
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
-  --color-primary-soft: var(--primary-soft);
-  --color-danger: var(--danger);
-  --color-success: var(--success);
-  --radius: var(--radius);
+	--color-bg: var(--bg);
+	--color-surface: var(--surface);
+	--color-border: var(--border);
+	--color-text: var(--text);
+	--color-muted: var(--muted);
+	--color-primary: var(--primary);
+	--color-primary-hover: var(--primary-hover);
+	--color-primary-soft: var(--primary-soft);
+	--color-danger: var(--danger);
+	--color-success: var(--success);
+	--radius: var(--radius);
+	--shadow-card: var(--shadow);
+	--font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif;
+}
+
+/* --- Base layer --------------------------------------------------------- */
+
+@layer base {
+	body {
+		@apply bg-bg text-text font-sans antialiased leading-normal;
+		margin: 0;
+	}
+
+	a:hover {
+		text-decoration: underline;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
 }

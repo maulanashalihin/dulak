@@ -21,44 +21,64 @@
 
 {#if user}
   <Layout>
-    <h1>Dashboard</h1>
-    <p class="page-sub">
-      You are signed in as <strong>{user.email}</strong> — this page is server-rendered,
-      database-backed, and hydrated by Inertia v3.
+    <h1 class="text-[1.6rem] m-0 mb-1 tracking-tight">Dashboard</h1>
+    <p class="text-muted mb-3">
+      You are signed in as <strong>{user.email}</strong> — this page is
+      server-rendered, database-backed, and hydrated by Inertia v3.
     </p>
 
-    <section class="stats">
-      <div class="stat-card">
-        <span class="stat-value">{stats.userCount}</span>
-        <span class="stat-label">Total users</span>
+    <section
+      class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 my-6"
+    >
+      <div
+        class="bg-surface border border-border rounded-radius p-5 flex flex-col items-start gap-1"
+      >
+        <span class="text-xl font-bold">{stats.userCount}</span>
+        <span class="text-[0.82rem] text-muted">Total users</span>
       </div>
-      <div class="stat-card">
-        <span class="stat-value badge-value">{user.role}</span>
-        <span class="stat-label">Role</span>
+      <div
+        class="bg-surface border border-border rounded-radius p-5 flex flex-col items-start gap-1"
+      >
+        <span class="text-xl font-bold capitalize">{user.role}</span>
+        <span class="text-[0.82rem] text-muted">Role</span>
       </div>
-      <div class="stat-card">
-        <span class="stat-value">{formatDate(user.createdAt)}</span>
-        <span class="stat-label">Member since</span>
+      <div
+        class="bg-surface border border-border rounded-radius p-5 flex flex-col items-start gap-1"
+      >
+        <span class="text-xl font-bold">{formatDate(user.createdAt)}</span>
+        <span class="text-[0.82rem] text-muted">Member since</span>
       </div>
     </section>
 
-    <section class="panel">
-      <h2>Recent users</h2>
-      <div class="table-wrap">
-        <table class="table">
+    <section class="bg-surface border border-border rounded-radius p-6">
+      <h2 class="text-[1.1rem] m-0 mb-3">Recent users</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Joined</th>
+              <th class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
+                Name
+              </th>
+              <th class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
+                Email
+              </th>
+              <th class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap text-muted text-xs uppercase tracking-wider bg-bg">
+                Joined
+              </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="[&>tr:last-child>td]:border-b-0">
             {#each stats.recentUsers as u (u.id)}
-              <tr>
-                <td>{u.name}</td>
-                <td>{u.email}</td>
-                <td>{formatDate(u.createdAt)}</td>
+              <tr class="transition-colors hover:bg-primary-soft">
+                <td class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap">
+                  {u.name}
+                </td>
+                <td class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap">
+                  {u.email}
+                </td>
+                <td class="text-left px-3 py-2.5 border-b border-border whitespace-nowrap">
+                  {formatDate(u.createdAt)}
+                </td>
               </tr>
             {/each}
           </tbody>
