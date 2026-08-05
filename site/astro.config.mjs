@@ -57,7 +57,6 @@ export default defineConfig({
 					items: [
 						{ label: "Configuration", slug: "deployment/configuration" },
 						{ label: "Docker", slug: "deployment/docker" },
-						{ label: "Cloudflare Pages", slug: "deployment/cloudflare-pages" },
 					],
 				},
 				{
