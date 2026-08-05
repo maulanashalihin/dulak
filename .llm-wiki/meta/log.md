@@ -82,3 +82,6 @@
 ## [2026-08-05T01:14:22.346Z] observe
 - slug: "obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox", title: "TypeBox formats not pre-registered in plain @sinclair/typebox", relevance: "high"
 
+## [2026-08-05T10:23:01.478Z] observe
+- slug: "obs-2026-08-05-tailwind-templates-converted-to-utility-classes-dulak-rebran", title: "Tailwind templates converted to utility classes + Dulak rebrand", relevance: "high"
+

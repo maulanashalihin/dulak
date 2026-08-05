@@ -32,6 +32,7 @@
     "sources/SRC-2026-08-03-001"
   ],
   "sources/obs-2026-08-04-tus-uploads-restructured-to-flat-convention": [],
+  "sources/obs-2026-08-05-tailwind-templates-converted-to-utility-classes-dulak-rebran": [],
   "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": [
     "entities/elysia-inertia-boilerplate"
   ],

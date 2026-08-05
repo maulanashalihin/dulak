@@ -25,3 +25,4 @@
 {"timestamp":"2026-08-05T01:14:21.414Z","kind":"observe","slug":"obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13","title":"Hono migration complete: Elysia swapped for Hono 4.13","relevance":"critical"}
 {"timestamp":"2026-08-05T01:14:22.342Z","kind":"observe","slug":"obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source","title":"Hono 4.13 integration gotchas (verified from source)","relevance":"high"}
 {"timestamp":"2026-08-05T01:14:22.346Z","kind":"observe","slug":"obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox","title":"TypeBox formats not pre-registered in plain @sinclair/typebox","relevance":"high"}
+{"timestamp":"2026-08-05T10:23:01.478Z","kind":"observe","slug":"obs-2026-08-05-tailwind-templates-converted-to-utility-classes-dulak-rebran","title":"Tailwind templates converted to utility classes + Dulak rebrand","relevance":"high"}

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-05T01:14:22.347Z",
+  "last_updated": "2026-08-05T10:23:02.076Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -120,6 +120,23 @@
         "architecture"
       ],
       "source_context": "\"Restructuring src/server/tus/ per README convention\""
+    },
+    "sources/obs-2026-08-05-tailwind-templates-converted-to-utility-classes-dulak-rebran": {
+      "type": "source",
+      "title": "\"Observation: Tailwind templates converted to utility classes + Dulak rebrand\"",
+      "created": "2026-08-05",
+      "updated": "2026-08-05",
+      "slug": "obs-2026-08-05-tailwind-templates-converted-to-utility-classes-dulak-rebran",
+      "status": "observation",
+      "relevance": "high",
+      "observed_at": "2026-08-05T10:23:01.477Z",
+      "tags": [
+        "styling",
+        "tailwind",
+        "agents-md",
+        "branding",
+        "dulak"
+      ]
     },
     "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": {
       "type": "source",
