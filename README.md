@@ -6,11 +6,10 @@ The Banjar word for *bored* — a deliberately boring full-stack starter.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Bun](https://img.shields.io/badge/runtime-Bun_1.3-black?logo=bun&logoColor=white)](https://bun.sh)
 
-A production-shaped, full-stack boilerplate: **Hono** (HTTP) + **bun:sqlite**
-(database) + **Inertia v3 / React 19** (server-driven UI with in-process SSR),
-running entirely on **Bun**. Auth (register / login / logout / forgot-password /
-Google OAuth), roles, rate limiting, tus uploads, migrations, tests, and Docker
-are wired end to end.
+A full-stack starter running entirely on **Bun**: **Hono** for HTTP,
+**bun:sqlite** for data, **Inertia v3** for server-driven UI — with React,
+Svelte, and Vue templates. Auth, uploads, migrations, tests, Docker — wired
+end to end.
 
 ```mermaid
 flowchart LR

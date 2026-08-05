@@ -34,6 +34,7 @@ export default defineConfig({
 						{ label: "Installation", slug: "getting-started/installation" },
 					],
 				},
+				{ label: "Philosophy", slug: "philosophy" },
 				{
 					label: "Architecture",
 					items: [
