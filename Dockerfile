@@ -15,6 +15,6 @@ COPY --from=build /app/dist ./dist
 COPY src ./src
 COPY migrations ./migrations
 COPY scripts ./scripts
-EXPOSE 3000
+EXPOSE 4000
 # bun runs TS directly; dist/assets are prebuilt in the build stage.
 CMD ["bun", "run", "src/index.ts"]

@@ -38,9 +38,9 @@ if (problems.length > 0) {
 
 export const config = {
   isProd: process.env.NODE_ENV === 'production',
-  port: Number(pick(process.env.PORT, '3000')),
+  port: Number(pick(process.env.PORT, '4000')),
   /** Absolute base URL — used for email links and OAuth redirect URIs. */
-  appUrl: pick(process.env.APP_URL, 'http://localhost:3000').replace(/\/+$/, ''),
+  appUrl: pick(process.env.APP_URL, 'http://localhost:4000').replace(/\/+$/, ''),
   dbPath: pick(process.env.DATABASE_PATH, './data/app.sqlite'),
   upload: {
     /** Directory where tus upload chunks are stored on disk. */

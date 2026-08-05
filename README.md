@@ -70,7 +70,7 @@ choice favors the next maintainer — human or AI agent — over cleverness:
 # Scaffold a new project (prompts for template, installs deps, creates .env)
 bunx create-dulak my-app
 cd my-app
-bun run dev          # http://localhost:3000
+bun run dev          # http://localhost:4000
 
 # Or pick a template directly:
 bunx create-dulak my-app --template svelte-tailwind
@@ -127,8 +127,8 @@ roles, SSR, and test suite.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `PORT` | `3000` | |
-| `APP_URL` | `http://localhost:3000` | Absolute base URL (email links, OAuth redirects) |
+| `PORT` | `4000` | |
+| `APP_URL` | `http://localhost:4000` | Absolute base URL (email links, OAuth redirects) |
 | `DATABASE_PATH` | `./data/app.sqlite` | |
 | `MAIL_DRIVER` | `log` | `log` \| `resend` \| `mailtrap` |
 | `MAIL_FROM` | `no-reply@example.com` | |
@@ -149,7 +149,7 @@ Invalid/incomplete config fails fast at startup with a clear message
 1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) →
    create OAuth client (Web application).
 2. Authorized redirect URI: `https://<your-domain>/auth/google/callback`
-   (`http://localhost:3000/auth/google/callback` for local dev).
+   (`http://localhost:4000/auth/google/callback` for local dev).
 3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`.
 
 ### Mail drivers

@@ -13,6 +13,7 @@ import {
 	manifestExists,
 } from "./server/assets";
 import { createApp } from "./server/app";
+import { config } from "./server/config";
 import { db } from "./server/db";
 
 const isProd = process.env.NODE_ENV === "production";
@@ -21,7 +22,7 @@ if (!isProd || !manifestExists()) {
 }
 
 const assets = loadManifest();
-const port = Number(process.env.PORT ?? 3000);
+const port = config.port;
 
 const server = Bun.serve({
 	port,
