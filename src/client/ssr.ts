@@ -22,6 +22,6 @@ export async function renderPage(page: Page) {
 			return createSSRApp({ render: () => h(App, props) }).use(plugin);
 		},
 		title: (title: string) =>
-			title ? `${title} — Hono Inertia` : "Hono Inertia",
+			title ? `${title} — Dulak` : "Dulak",
 	});
 }

@@ -236,7 +236,7 @@ function handleLogout() {
 
 			<div class="sidebar-foot">
 				<div class="sidebar-foot-card">
-					<p class="sidebar-foot-title">Hono Inertia</p>
+					<p class="sidebar-foot-title">Dulak</p>
 					<p class="sidebar-foot-sub">Bun · SQLite · Inertia v3</p>
 				</div>
 			</div>
@@ -450,7 +450,7 @@ function handleLogout() {
 			<main class="content"><slot /></main>
 
 			<footer class="footer">
-				<span>Hono Inertia boilerplate</span>
+				<span>Dulak boilerplate</span>
 				<span class="footer-stack">Bun · Hono · bun:sqlite · Inertia v3</span>
 			</footer>
 		</div>
