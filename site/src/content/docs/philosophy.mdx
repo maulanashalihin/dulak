@@ -3,56 +3,57 @@ title: Philosophy
 description: Why Dulak is deliberately boring.
 ---
 
-**Dulak** is the Banjar word for *bored* — the name is the philosophy. Every
-choice in this starter favors the next maintainer, human or AI agent, over
-cleverness. This page is the reasoning behind the rules you'll see codified
-in `AGENTS.md` and the [Conventions](/architecture/conventions/) page.
+**Dulak** is the Banjar word for *bored* — and the name is the manifesto:
+code that is "boring" is the most valuable code there is. Boring here does
+not mean dull — it means **predictable**. No surprises, no clever tricks
+that require the next maintainer to reverse-engineer intent. Whoever comes
+later — human or AI agent — should be able to understand the code, change
+it, and not be afraid of breaking it.
 
 ## Deliberately boring
 
-The strongest tool a codebase has is predictability. Dulak would rather be
-unremarkable and understandable than clever and surprising. If a piece of
-the starter can't be explained in one sentence, it doesn't belong here.
+Every choice trades "clever" for "obviously right". When two ways of doing
+the same thing exist, only one is kept — the simpler one. For example,
+route handlers are written inline in their route file instead of being
+split into abstract controllers. Boring? Yes. Followable at a glance?
+Far more.
 
 ## Zero-dependency where it's cheap
 
-Dependencies are a liability. Vanilla CSS by default (Tailwind v4 available
-as a template), a hand-rolled rate limiter and OAuth client instead of
-packages that pin the stack, raw `bun:sqlite` instead of an ORM. When a
-60-line module does the job, it ships — and it can be read, audited, and
-forked without a license review.
+Every dependency is a liability: it must be upgraded, audited, and can
+break under you. When 60 lines of our own code are enough, we write them.
+In this repo: the rate limiter is hand-rolled (`rate-limit.ts`), the
+Google OAuth client is plain `fetch` (no SDK), CSS is vanilla by default,
+and the database layer is raw `bun:sqlite` prepared statements — no ORM.
 
 ## One obvious way to do things
 
-A single structural convention, codified in `AGENTS.md`: routes in
-`routes/<feature>.routes.ts` with handlers inline, shared logic as flat
-modules, all SQL in `db.ts`, schema in versioned migrations. No feature
-folders, no second way to do the same thing. New contributors — and AI
-agents — are never left to invent a convention.
+Structure is standardized, on purpose: routes only live in
+`routes/<feature>.routes.ts`, all SQL lives in `db.ts`, environment
+variables are read only in `config.ts`. No "structural creativity" — that
+is the point. When everyone writes the same way, anyone can find anything.
 
 ## Discoverability as a contract
 
-Given any URL you can derive the file that owns it: `src/server/routes/`
-mirrors URL namespaces, every URL lives in exactly one file (GET renders
-and POST actions together), and new features get their own
-`<feature>.routes.ts`. Pasting a broken route into the codebase leads to
-exactly one file.
+Given a URL you can name the file that owns it: `/login` →
+`routes/auth.routes.ts`, `/uploads` → `routes/uploads.routes.ts`. Every
+URL lives in exactly one file, with its GET render and POST actions
+together. Paste a broken URL and you land in exactly one place — no
+guessing.
 
 ## Production-shaped, not production
 
-The guardrails a deployed app needs — migrations, CSRF, rate limiting,
-security headers, session rotation, graceful shutdown, CI, Docker — are
-wired from day one, so you start with a skeleton *shaped* like a production
-app. But it is not one: the only pre-built feature is auth, and anything
-deployment-specific (Redis-backed rate limiting, CDN, observability) is a
-documented swap point. The product is yours to add by following the
-conventions.
+The guardrails a deployed app needs are wired from day one: CSRF, rate
+limiting, security headers, versioned migrations, graceful shutdown,
+Docker, CI. But the business features are not — that part is yours. You
+start from a skeleton that is *shaped* like a production app, not from
+zero.
 
 ## Boring versions, current versions
 
-A starter gets forked and maintained for years — its dependencies decide how
-much forced maintenance lands on the fork owner. Dulak pins **current stable
-releases** (Hono 4.x, Bun 1.3, Inertia v3) because:
+A starter gets forked and maintained for years — its dependencies decide
+how much forced maintenance lands on the fork owner. Dulak pins **current
+stable releases** (Hono 4.x, Bun 1.3, Inertia v3) because:
 
 - **No inherited rewrite churn.** A dependency whose next major is a full
   rewrite strands the boilerplate on a legacy track with no upgrade path.
@@ -65,15 +66,17 @@ releases** (Hono 4.x, Bun 1.3, Inertia v3) because:
 
 ## Correctness over cleverness
 
-Synchronous, explicitly typed, parameterized queries; fail-fast config;
-deterministic tests (`bun test --isolate`). Trade the clever trick for the
-boring one that's obviously right.
+Synchronous, explicitly typed, parameterized queries; fail-fast
+configuration; deterministic tests (`bun test --isolate`). Prefer the
+boring implementation that is obviously correct over the clever one that
+is hard to verify.
 
-## Built for AI agents too
+## Built for AI agents
 
-The "next maintainer" includes the agent writing the next feature: TypeBox
-schemas with exact error shapes, strict TypeScript
-(`strict` + `noUncheckedIndexedAccess`) so mistakes fail at compile time,
-conventions codified where agents read them, and a deterministic test
-suite as the safety net. A codebase that's easy for an agent to extend
-without hallucinating conventions is a codebase that stays coherent.
+The "next maintainer" includes the agent writing the next feature — which,
+in this project, is the main way the code evolves. That is why conventions
+are codified where agents read them (`AGENTS.md`), validation errors have
+exact, documented shapes (TypeBox), mistakes fail at compile time
+(`strict` + `noUncheckedIndexedAccess`), and the test suite runs
+deterministically as the safety net. A codebase an agent can extend
+without inventing conventions is a codebase that stays coherent.
