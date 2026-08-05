@@ -1,6 +1,6 @@
 {
   "name": "create-dulak",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "license": "MIT",
   "description": "Scaffold a new Dulak project — Hono + bun:sqlite + Inertia v3 boilerplate with template selection (React/Svelte/Vue, vanilla CSS/Tailwind).",
   "keywords": [
@@ -17,6 +17,7 @@
     "ssr",
     "create"
   ],
+  "homepage": "https://dulak.pages.dev",
   "repository": {
     "type": "git",
     "url": "https://github.com/maulanashalihin/dulak.git",

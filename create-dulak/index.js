@@ -80,6 +80,10 @@ ${c.bold("Examples:")}
   ${c.cyan("bun create dulak")} my-app
   ${c.cyan("bun create dulak")} my-app --template svelte-tailwind
   ${c.cyan("bun create dulak")} my-app --no-install
+
+${c.bold("Links:")}
+  Docs: https://dulak.pages.dev
+  GitHub: https://github.com/maulanashalihin/dulak
 `);
 }
 
@@ -232,7 +236,8 @@ async function main() {
 	}
 	console.log(`  ${c.cyan("bun")} dev`);
 	console.log();
-	console.log(c.dim("Docs: https://github.com/maulanashalihin/dulak"));
+	console.log(c.dim("Docs: https://dulak.pages.dev"));
+	console.log(c.dim("GitHub: https://github.com/maulanashalihin/dulak"));
 }
 
 main().catch((e) => {

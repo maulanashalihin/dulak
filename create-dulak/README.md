@@ -1,8 +1,8 @@
 # create-dulak
 
-Scaffold a new [Dulak](https://github.com/maulanashalihin/dulak) project —
-Hono + bun:sqlite + Inertia v3 boilerplate with auth, roles, SSR,
-migrations, tests, and Docker.
+Scaffold a new [Dulak](https://dulak.pages.dev) project — Hono +
+bun:sqlite + Inertia v3 boilerplate with auth, roles, SSR, migrations,
+tests, and Docker. Code: [github.com/maulanashalihin/dulak](https://github.com/maulanashalihin/dulak).
 
 ## Usage
 
