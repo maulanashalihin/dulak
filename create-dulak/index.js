@@ -27,6 +27,11 @@ const TEMPLATES = [
     label: 'React 19 + Tailwind CSS v4',
     ref: 'template/react-tailwind',
   },
+  {
+    name: 'vue-tailwind',
+    label: 'Vue 3 + Tailwind CSS v4',
+    ref: 'template/vue-tailwind',
+  },
 ]
 
 /** Files/dirs to strip from the scaffolded project. */
@@ -61,12 +66,13 @@ ${c.bold('Options:')}
   --help, -h          Show this help
   --no-install        Skip running bun install
   --template <name>   Skip prompt, use template directly
-                      ${c.dim('default | svelte-tailwind | react-tailwind')}
+                      ${c.dim('default | svelte-tailwind | react-tailwind | vue-tailwind')}
 
 ${c.bold('Templates:')}
   default            React 19 + vanilla CSS
   svelte-tailwind    Svelte 5 + Tailwind CSS v4
   react-tailwind     React 19 + Tailwind CSS v4
+  vue-tailwind       Vue 3 + Tailwind CSS v4
 
 ${c.bold('Examples:')}
   ${c.cyan('bunx create-dulak')} my-app

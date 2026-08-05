@@ -83,11 +83,12 @@ bunx create-dulak my-app --template svelte-tailwind
 | `default`         | React 19 + vanilla CSS             | `main`                    |
 | `svelte-tailwind` | Svelte 5 + Tailwind CSS v4         | `template/svelte-tailwind`|
 | `react-tailwind`  | React 19 + Tailwind CSS v4         | `template/react-tailwind` |
+| `vue-tailwind`    | Vue 3 + Tailwind CSS v4            | `template/vue-tailwind`   |
 
 The `default` template (this branch) uses React 19 with vanilla CSS — no
-CSS framework. The `svelte-tailwind` and `react-tailwind` templates add
-Tailwind CSS v4 (via `@tailwindcss/cli`, no PostCSS) with the same auth,
-roles, SSR, and test suite.
+CSS framework. The `svelte-tailwind`, `react-tailwind`, and `vue-tailwind`
+templates add Tailwind CSS v4 (via `@tailwindcss/cli`, no PostCSS) with the
+same auth, roles, SSR, and test suite.
 
 ### Scripts
 
@@ -333,8 +334,9 @@ bridge cleanly. See the
   relies on the Web `CompressionStream`, which is not reliably present in
   every Bun 1.3.14 context; `node:zlib` is. `busy_timeout = 5000` is set so
   concurrent writes wait instead of failing with SQLITE_BUSY.
-- Prefer Svelte or Tailwind? `bunx create-dulak my-app --template svelte-tailwind`
-  (or `react-tailwind`). The server side is adapter-agnostic — Inertia v3
-  works with React, Svelte, or Vue. A verified Svelte 5 migration guide
-  (Bun.build plugin, SSR, API mapping) is in the
-  [Svelte 5 migration guide](.llm-wiki/wiki/concepts/svelte-5-migration.md).
+- Prefer Svelte, Vue, or Tailwind? `bunx create-dulak my-app --template svelte-tailwind`
+  (or `react-tailwind` / `vue-tailwind`). The server side is adapter-agnostic —
+  Inertia v3 works with React, Svelte, or Vue. The Svelte template follows a
+  verified migration guide (Bun.build plugin, SSR, API mapping) in the
+  [Svelte 5 migration guide](.llm-wiki/wiki/concepts/svelte-5-migration.md);
+  the Vue template uses the same architecture (`vue-plugin.ts`, `@inertiajs/vue3`).
