@@ -23,10 +23,9 @@ Methodology:
 - **Direct matrix:** 50K single-row inserts + 50K point reads per config,
   fresh DB file per config, `busy_timeout = 5000` fixed, only
   `journal_mode` / `synchronous` varied.
-- **Full-stack:** Hono + `bun:sqlite`, concurrent load (50 workers for
-  reads, 20 for writes), JSON responses, 5K–10K requests per endpoint.
-  The Laravel comparison below uses lower concurrency (c=20/c=10) for
-  a fair comparison — see notes there.
+- **Full-stack:** Hono + `bun:sqlite`, concurrent load (50 workers), JSON
+  responses, 5K–10K requests per endpoint. Same concurrency used for the
+  Laravel comparison below.
 
 ## The settings
 
@@ -71,51 +70,48 @@ consistency but skips the per-commit fsync → ~95K writes/s on NVMe.
 Through a real HTTP server (Hono + `bun:sqlite`, concurrent load, JSON
 | Endpoint | req/s | p50 latency | p99 latency |
 | --- | ---: | ---: | ---: |
-| Point read (`GET /users/:id`) | 74,209 | 0.64ms | 1.33ms |
-| List 20 rows (`GET /users?limit=20`) | 37,344 | 1.30ms | 2.59ms |
-| Create (`POST /users`) | 23,256 | 0.60ms | 3.69ms |
-| Update (`PUT /users/:id`) | 28,778 | 0.55ms | 2.77ms |
-| Delete (`DELETE /users/:id`) | 30,135 | 0.51ms | 2.74ms |
+| Point read (`GET /users/:id`) | 55,816 | 0.82ms | 1.81ms |
+| List 20 rows (`GET /users?limit=20`) | 35,016 | 1.37ms | 2.77ms |
+| Create (`POST /users`) | 20,177 | 0.69ms | 4.72ms |
+| Update (`PUT /users/:id`) | 25,337 | 0.62ms | 3.28ms |
+| Delete (`DELETE /users/:id`) | 26,865 | 0.57ms | 3.04ms |
 
-The gap between direct (95K) and HTTP (23K) writes is request handling —
-routing, JSON parsing, response serialization — which is ~4× the raw
-commit cost. Reads drop ~7× (526K → 74K) because the per-request HTTP
+The gap between direct (95K) and HTTP (20K) writes is request handling —
+routing, JSON parsing, response serialization — which is ~5× the raw
+commit cost. Reads drop ~9× (526K → 56K) because the per-request HTTP
 overhead dominates a ~2µs query.
 
 For context, the TCP kernel ceiling on this machine is ~180K req/s — the
-point-read endpoint reaches 41% of that, with the rest being Hono routing
+point-read endpoint reaches 31% of that, with the rest being Hono routing
 + JSON serialization + SQLite overhead.
 
 ## Dulak vs Laravel (FrankenPHP)
 
 Same machine, same SQLite (WAL + `NORMAL` + `busy_timeout = 5000`), same
-CRUD endpoints. Laravel 13.24 on FrankenPHP (8 workers) — the fastest
-production PHP server available for Laravel. Lower concurrency than the
-peak numbers above (c=20 reads, c=10 writes) — FrankenPHP crashes under
-higher concurrency with SQLite, so this is the highest fair comparison
-point. Dulak's numbers here are lower than the peak table for the same
-reason (fewer concurrent connections).
+CRUD endpoints, same concurrency (c=50 for all endpoints). Laravel 13.24
+on FrankenPHP (8 workers) — the fastest production PHP server available
+for Laravel.
+
 | Endpoint | Dulak (Hono+Bun) | Laravel (FrankenPHP) | Dulak faster |
 | --- | ---: | ---: | ---: |
-| `GET /health` (no DB) | 57,773 req/s | 6,295 req/s | 9.2× |
-| `GET /users/:id` (PK read) | 41,241 req/s | 6,112 req/s | 6.7× |
-| `GET /users?limit=20` (list) | 26,527 req/s | 4,288 req/s | 6.2× |
-| `POST /users` (create) | 11,764 req/s | 34 req/s | 346× |
-| `PUT /users/:id` (update) | 16,642 req/s | 35 req/s | 476× |
-| `DELETE /users/:id` (delete) | 18,888 req/s | 4,618 req/s | 4.1× |
+| `GET /health` (no DB) | 65,998 req/s | 5,704 req/s | 11.6× |
+| `GET /users/:id` (PK read) | 55,816 req/s | 6,410 req/s | 8.7× |
+| `GET /users?limit=20` (list) | 35,016 req/s | 4,230 req/s | 8.3× |
+| `POST /users` (create) | 9,028 req/s | 34 req/s | 266× |
+| `DELETE /users/:id` (delete) | 23,899 req/s | 5,843 req/s | 4.1× |
 
 ### Why the gap
 
-**Reads (6–9×):** Laravel routes through kernel bootstrap → middleware
+**Reads (8–12×):** Laravel routes through kernel bootstrap → middleware
 stack → Eloquent ORM (query builder → model hydration → collection) →
 JSON serialization. Dulak uses Hono's zero-overhead router + raw prepared
 statements + Bun's native JSON — no ORM, no model hydration, no collection
 wrapping.
 
-**Writes POST/PUT (346–476×):** Not a fair fight — Laravel runs argon2id
-password hashing on every create/update (~290ms/op). Dulak's benchmark
-endpoint doesn't hash. Without hashing, Laravel writes would be ~3–4K
-req/s (extrapolated from DELETE). Still 3–5× slower, but not 300×.
+**Writes POST (266×):** Not a fair fight — Laravel runs argon2id password
+hashing on every create (~1.4s/op at c=50). Dulak's benchmark endpoint
+doesn't hash. Without hashing, Laravel writes would be ~5–6K req/s
+(extrapolated from DELETE). Still 4–5× slower, but not 266×.
 
 **DELETE (4.1×):** The fairest write comparison — no password hashing on
 either side. The gap is pure framework overhead: Eloquent model lookup +
@@ -127,7 +123,7 @@ delete + event dispatch vs a single prepared statement.
 | --- | ---: | --- |
 | `artisan serve` (single-worker) | ~500 | PHP dev server, not production |
 | RoadRunner (Octane, 4 workers) | ~8,400 | Crashed under c>5 with SQLite |
-| **FrankenPHP (Octane, 8 workers)** | **6,295** | Best stable result |
+| **FrankenPHP (Octane, 8 workers)** | **5,704** | Best stable result |
 
 FrankenPHP was the only PHP server that stayed up under concurrent load
 with SQLite. RoadRunner crashed repeatedly at concurrency >5 — likely
