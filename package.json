@@ -1,6 +1,6 @@
 {
   "name": "dulak",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "description": "Full-stack boilerplate: Hono + bun:sqlite + Inertia v3 (React 19) with auth, roles, SSR, migrations, tests and Docker.",
   "keywords": ["dulak", "hono", "bun", "inertia", "react", "sqlite", "boilerplate", "ssr"],
