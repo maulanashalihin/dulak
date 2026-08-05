@@ -1,0 +1,224 @@
+---
+const nav = [
+  "bunx create-dulak my-app --template vue-tailwind",
+  "cd my-app && bun install",
+  "bun run dev",
+];
+const output = [
+  "↓ Downloading Dulak (Vue 3 + Tailwind CSS v4)...",
+  "✓ Dulak project created!",
+  "  [migrate] applied 0001_users.sql",
+  "  [migrate] applied 0002_sessions.sql",
+  "  Hono Inertia boilerplate → http://localhost:4000",
+];
+---
+
+<div class="dl-hero">
+  <div class="dl-aurora" aria-hidden="true">
+    <span class="dl-aurora-blob a1"></span>
+    <span class="dl-aurora-blob a2"></span>
+    <span class="dl-aurora-blob a3"></span>
+  </div>
+
+  <div class="dl-hero-inner">
+    <div class="dl-bolt">
+      <svg viewBox="0 0 32 32" width="52" height="52" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="#059669" />
+        <path d="M17.8 5.6 8.4 18h5.2l-1.2 8.4 9.2-12h-5.2z" fill="white" />
+      </svg>
+    </div>
+
+    <h1 class="dl-title">
+      Deliberately <span class="dl-gradient">boring</span>.<br />
+      Production-shaped by default.
+    </h1>
+
+    <p class="dl-tagline">
+      A full-stack starter running entirely on <strong>Bun</strong>:
+      <strong>Hono</strong> for HTTP, <strong>bun:sqlite</strong> for data,
+      <strong>Inertia v3</strong> for server-driven UI — with React, Svelte,
+      and Vue templates. Auth, uploads, migrations, tests, Docker — wired
+      end to end.
+    </p>
+
+    <div class="dl-actions">
+      <a class="dl-btn dl-btn-primary" href="/docs/getting-started/introduction/">Get started</a>
+      <a class="dl-btn dl-btn-ghost" href="https://github.com/maulanashalihin/dulak" target="_blank" rel="noreferrer">
+        View on GitHub
+      </a>
+    </div>
+
+    <div class="dl-terminal" aria-label="Quick start">
+      <div class="dl-terminal-bar">
+        <span class="dl-dot r"></span><span class="dl-dot y"></span><span class="dl-dot g"></span>
+        <span class="dl-terminal-title">zsh</span>
+      </div>
+      <div class="dl-terminal-body">
+        <div class="dl-line"><span class="dl-prompt">➜</span> <span class="dl-typing" id="dl-typing"></span><span class="dl-cursor" id="dl-cursor"></span></div>
+        <div class="dl-line dl-out o1"><span class="dl-prompt">➜</span> <span>cd my-app && bun install</span></div>
+        <div class="dl-line dl-out o2"><span class="dl-prompt">➜</span> <span>bun run dev</span></div>
+        <div class="dl-line dl-out o3"><span class="dl-dim">↓ Downloading Dulak (Vue 3 + Tailwind CSS v4)...</span></div>
+        <div class="dl-line dl-out o4"><span class="dl-ok">✓ Dulak project created!</span></div>
+        <div class="dl-line dl-out o5"><span class="dl-dim">[migrate] applied 0001_users.sql …</span></div>
+        <div class="dl-line dl-out o6"><span class="dl-dim">Hono Inertia boilerplate → http://localhost:4000</span></div>
+      </div>
+    </div>
+
+    <div class="dl-chips">
+      <span>Bun</span><span>Hono</span><span>Inertia v3</span><span>bun:sqlite</span><span>TypeBox</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const el = document.getElementById("dl-typing");
+  const cursor = document.getElementById("dl-cursor");
+  if (el && cursor) {
+    const text = "bunx create-dulak my-app --template vue-tailwind";
+    let i = 0;
+    const tick = () => {
+      if (i <= text.length) {
+        el.textContent = text.slice(0, i);
+        i++;
+        setTimeout(tick, 45 + Math.random() * 60);
+      } else {
+        cursor.style.display = "none";
+        document.querySelectorAll(".dl-out").forEach((o, idx) => {
+          o.style.animationDelay = `${0.35 + idx * 0.22}s`;
+          o.classList.add("show");
+        });
+      }
+    };
+    tick();
+  }
+</script>
+
+<style>
+  .dl-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 5.5rem 1.5rem 4rem;
+    text-align: center;
+  }
+  .dl-aurora {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .dl-aurora-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.45;
+  }
+  .a1 { width: 480px; height: 480px; background: #059669; top: -160px; left: -120px; animation: drift 18s ease-in-out infinite; }
+  .a2 { width: 420px; height: 420px; background: #0d9488; top: 40px; right: -140px; animation: drift 22s ease-in-out infinite reverse; }
+  .a3 { width: 360px; height: 360px; background: #065f46; bottom: -180px; left: 30%; animation: drift 26s ease-in-out infinite; }
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(40px, 30px) scale(1.08); }
+  }
+  .dl-hero-inner { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; }
+  .dl-bolt {
+    display: inline-flex;
+    filter: drop-shadow(0 0 24px rgba(16, 185, 129, 0.55));
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .dl-title {
+    margin: 1.4rem 0 1rem;
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+  }
+  .dl-gradient {
+    background: linear-gradient(100deg, #34d399, #059669 55%, #0d9488);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .dl-tagline {
+    max-width: 620px;
+    margin: 0 auto 1.8rem;
+    font-size: 1.08rem;
+    line-height: 1.65;
+    color: #9aa4b2;
+  }
+  .dl-actions { display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 2.5rem; }
+  .dl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.7rem 1.4rem;
+    border-radius: 0.6rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .dl-btn:hover { transform: translateY(-1px); }
+  .dl-btn-primary {
+    background: linear-gradient(180deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35);
+  }
+  .dl-btn-primary:hover { box-shadow: 0 12px 32px rgba(5, 150, 105, 0.5); }
+  .dl-btn-ghost {
+    border: 1px solid #263041;
+    color: #d3dae4;
+    background: rgba(15, 17, 23, 0.6);
+  }
+  .dl-btn-ghost:hover { background: rgba(30, 41, 59, 0.8); }
+
+  .dl-terminal {
+    max-width: 640px;
+    margin: 0 auto 1.6rem;
+    border-radius: 0.75rem;
+    border: 1px solid #1f2937;
+    background: #0b0f14;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    text-align: left;
+    overflow: hidden;
+  }
+  .dl-terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid #1f2937;
+    background: #10151c;
+  }
+  .dl-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dl-dot.r { background: #f87171; } .dl-dot.y { background: #fbbf24; } .dl-dot.g { background: #34d399; }
+  .dl-terminal-title { margin-left: 0.4rem; font-size: 0.75rem; color: #64748b; font-family: ui-monospace, monospace; }
+  .dl-terminal-body { padding: 1rem 1.1rem; font-family: ui-monospace, "SF Mono", monospace; font-size: 0.85rem; line-height: 1.7; }
+  .dl-line { color: #d1d5db; white-space: nowrap; overflow: hidden; }
+  .dl-prompt { color: #34d399; margin-right: 0.5rem; }
+  .dl-cursor {
+    display: inline-block;
+    width: 8px; height: 1em;
+    background: #34d399;
+    vertical-align: text-bottom;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .dl-out { opacity: 0; }
+  .dl-out.show { animation: fadein 0.3s ease forwards; }
+  @keyframes fadein { to { opacity: 1; } }
+  .dl-dim { color: #64748b; }
+  .dl-ok { color: #34d399; }
+
+  .dl-chips { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+  .dl-chips span {
+    font-size: 0.78rem;
+    color: #9aa4b2;
+    border: 1px solid #263041;
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    background: rgba(15, 17, 23, 0.6);
+  }
+</style>

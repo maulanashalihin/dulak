@@ -1,0 +1,68 @@
+---
+const cmd = "bunx create-dulak my-app --template vue-tailwind";
+---
+
+<section class="dl-cta">
+  <div class="dl-cta-inner">
+    <h2>Ship your next app. <span class="dl-gradient">Boringly.</span></h2>
+    <p>One command. Auth, uploads, migrations, tests, Docker — already wired.</p>
+    <div class="dl-actions">
+      <a class="dl-btn dl-btn-primary" href="/docs/getting-started/introduction/">Read the docs</a>
+      <a class="dl-btn dl-btn-ghost" href="https://github.com/maulanashalihin/dulak" target="_blank" rel="noreferrer">Star on GitHub</a>
+    </div>
+    <code class="dl-cta-cmd">$ {cmd}</code>
+  </div>
+</section>
+
+<style>
+  .dl-cta { max-width: 900px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+  .dl-cta-inner {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    border: 1px solid #1f2937;
+    border-radius: 1rem;
+    background: radial-gradient(600px 240px at 50% 0%, rgba(5, 150, 105, 0.12), transparent),
+      #0f141a;
+  }
+  .dl-cta h2 { margin: 0 0 0.5rem; font-size: 1.8rem; letter-spacing: -0.02em; }
+  .dl-cta p { margin: 0 auto 1.6rem; color: #9aa4b2; max-width: 460px; }
+  .dl-actions { display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.4rem; }
+  .dl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.7rem 1.4rem;
+    border-radius: 0.6rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .dl-btn:hover { transform: translateY(-1px); }
+  .dl-btn-primary {
+    background: linear-gradient(180deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35);
+  }
+  .dl-btn-ghost {
+    border: 1px solid #263041;
+    color: #d3dae4;
+    background: rgba(15, 17, 23, 0.6);
+  }
+  .dl-cta-cmd {
+    display: inline-block;
+    padding: 0.5rem 0.9rem;
+    border-radius: 0.5rem;
+    background: #0b0f14;
+    border: 1px solid #1f2937;
+    font-size: 0.8rem;
+    color: #34d399;
+    font-family: ui-monospace, monospace;
+  }
+  .dl-gradient {
+    background: linear-gradient(100deg, #34d399, #059669 55%, #0d9488);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+</style>
