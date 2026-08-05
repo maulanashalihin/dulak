@@ -44,9 +44,20 @@ export const compress = () =>
 		if (!acceptsGzip(c.req.header("accept-encoding"))) return;
 
 		const buf = Buffer.from(await res.arrayBuffer());
-		if (buf.byteLength < THRESHOLD_BYTES) return;
+		// Reading the body CONSUMES it — every path below must rebuild the
+		// response from `buf`, or the client gets a 200 with an empty body
+		// (this broke Inertia XHR navigation: JSON payloads are < 1KB, so
+		// the early returns left a consumed body in place).
+		if (buf.byteLength < THRESHOLD_BYTES) {
+			c.res = new Response(new Uint8Array(buf), res);
+			return;
+		}
 		const compressed = await gzipAsync(buf);
-		if (compressed.byteLength >= buf.byteLength) return; // not worth it
+		if (compressed.byteLength >= buf.byteLength) {
+			// not worth it
+			c.res = new Response(new Uint8Array(buf), res);
+			return;
+		}
 
 		const vary = res.headers.get("vary");
 		if (vary && !/\baccept-encoding\b/i.test(vary)) {

@@ -46,6 +46,8 @@ const VALIDATION_MESSAGES_ALL = {
 const isUploadsPath = (pathname: string) =>
 	pathname === "/uploads" || pathname.startsWith("/uploads/");
 
+const UPLOADS_RE = /^\/uploads(\/|$)/;
+
 /**
  * Build the Inertia adapter for error/not-found paths. The global
  * inertiaMiddleware has already run for every request, so `c.var.inertia`
@@ -89,9 +91,18 @@ export function createApp(assets: InertiaAssets) {
 			// script-src/style-src 'unsafe-inline': Inertia embeds the page
 			// payload as an inline <script type="application/json"> plus the
 			// theme-boot script, and the progress bar injects inline styles.
+			// For /uploads responses the content is attacker-controlled bytes
+			// (served with a client-declared content-type) — script-src 'none'
+			// blocks inline/external script execution there (stored-XSS guard;
+			// a sandbox CSP can't be set per-path through secureHeaders).
 			contentSecurityPolicy: {
 				defaultSrc: ["'self'"],
-				scriptSrc: ["'self'", "'unsafe-inline'"],
+				scriptSrc: [
+					(c) =>
+						UPLOADS_RE.test(safeUrl(c.req.url).pathname)
+							? "'none'"
+							: "'self' 'unsafe-inline'",
+				],
 				styleSrc: ["'self'", "'unsafe-inline'"],
 				imgSrc: ["'self'", "data:"],
 				fontSrc: ["'self'"],
