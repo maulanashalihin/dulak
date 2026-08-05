@@ -5,6 +5,8 @@ The Banjar word for *bored* — a deliberately boring full-stack starter.
 [![CI](https://github.com/maulanashalihin/dulak/actions/workflows/ci.yml/badge.svg)](https://github.com/maulanashalihin/dulak/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Bun](https://img.shields.io/badge/runtime-Bun_1.3-black?logo=bun&logoColor=white)](https://bun.sh)
+[![Website](https://img.shields.io/badge/website-dulak.pages.dev-059669?style=flat&logo=astro&logoColor=white&labelColor=%230d1117)](https://dulak.pages.dev)
+[![npm](https://img.shields.io/npm/v/create-dulak?color=%23059669&label=create-dulak)](https://www.npmjs.com/package/create-dulak)
 
 A full-stack starter running entirely on **Bun**: **Hono** for HTTP,
 **bun:sqlite** for data, **Inertia v3** for server-driven UI — with React,
