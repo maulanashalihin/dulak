@@ -5,8 +5,14 @@ const rows = [
   { op: "Autocommit insert", detail: "WAL + synchronous=NORMAL", value: "95K", unit: "ops/s" },
   { op: "Point read (direct)", detail: "bun:sqlite prepared stmt", value: "526K", unit: "ops/s" },
 ];
----
 
+const compare = [
+  { op: "Point read", dulak: "41K", laravel: "6K", x: "6.7×" },
+  { op: "List 20 rows", dulak: "27K", laravel: "4K", x: "6.2×" },
+  { op: "Delete", dulak: "19K", laravel: "5K", x: "4.1×" },
+];
+
+---
 <section class="dl-bench">
   <h2 class="dl-section-title">Numbers from <span class="dl-gradient">real hardware</span></h2>
   <p class="dl-section-sub">
@@ -32,6 +38,29 @@ const rows = [
               <span class="dl-bench-value">{r.value}</span>
               <span class="dl-bench-unit">{r.unit}</span>
             </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <div class="dl-bench-vs">
+    <p class="dl-bench-vs-label">vs Laravel 13 + FrankenPHP (8 workers, same SQLite WAL)</p>
+    <table class="dl-bench-table dl-bench-table-sm">
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th class="dl-bench-num">Dulak</th>
+          <th class="dl-bench-num">Laravel</th>
+          <th class="dl-bench-num">Faster</th>
+        </tr>
+      </thead>
+      <tbody>
+        {compare.map((c) => (
+          <tr>
+            <td class="dl-bench-op-name">{c.op}</td>
+            <td class="dl-bench-num dl-bench-vs-dulak">{c.dulak} <span class="dl-bench-unit">req/s</span></td>
+            <td class="dl-bench-num dl-bench-vs-laravel">{c.laravel} <span class="dl-bench-unit">req/s</span></td>
+            <td class="dl-bench-num dl-bench-vs-x">{c.x}</td>
           </tr>
         ))}
       </tbody>
@@ -124,6 +153,39 @@ const rows = [
     margin-left: 0.3rem;
   }
 
+  .dl-bench-vs {
+    max-width: 580px;
+    margin: 1.5rem auto 0;
+  }
+  .dl-bench-vs-label {
+    text-align: center;
+    font-size: 0.82rem;
+    color: #6b7685;
+    margin: 0 0 0.8rem;
+  }
+  .dl-bench-table-sm {
+    font-size: 0.85rem;
+  }
+  .dl-bench-table-sm td,
+  .dl-bench-table-sm th {
+    padding: 0.55rem 0.9rem;
+  }
+  .dl-bench-table-sm .dl-bench-op-name {
+    display: inline;
+    font-size: 0.85rem;
+  }
+  .dl-bench-vs-dulak {
+    color: #34d399;
+    font-weight: 700;
+  }
+  .dl-bench-vs-laravel {
+    color: #8b95a5;
+  }
+  .dl-bench-vs-x {
+    color: #34d399;
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
   @media (max-width: 520px) {
     .dl-bench-table td { padding: 0.7rem 0.8rem; }
     .dl-bench-value { font-size: 1.15rem; }

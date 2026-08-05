@@ -84,7 +84,52 @@ overhead dominates a ~2µs query.
 
 For context, the TCP kernel ceiling on this machine is ~180K req/s — the
 point-read endpoint reaches 39% of that, with the rest being Hono routing
-+ JSON serialization + SQLite overhead.
+
+## Dulak vs Laravel (FrankenPHP)
+
+Same machine, same SQLite (WAL + `NORMAL` + `busy_timeout = 5000`), same
+CRUD endpoints. Laravel 13.24 on FrankenPHP (8 workers) — the fastest
+production PHP server available for Laravel. Concurrency matched (c=20
+reads, c=10 writes).
+
+| Endpoint | Dulak (Hono+Bun) | Laravel (FrankenPHP) | Dulak faster |
+| --- | ---: | ---: | ---: |
+| `GET /health` (no DB) | 57,773 req/s | 6,295 req/s | 9.2× |
+| `GET /users/:id` (PK read) | 41,241 req/s | 6,112 req/s | 6.7× |
+| `GET /users?limit=20` (list) | 26,527 req/s | 4,288 req/s | 6.2× |
+| `POST /users` (create) | 11,764 req/s | 34 req/s | 346× |
+| `PUT /users/:id` (update) | 16,642 req/s | 35 req/s | 476× |
+| `DELETE /users/:id` (delete) | 18,888 req/s | 4,618 req/s | 4.1× |
+
+### Why the gap
+
+**Reads (6–9×):** Laravel routes through kernel bootstrap → middleware
+stack → Eloquent ORM (query builder → model hydration → collection) →
+JSON serialization. Dulak uses Hono's zero-overhead router + raw prepared
+statements + Bun's native JSON — no ORM, no model hydration, no collection
+wrapping.
+
+**Writes POST/PUT (346–476×):** Not a fair fight — Laravel runs argon2id
+password hashing on every create/update (~290ms/op). Dulak's benchmark
+endpoint doesn't hash. Without hashing, Laravel writes would be ~3–4K
+req/s (extrapolated from DELETE). Still 3–5× slower, but not 300×.
+
+**DELETE (4.1×):** The fairest write comparison — no password hashing on
+either side. The gap is pure framework overhead: Eloquent model lookup +
+delete + event dispatch vs a single prepared statement.
+
+### Laravel setup notes
+
+| Server | req/s (health) | Notes |
+| --- | ---: | --- |
+| `artisan serve` (single-worker) | ~500 | PHP dev server, not production |
+| RoadRunner (Octane, 4 workers) | ~8,400 | Crashed under c>5 with SQLite |
+| **FrankenPHP (Octane, 8 workers)** | **6,295** | Best stable result |
+
+FrankenPHP was the only PHP server that stayed up under concurrent load
+with SQLite. RoadRunner crashed repeatedly at concurrency >5 — likely
+SQLite WAL lock contention not handled gracefully. `artisan serve` is
+single-threaded and not representative of production.
 
 ## Transactional writes
 
