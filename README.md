@@ -296,7 +296,10 @@ docker compose up -d --build
 
 Alternatives: `bun build --compile` for a single binary, or plain
 `bun run start` behind your process supervisor (it handles SIGTERM
-gracefully).
+gracefully). No Docker? Follow the
+[Linux VPS guide](https://dulak.pages.dev/deployment/vps/) — Bun +
+systemd + Cloudflare (origin rule or tunnel), no reverse proxy to
+install.
 
 ## Styling
 

@@ -63,6 +63,7 @@ export default defineConfig({
 					items: [
 						{ label: "Configuration", slug: "deployment/configuration" },
 						{ label: "Docker", slug: "deployment/docker" },
+						{ label: "Linux VPS (no Docker)", slug: "deployment/vps" },
 					],
 				},
 				{
