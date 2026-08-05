@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* Map dark mode to [data-theme="dark"] (boilerplate convention). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Bridge existing CSS variables to Tailwind theme tokens. */
+@theme inline {
+	--color-bg: var(--bg);
+	--color-surface: var(--surface);
+	--color-border: var(--border);
+	--color-text: var(--text);
+	--color-muted: var(--muted);
+	--color-primary: var(--primary);
+	--color-primary-hover: var(--primary-hover);
+	--color-primary-soft: var(--primary-soft);
+	--color-danger: var(--danger);
+	--color-success: var(--success);
+	--radius: var(--radius);
+}

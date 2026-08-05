@@ -2,8 +2,8 @@
   "name": "dulak",
   "version": "0.1.0",
   "license": "MIT",
-  "description": "Full-stack boilerplate: Hono + bun:sqlite + Inertia v3 (React 19) with auth, roles, SSR, migrations, tests and Docker.",
-  "keywords": ["dulak", "hono", "bun", "inertia", "react", "sqlite", "boilerplate", "ssr"],
+  "description": "Full-stack boilerplate: Hono + bun:sqlite + Inertia v3 (Vue 3) with auth, roles, SSR, Tailwind v4, migrations, tests and Docker.",
+  "keywords": ["dulak", "hono", "bun", "inertia", "vue", "tailwind", "sqlite", "boilerplate", "ssr"],
   "repository": {
     "type": "git",
     "url": "https://github.com/maulanashalihin/dulak.git"
@@ -16,23 +16,26 @@
   "module": "src/index.ts",
   "scripts": {
     "dev": "bun --watch src/index.ts",
+    "dev:css": "bunx @tailwindcss/cli -i src/client/tailwind.css -o src/client/.tailwind.css --watch",
     "build": "bun run scripts/build.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
     "db:seed": "bun run scripts/seed.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "vue-tsc --noEmit",
     "test": "bun test --isolate"
   },
   "dependencies": {
-    "@inertiajs/react": "^3.0.0",
+    "@inertiajs/vue3": "^3.6.1",
     "@sinclair/typebox": "^0.34.52",
+    "@vue/server-renderer": "^3.5.40",
     "hono": "^4.13.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "vue": "^3.5.40"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@types/bun": "^1.2.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "typescript": "^5.8.0"
+    "@vue/compiler-sfc": "^3.5.40",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.8.0",
+    "vue-tsc": "^3.3.9"
   }
 }
