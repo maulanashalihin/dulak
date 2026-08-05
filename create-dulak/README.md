@@ -1,7 +1,7 @@
 # create-dulak
 
 Scaffold a new [Dulak](https://github.com/maulanashalihin/dulak) project —
-Elysia + bun:sqlite + Inertia v3 boilerplate with auth, roles, SSR,
+Hono + bun:sqlite + Inertia v3 boilerplate with auth, roles, SSR,
 migrations, tests, and Docker.
 
 ## Usage
@@ -23,11 +23,12 @@ bunx create-dulak .
 | `default`        | React 19 + vanilla CSS             | `main`                    |
 | `svelte-tailwind`| Svelte 5 + Tailwind CSS v4         | `template/svelte-tailwind`|
 | `react-tailwind` | React 19 + Tailwind CSS v4         | `template/react-tailwind` |
+| `vue-tailwind`   | Vue 3 + Tailwind CSS v4            | `template/vue-tailwind`   |
 
 Select interactively or via `--template`:
 
 ```sh
-bunx create-dulak my-app --template svelte-tailwind
+bunx create-dulak my-app --template vue-tailwind
 ```
 
 ## Options
