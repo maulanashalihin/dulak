@@ -85,3 +85,6 @@
 ## [2026-08-05T02:58:17.987Z] observe
 - slug: "obs-2026-08-05-hono-dulak-pushed-to-github-elysia-version-archived-via-tags", title: "Hono dulak pushed to GitHub, Elysia version archived via tags", relevance: "high"
 
+## [2026-08-05T04:45:36.874Z] observe
+- slug: "obs-2026-08-05-landing-docs-site-live-at-dulak-pages-dev", title: "Landing + docs site live at dulak.pages.dev", relevance: "high"
+
