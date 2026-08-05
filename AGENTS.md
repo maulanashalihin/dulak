@@ -14,7 +14,10 @@ contributions broke the architecture by inventing their own layout.
   (versioned SQL applied at startup, see `migrations.ts`).
 - **Inertia v3 + React 19** — in-process SSR; page registry in
   `src/client/pages.ts` with explicit imports.
-- **Vanilla CSS** — no CSS framework (see README "Styling").
+- **Tailwind CSS v4** — utility classes in components; `@tailwindcss/cli` as a
+  pre-build step (no PostCSS). Design tokens via CSS variables in
+  `src/client/styles.css`, bridged to Tailwind via `@theme inline` in
+  `src/client/tailwind.css` (see README "Styling").
 
 ## Layout
 
@@ -133,6 +136,20 @@ src/
 
 ## Style
 
+- **Styling is done with Tailwind utility classes** in React components
+  (`className="flex items-center gap-2 …"`). Do NOT write component CSS in
+  `src/client/styles.css` — that file holds only design-token CSS variables
+  and `@keyframes`. New styling = new utility classes in the component.
+- Design tokens (`--primary`, `--surface`, `--border`, …) are defined in
+  `src/client/styles.css` and bridged to Tailwind theme tokens via
+  `@theme inline` in `src/client/tailwind.css`. Use the token-based
+  utilities (`bg-surface`, `text-primary`, `border-border`, `text-muted`,
+  `bg-primary-soft`, etc.) so dark mode auto-switches via `var()`.
+- Dark mode uses `[data-theme="dark"]` on `<html>` (not
+  `prefers-color-scheme`). Use the `dark:` variant for one-off dark-only
+  overrides: `dark:bg-green-950 dark:text-green-300`.
+- `@keyframes` that cannot be expressed as utilities live in `styles.css`
+  and are referenced via `animate-[name_duration_ease]`.
 - Match the repo's current style: 2-space indent, double quotes, semicolons
   (normalized by the editor/agent formatter; `tests/` and the route files are
   the reference). When editing an existing file, match that file's

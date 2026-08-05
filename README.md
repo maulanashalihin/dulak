@@ -34,11 +34,10 @@ flowchart LR
 **Dulak** is the Banjar word for *bored* — the name is the philosophy. Every
 choice favors the next maintainer — human or AI agent — over cleverness:
 
-- **Zero-dependency where it's cheap.** Vanilla CSS by default (Tailwind v4
-  available as a template), a hand-rolled rate limiter and OAuth client
-  instead of packages that pin the stack, raw `bun:sqlite` instead of an
-  ORM. Dependencies are a liability; when a hand-rolled 60-line module does
-  the job, it ships.
+- **Minimal dependencies.** Tailwind CSS v4 (via `@tailwindcss/cli`, no
+  PostCSS), a hand-rolled rate limiter and OAuth client instead of packages
+  that pin the stack, raw `bun:sqlite` instead of an ORM. Dependencies are a
+  liability; when a hand-rolled 60-line module does the job, it ships.
 - **One obvious way to do things.** A single structural convention (codified
   in `AGENTS.md`): routes in `routes/<feature>.routes.ts` with handlers
   inline, shared logic as flat modules, all SQL in `db.ts`, schema in
@@ -198,8 +197,9 @@ src/
 │   ├── pages.ts            # explicit page registry (shared by SSR + bundle)
 │   ├── pages/              # Login, Register, Dashboard, ForgotPassword,
 │   │                       # ResetPassword, Admin, NotFound
-│   ├── components/         # Layout, AuthLayout, Field
-│   └── styles.css          # plain CSS, light/dark
+│   ├── components/         # Layout, AuthLayout, Brand, Field
+│   ├── tailwind.css        # @import tailwindcss + @theme inline (token bridge)
+│   └── styles.css          # design-token CSS variables + @keyframes only
 ├── shared/
 │   ├── types.ts            # User, Role, FlashData, SharedPageProps, Paginated
 │   └── inertia.d.ts        # InertiaConfig augmentation → typed props.auth
@@ -298,16 +298,23 @@ gracefully).
 
 ## Styling
 
-**Vanilla CSS by design** (`src/client/styles.css`, ~6KB): design tokens via CSS
-variables, light/dark via `prefers-color-scheme`, no framework. Chosen to keep
-the starter zero-dependency and zero extra build steps — the CSS is bundled and
-content-hashed by the same `Bun.build` pipeline as the JS.
+**Tailwind CSS v4** — all component styling uses Tailwind utility classes
+directly in React components (`className="flex items-center gap-2 …"`).
+Design tokens (colors, radius, shadow) are defined as CSS variables in
+`src/client/styles.css` and bridged to Tailwind theme tokens via
+`@theme inline` in `src/client/tailwind.css`, so utilities like
+`bg-surface`, `text-primary`, and `border-border` auto-switch on dark mode
+via `var()` resolution — no duplicated values.
 
-Adding **Tailwind v4** is a per-project decision — the boilerplate stays
-vanilla CSS by design. It is verified to work without PostCSS using only
-`@tailwindcss/cli` as a pre-build step; dark mode and existing CSS variables
-bridge cleanly. See the
-[Tailwind v4 setup guide](.llm-wiki/wiki/concepts/tailwind-v4-setup.md).
+Dark mode uses `[data-theme="dark"]` on `<html>` (set by an inline head
+script to avoid FOUC). The `dark:` variant maps to this attribute, so
+one-off dark overrides use `dark:bg-green-950 dark:text-green-300`.
+
+`src/client/styles.css` holds **only** design-token CSS variables and
+`@keyframes` — no component CSS. New styling is new utility classes in the
+component. The Tailwind CLI (`@tailwindcss/cli`) runs as a pre-build step
+in `src/server/assets.ts` (no PostCSS), outputting `src/client/.tailwind.css`
+which is imported before `styles.css` in `app.tsx`.
 
 ## Notes / decisions
 

@@ -321,11 +321,11 @@ export default function Layout({ children }: { children: ReactNode }) {
 	};
 
 	return (
-		<div className="dash">
+		<div className="grid grid-cols-[260px_1fr] min-h-screen bg-bg max-md:grid-cols-1">
 			{/* Mobile backdrop */}
 			{sidebarOpen ? (
 				<div
-					className="dash-backdrop"
+					className="fixed inset-0 bg-black/50 z-[25] animate-[fade-in_120ms_ease]"
 					aria-hidden="true"
 					onClick={() => setSidebarOpen(false)}
 				/>
@@ -333,14 +333,14 @@ export default function Layout({ children }: { children: ReactNode }) {
 
 			{/* Sidebar */}
 			<aside
-				className={`sidebar${sidebarOpen ? " sidebar-open" : ""}`}
+				className={`sticky top-0 self-start h-screen flex flex-col bg-surface border-r border-border z-30 max-md:fixed max-md:top-0 max-md:left-0 max-md:w-[280px] max-md:max-w-[85vw] max-md:-translate-x-full max-md:transition-transform max-md:shadow-card${sidebarOpen ? " max-md:translate-x-0" : ""}`}
 				aria-label="Primary"
 			>
-				<div className="sidebar-head">
+				<div className="flex items-center justify-between gap-2 px-5 border-b border-border h-16 shrink-0">
 					<Brand href={user ? "/dashboard" : "/login"} />
 					<button
 						type="button"
-						className="sidebar-close"
+						className="hidden items-center justify-center w-9 h-9 border border-border rounded-lg bg-transparent text-text cursor-pointer max-md:flex"
 						aria-label="Close navigation"
 						onClick={() => setSidebarOpen(false)}
 					>
@@ -348,9 +348,11 @@ export default function Layout({ children }: { children: ReactNode }) {
 					</button>
 				</div>
 
-				<nav className="sidebar-nav">
-					<p className="sidebar-section">Menu</p>
-					<ul>
+				<nav className="flex-1 overflow-y-auto px-3 py-4">
+					<p className="mx-3 my-2 text-xs font-bold uppercase tracking-wider text-muted">
+						Menu
+					</p>
+					<ul className="list-none m-0 p-0 flex flex-col gap-0.5">
 						{items.map((item) => {
 							const active = item.match
 								? item.match(currentPath)
@@ -359,10 +361,14 @@ export default function Layout({ children }: { children: ReactNode }) {
 								<li key={item.href}>
 									<Link
 										href={item.href}
-										className={`sidebar-link${active ? " sidebar-link-active" : ""}`}
+										className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-text text-sm font-medium transition-colors hover:bg-primary-soft hover:no-underline${active ? " bg-primary-soft text-primary font-semibold" : ""}`}
 										aria-current={active ? "page" : undefined}
 									>
-										<span className="sidebar-link-icon">{item.icon}</span>
+										<span
+											className={`inline-flex shrink-0 ${active ? "text-primary" : "text-muted"}`}
+										>
+											{item.icon}
+										</span>
 										<span>{item.label}</span>
 									</Link>
 								</li>
@@ -371,47 +377,58 @@ export default function Layout({ children }: { children: ReactNode }) {
 					</ul>
 				</nav>
 
-				<div className="sidebar-foot">
-					<div className="sidebar-foot-card">
-						<p className="sidebar-foot-title">Hono Inertia</p>
-						<p className="sidebar-foot-sub">Bun · SQLite · Inertia v3</p>
+				<div className="p-3 border-t border-border">
+					<div className="p-3.5 rounded-[10px] bg-bg border border-border">
+					<p className="m-0 text-sm font-bold">Dulak</p>
+						<p className="mt-0.5 text-xs text-muted">
+							Bun · SQLite · Inertia v3
+						</p>
 					</div>
 				</div>
 			</aside>
 
 			{/* Main column */}
-			<div className="dash-main">
-				<header className="topbar">
-					<div className="topbar-left">
+			<div className="flex flex-col min-w-0">
+				<header className="sticky top-0 z-20 flex items-center justify-between gap-4 px-5 py-2.5 bg-surface/88 backdrop-saturate-[1.8] backdrop-blur border-b border-border h-16 max-md:px-4">
+					<div className="flex items-center gap-3 flex-1 min-w-0">
 						<button
 							type="button"
-							className="topbar-toggle"
+							className="hidden items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 max-md:flex"
 							aria-label="Open navigation"
 							aria-expanded={sidebarOpen}
 							onClick={() => setSidebarOpen((v) => !v)}
 						>
 							{ICON_MENU}
 						</button>
-						<label className="topbar-search">
-							<span className="topbar-search-icon">{ICON_SEARCH}</span>
-							<input type="search" placeholder="Search…" aria-label="Search" />
-							<kbd className="topbar-search-kbd">⌘K</kbd>
+						<label className="relative flex items-center w-full max-w-[360px] h-10 px-2.5 border border-border rounded-lg bg-bg text-muted transition-colors focus-within:border-primary focus-within:shadow-[0_0_0_3px_var(--primary-soft)] max-[960px]:hidden">
+							<span className="inline-flex text-muted shrink-0">
+								{ICON_SEARCH}
+							</span>
+							<input
+								type="search"
+								placeholder="Search…"
+								aria-label="Search"
+								className="flex-1 min-w-0 border-none outline-none bg-transparent text-text text-sm px-1 placeholder:text-muted"
+							/>
+							<kbd className="font-mono text-xs px-1 py-0.5 border border-border rounded text-muted bg-surface shrink-0">
+								⌘K
+							</kbd>
 						</label>
 					</div>
 
-					<div className="topbar-right">
+					<div className="flex items-center gap-2 shrink-0">
 						<button
 							type="button"
-							className="topbar-icon-btn"
+							className="relative inline-flex items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 transition-colors hover:bg-primary-soft hover:no-underline"
 							aria-label="Notifications"
 						>
 							{ICON_BELL}
-							<span className="topbar-dot" aria-hidden="true" />
+							<span className="absolute top-2 right-[9px] w-1.5 h-1.5 rounded-full bg-primary border-2 border-surface" />
 						</button>
 
 						<button
 							type="button"
-							className="topbar-icon-btn"
+							className="inline-flex items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 transition-colors hover:bg-primary-soft hover:no-underline"
 							aria-label="Toggle theme"
 							onClick={toggleTheme}
 						>
@@ -419,57 +436,68 @@ export default function Layout({ children }: { children: ReactNode }) {
 						</button>
 
 						{user ? (
-							<div className="user-menu" ref={menuRef}>
+							<div className="relative" ref={menuRef}>
 								<button
 									type="button"
-									className="user-menu-trigger"
+									className="flex items-center gap-2 h-10 px-2.5 py-1 border border-border rounded-full bg-surface text-text cursor-pointer transition-colors hover:bg-primary-soft max-md:p-1"
 									aria-haspopup="menu"
 									aria-expanded={menuOpen}
 									onClick={() => setMenuOpen((v) => !v)}
 								>
 									{user.avatarUrl ? (
 										<img
-											className="avatar avatar-img"
+											className="w-8 h-8 rounded-full object-cover"
 											src={user.avatarUrl}
 											alt=""
 										/>
 									) : (
-										<span className="avatar" aria-hidden="true">
+										<span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-xs font-bold tracking-tight shrink-0">
 											{initials(user.name)}
 										</span>
 									)}
-									<span className="user-menu-meta">
-										<span className="user-menu-name">{user.name}</span>
-										<span className="user-menu-role">{user.role}</span>
+									<span className="flex flex-col items-start leading-tight max-md:hidden">
+										<span className="text-sm font-semibold max-w-[140px] truncate">
+											{user.name}
+										</span>
+										<span className="text-xs text-muted capitalize">
+											{user.role}
+										</span>
 									</span>
-									<span className="user-menu-chevron">{ICON_CHEVRON}</span>
+									<span className="inline-flex text-muted max-md:hidden">
+										{ICON_CHEVRON}
+									</span>
 								</button>
 
 								{menuOpen ? (
-									<div className="user-menu-panel" role="menu">
-										<div className="user-menu-head">
+									<div
+										className="absolute top-full right-0 mt-2 w-60 bg-surface border border-border rounded-xl shadow-card p-1 z-40 animate-[menu-in_120ms_ease]"
+										role="menu"
+									>
+										<div className="flex items-center gap-1.5 px-2.5 pt-2 pb-2.5">
 											{user.avatarUrl ? (
 												<img
-													className="avatar avatar-lg avatar-img"
+													className="w-11 h-11 rounded-full object-cover"
 													src={user.avatarUrl}
 													alt=""
 												/>
 											) : (
-												<span className="avatar avatar-lg" aria-hidden="true">
+												<span className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary text-white text-sm font-bold shrink-0">
 													{initials(user.name)}
 												</span>
 											)}
-											<div className="user-menu-head-meta">
-												<span className="user-menu-head-name">{user.name}</span>
-												<span className="user-menu-head-email">
+											<div className="flex flex-col min-w-0">
+												<span className="text-sm font-semibold truncate">
+													{user.name}
+												</span>
+												<span className="text-xs text-muted truncate">
 													{user.email}
 												</span>
 											</div>
 										</div>
-										<div className="user-menu-divider" />
+										<div className="h-px bg-border my-1.5" />
 										<Link
 											href="/dashboard"
-											className="user-menu-item"
+											className="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-text text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
 											role="menuitem"
 										>
 											Dashboard
@@ -477,31 +505,39 @@ export default function Layout({ children }: { children: ReactNode }) {
 										{user.role === "admin" ? (
 											<Link
 												href="/admin"
-												className="user-menu-item"
+												className="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-text text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
 												role="menuitem"
 											>
 												Admin console
 											</Link>
 										) : null}
-										<div className="user-menu-divider" />
+										<div className="h-px bg-border my-1.5" />
 										<button
 											type="button"
-											className="user-menu-item user-menu-danger"
+											className="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-danger text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
 											role="menuitem"
 											onClick={handleLogout}
 										>
-											<span className="user-menu-item-icon">{ICON_LOGOUT}</span>
+											<span className="inline-flex text-danger">
+												{ICON_LOGOUT}
+											</span>
 											<span>Log out</span>
 										</button>
 									</div>
 								) : null}
 							</div>
 						) : (
-							<div className="topbar-auth">
-								<Link href="/login" className="btn btn-ghost">
+							<div className="flex items-center gap-2">
+								<Link
+									href="/login"
+									className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-border rounded-lg bg-transparent text-text font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
+								>
 									Log in
 								</Link>
-								<Link href="/register" className="btn btn-primary">
+								<Link
+									href="/register"
+									className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-primary rounded-lg bg-primary text-white font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline"
+								>
 									Register
 								</Link>
 							</div>
@@ -510,19 +546,23 @@ export default function Layout({ children }: { children: ReactNode }) {
 				</header>
 
 				{flash.success ? (
-					<div className="flash flash-success">{String(flash.success)}</div>
+					<div className="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-green-200 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
+						{String(flash.success)}
+					</div>
 				) : null}
 				{flash.error ? (
-					<div className="flash flash-error">{String(flash.error)}</div>
+					<div className="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
+						{String(flash.error)}
+					</div>
 				) : null}
 
-				<main className="content">{children}</main>
+				<main className="flex-1 w-full max-w-[1200px] mx-auto px-5 py-6 max-md:px-4 max-md:py-5">
+					{children}
+				</main>
 
-				<footer className="footer">
-					<span>Hono Inertia boilerplate</span>
-					<span className="footer-stack">
-						Bun · Hono · bun:sqlite · Inertia v3
-					</span>
+				<footer className="mt-auto px-5 py-3.5 flex items-center justify-between gap-3 text-muted text-xs border-t border-border dark:text-[#b6bdcb] max-md:px-4 max-md:py-3">
+				<span>Dulak boilerplate</span>
+				<span>Bun · Hono · bun:sqlite · Inertia v3</span>
 				</footer>
 			</div>
 		</div>
