@@ -21,9 +21,7 @@ export default function Brand({
 				<rect width="32" height="32" rx="8" fill="currentColor" />
 				<path d="M17.8 5.6 8.4 18h5.2l-1.2 8.4 9.2-12h-5.2z" fill="white" />
 			</svg>
-			<span>
-				Hono <em>Inertia</em>
-			</span>
+			<span>Dulak</span>
 		</Link>
 	);
 }

@@ -183,7 +183,7 @@ export class Inertia {
 	private html(head: string[], body: string, status: number): Response {
 		const headTags = head.filter((h) => h && h.trim().length > 0);
 		const hasTitle = headTags.some((h) => h.includes("<title"));
-		const titleTag = hasTitle ? "" : "<title>Hono Inertia</title>";
+		const titleTag = hasTitle ? "" : "<title>Dulak</title>";
 		const cssTag = this.assets.css
 			? `<link rel="stylesheet" href="/assets/${this.assets.css}" />`
 			: "";

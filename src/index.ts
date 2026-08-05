@@ -28,7 +28,7 @@ const server = Bun.serve({
 	port,
 	fetch: createApp(assets).fetch,
 });
-console.log(`Hono Inertia boilerplate → http://localhost:${port}`);
+console.log(`Dulak boilerplate → http://localhost:${port}`);
 
 function shutdown(signal: string): void {
 	console.log(`\n${signal} received — shutting down`);

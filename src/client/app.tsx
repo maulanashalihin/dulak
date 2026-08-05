@@ -23,6 +23,5 @@ createInertiaApp({
 		}
 	},
 	title: (title: string) =>
-		title ? `${title} — Hono Inertia` : "Hono Inertia",
-	progress: { color: "#059669" },
+		title ? `${title} — Dulak` : "Dulak",
 });

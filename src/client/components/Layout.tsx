@@ -373,7 +373,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
 				<div className="sidebar-foot">
 					<div className="sidebar-foot-card">
-						<p className="sidebar-foot-title">Hono Inertia</p>
+						<p className="sidebar-foot-title">Dulak</p>
 						<p className="sidebar-foot-sub">Bun · SQLite · Inertia v3</p>
 					</div>
 				</div>
@@ -519,7 +519,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 				<main className="content">{children}</main>
 
 				<footer className="footer">
-					<span>Hono Inertia boilerplate</span>
+					<span>Dulak boilerplate</span>
 					<span className="footer-stack">
 						Bun · Hono · bun:sqlite · Inertia v3
 					</span>
