@@ -1,13 +1,14 @@
 /**
  * App composition: logging → CSRF origin check → security headers →
- * inertia session → routes → error/not-found handlers.
- * Middleware runs in registration order (same principle as Elysia 1.4 —
- * global middleware must precede the routes they cover).
+ * compression → inertia session → routes → error/not-found handlers.
+ * Middleware runs in registration order — global middleware must precede
+ * the routes they cover.
  */
 import { getCookie } from "hono/cookie";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
+import { compress } from "./compress";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { serveAsset } from "./assets";
 import { pingDb, toPublicUser } from "./db";
@@ -76,6 +77,10 @@ export function createApp(assets: InertiaAssets) {
 
 	app.use(requestLogger);
 	app.use(checkOrigin);
+	// gzip-compress compressible responses (HTML/CSS/JS/JSON) above 1KB.
+	// Custom zlib-based middleware — hono's built-in needs the CompressionStream
+	// Web API, which is not reliably present in every Bun 1.3.14 context.
+	app.use(compress());
 	app.use(
 		secureHeaders({
 			xFrameOptions: "DENY",

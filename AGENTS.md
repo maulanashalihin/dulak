@@ -32,7 +32,8 @@ src/
 │   ├── validation.ts       # TypeBox JSON validation → ValidationFailed (422)
 │   ├── mailer.ts           # mail drivers: log / resend / mailtrap
 │   ├── rate-limit.ts       # in-memory fixed-window rate limiter
-│   ├── logger.ts           # request logging + x-request-id
+│   ├── logger.ts           # batched request logging + x-request-id
+│   ├── compress.ts         # gzip compression (node:zlib, not CompressionStream)
 │   ├── security.ts         # CSRF origin check (headers via hono/secure-headers)
 │   ├── url.ts              # defensive request-URL parsing
 │   ├── assets.ts           # Bun.build pipeline + manifest + static serving
@@ -113,6 +114,9 @@ src/
   reads the peer IP from `c.env` (the Bun server) instead.
 - `@sinclair/typebox` does not pre-register string formats — `email` is
   registered in `validation.ts`; add others there.
+- The Web `CompressionStream` API is NOT reliably available in every Bun
+  1.3.14 context — compression uses `node:zlib` (`compress.ts`), and any
+  future code should avoid relying on Web compression globals.
 
 ## Testing
 

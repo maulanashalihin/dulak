@@ -119,8 +119,9 @@ roles, SSR, and test suite.
   and on-disk storage — demonstrated end to end by the avatar upload on the
   profile page.
 - **Migrations**: versioned SQL files applied at startup in transactions.
-- **Ops**: batched request logging with correlation id, security headers (CSP,
-  nosniff, frame denial), `/health`, graceful shutdown, Docker.
+- **Ops**: batched request logging with correlation id, gzip compression,
+  security headers (CSP, nosniff, frame denial), `/health`, graceful
+  shutdown, Docker.
 - **Testing**: `bun test` — boots the app against an in-memory SQLite DB.
 
 ## Configuration (.env)
@@ -328,6 +329,10 @@ bridge cleanly. See the
   payload as inline JSON; external script injection is still blocked.
 - `X-Forwarded-For` is trusted for rate limiting — only run behind a proxy
   that sets it.
+- gzip compression is a custom middleware (`compress.ts`) — Hono's built-in
+  relies on the Web `CompressionStream`, which is not reliably present in
+  every Bun 1.3.14 context; `node:zlib` is. `busy_timeout = 5000` is set so
+  concurrent writes wait instead of failing with SQLITE_BUSY.
 - Prefer Svelte or Tailwind? `bunx create-dulak my-app --template svelte-tailwind`
   (or `react-tailwind`). The server side is adapter-agnostic — Inertia v3
   works with React, Svelte, or Vue. A verified Svelte 5 migration guide

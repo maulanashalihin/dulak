@@ -51,6 +51,9 @@ mkdirSync(dirname(config.dbPath), { recursive: true });
 
 export const db = new Database(config.dbPath, { create: true });
 db.exec("PRAGMA journal_mode = WAL");
+// Concurrent writes (e.g. two tus PATCHes) wait up to 5s instead of
+// failing with SQLITE_BUSY.
+db.exec("PRAGMA busy_timeout = 5000");
 db.exec("PRAGMA foreign_keys = ON");
 
 // Apply pending migrations before any statement is prepared/used.
