@@ -54,10 +54,8 @@ A starter gets forked and maintained for years — its dependencies decide how
 much forced maintenance lands on the fork owner. Dulak pins **current stable
 releases** (Hono 4.x, Bun 1.3, Inertia v3) because:
 
-- **No inherited rewrite churn.** A dependency whose next major is a rewrite
-  strands the boilerplate on a legacy track with no upgrade path. The HTTP
-  layer moved from Elysia to Hono precisely for this reason: Elysia's 2.x is
-  a full rewrite stuck in beta, so the old stack had no viable forward path.
+- **No inherited rewrite churn.** A dependency whose next major is a full
+  rewrite strands the boilerplate on a legacy track with no upgrade path.
 - **Breaking changes become schedulable.** On a stable track, upgrades are
   deliberate, documented migrations you can plan and test — not emergency
   fixes when a beta dependency shifts under you.
