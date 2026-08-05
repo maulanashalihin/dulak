@@ -60,8 +60,9 @@ function help() {
 ${c.bold("create-dulak")} — scaffold a new Dulak project
 
 ${c.bold("Usage:")}
-  ${c.cyan("bunx create-dulak")} ${c.dim("<project-name>")}
-  ${c.cyan("bunx create-dulak")} ${c.dim(".")}   ${c.dim("# use current directory")}
+  ${c.cyan("bun create dulak")} ${c.dim("<project-name>")}
+  ${c.cyan("bunx create-dulak")} ${c.dim("<project-name>  (equivalent)")}
+  ${c.cyan("bun create dulak")} ${c.dim(".")}   ${c.dim("# use current directory")}
 
 ${c.bold("Options:")}
   --help, -h          Show this help
@@ -76,9 +77,9 @@ ${c.bold("Templates:")}
   vue-tailwind       Vue 3 + Tailwind CSS v4
 
 ${c.bold("Examples:")}
-  ${c.cyan("bunx create-dulak")} my-app
-  ${c.cyan("bunx create-dulak")} my-app --template svelte-tailwind
-  ${c.cyan("bunx create-dulak")} my-app --no-install
+  ${c.cyan("bun create dulak")} my-app
+  ${c.cyan("bun create dulak")} my-app --template svelte-tailwind
+  ${c.cyan("bun create dulak")} my-app --no-install
 `);
 }
 

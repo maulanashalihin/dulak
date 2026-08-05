@@ -7,7 +7,7 @@ migrations, tests, and Docker.
 ## Usage
 
 ```sh
-bunx create-dulak my-app
+bun create dulak my-app
 ```
 
 Or in the current directory:
@@ -28,7 +28,7 @@ bunx create-dulak .
 Select interactively or via `--template`:
 
 ```sh
-bunx create-dulak my-app --template vue-tailwind
+bun create dulak my-app --template vue-tailwind
 ```
 
 ## Options

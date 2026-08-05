@@ -1,16 +1,4 @@
 ---
-const nav = [
-  "bunx create-dulak my-app --template vue-tailwind",
-  "cd my-app && bun install",
-  "bun run dev",
-];
-const output = [
-  "↓ Downloading Dulak (Vue 3 + Tailwind CSS v4)...",
-  "✓ Dulak project created!",
-  "  [migrate] applied 0001_users.sql",
-  "  [migrate] applied 0002_sessions.sql",
-  "  Hono Inertia boilerplate → http://localhost:4000",
-];
 ---
 
 <div class="dl-hero">
@@ -57,12 +45,16 @@ const output = [
       </div>
       <div class="dl-terminal-body">
         <div class="dl-line"><span class="dl-prompt">➜</span> <span class="dl-typing" id="dl-typing"></span><span class="dl-cursor" id="dl-cursor"></span></div>
-        <div class="dl-line dl-out o1"><span class="dl-prompt">➜</span> <span>cd my-app && bun install</span></div>
-        <div class="dl-line dl-out o2"><span class="dl-prompt">➜</span> <span>bun run dev</span></div>
-        <div class="dl-line dl-out o3"><span class="dl-dim">↓ Downloading Dulak (Vue 3 + Tailwind CSS v4)...</span></div>
-        <div class="dl-line dl-out o4"><span class="dl-ok">✓ Dulak project created!</span></div>
-        <div class="dl-line dl-out o5"><span class="dl-dim">[migrate] applied 0001_users.sql …</span></div>
-        <div class="dl-line dl-out o6"><span class="dl-dim">Hono Inertia boilerplate → http://localhost:4000</span></div>
+        <div class="dl-line dl-out o1"><span class="dl-dim">Select a template:</span></div>
+        <div class="dl-line dl-out o2"><span class="dl-dim">  1. Default (React 19 + vanilla CSS)</span></div>
+        <div class="dl-line dl-out o3"><span class="dl-dim">  2. Svelte 5 + Tailwind CSS v4</span></div>
+        <div class="dl-line dl-out o4"><span class="dl-dim">  3. React 19 + Tailwind CSS v4</span></div>
+        <div class="dl-line dl-out o5"><span class="dl-dim">  4. Vue 3 + Tailwind CSS v4</span></div>
+        <div class="dl-line dl-out o6"><span>? Template number [4]: </span></div>
+        <div class="dl-line dl-out o7"><span class="dl-dim">↓ Downloading Dulak (Vue 3 + Tailwind CSS v4)...</span></div>
+        <div class="dl-line dl-out o8"><span class="dl-ok">✓ Dulak project created!</span></div>
+        <div class="dl-line dl-out o9"><span class="dl-dim">[migrate] applied 0001_users.sql …</span></div>
+        <div class="dl-line dl-out o10"><span class="dl-dim">Hono Inertia boilerplate → http://localhost:4000</span></div>
       </div>
     </div>
 
@@ -76,7 +68,7 @@ const output = [
   const el = document.getElementById("dl-typing");
   const cursor = document.getElementById("dl-cursor");
   if (el && cursor) {
-    const text = "bunx create-dulak my-app --template vue-tailwind";
+    const text = "bun create dulak my-app";
     let i = 0;
     const tick = () => {
       if (i <= text.length) {

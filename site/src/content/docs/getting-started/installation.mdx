@@ -6,10 +6,14 @@ description: Scaffold a project with create-dulak, or run the repository directl
 ## Scaffold with create-dulak
 
 ```bash
-bunx create-dulak my-app                # interactive template prompt
-bunx create-dulak my-app --template vue-tailwind
-bunx create-dulak .                     # scaffold into the current dir
+bun create dulak my-app                # interactive template prompt
+bun create dulak my-app --template vue-tailwind
+bun create dulak .                     # scaffold into the current dir
 ```
+
+`bun create dulak` is bun's shorthand for `bunx create-dulak`. If your
+local bunx cache ever resolves a stale version, pin it explicitly with
+`bunx create-dulak@latest my-app`.
 
 Available templates:
 
