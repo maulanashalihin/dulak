@@ -1,0 +1,73 @@
+---
+title: SQLite performance
+description: The benchmark data behind Dulak's DB settings — why synchronous=NORMAL, and what to expect on real hardware.
+---
+
+Dulak ships with WAL + `synchronous = NORMAL` + `busy_timeout = 5000` +
+`foreign_keys = ON` in `src/server/db.ts`. This page documents why, with
+numbers measured on the reference hardware (2-core VPS, Bun 1.3.14,
+August 2026).
+
+## The settings
+
+```ts
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA synchronous = NORMAL"); // the one that matters for writes
+db.exec("PRAGMA busy_timeout = 5000");
+db.exec("PRAGMA foreign_keys = ON");
+```
+
+## Benchmark: pragma matrix
+
+Direct `bun:sqlite` prepared statements (no HTTP), 5K single-row inserts +
+50K point reads, fresh DB per config:
+
+| `synchronous` | writes/s | reads/s |
+| --- | ---: | ---: |
+| `FULL` (SQLite default) | 417 | 311K |
+| **`NORMAL`** | **20,005** | 327K |
+| `OFF` | 60,969 | 333K |
+
+- **`NORMAL` is ~48× faster for writes** than the default `FULL` — that is
+  the whole point. Reads are unaffected either way (page-cache bound).
+- `OFF` is another 3× on top but risks **database corruption** on power
+  loss — never use it for real data.
+- `cache_size` and `temp_store` showed **no measurable gain** at typical
+  app dataset sizes; they were left at defaults.
+
+## Why WAL alone isn't enough
+
+WAL fixes **read concurrency** (readers don't block the writer) but does
+**not** remove the per-commit fsync — that is `synchronous`'s job. With the
+SQLite default `FULL`, every commit calls `fsync` (~2.4ms on this disk),
+and because `bun:sqlite` is synchronous, commits serialize on the single
+event loop → ~400 writes/s. `NORMAL` keeps WAL's crash consistency but
+skips the per-commit fsync → ~20K writes/s.
+
+## Full-stack numbers
+
+Through a real HTTP server (Hono + `bun:sqlite`, `hey -n 50000`, 100
+concurrent connections, JSON endpoints), the same tuning gives:
+
+| Endpoint | req/s |
+| --- | ---: |
+| Point read (`SELECT … WHERE id = ?`) | ~22.8K |
+| List (20 rows) | ~19.6K |
+| Write (`INSERT`) | ~7.7K |
+
+The gap between direct (20K) and HTTP (7.7K) writes is request handling —
+routing, JSON parsing, response serialization — which is ~2.6× the raw
+commit cost. Reads drop ~14× (311K → 22.8K) because the per-request HTTP
+overhead dominates a ~3µs query.
+
+## The tradeoff
+
+| Mode | Power-loss behavior | Writes/s |
+| --- | --- | ---: |
+| `NORMAL` | last WAL transactions may be lost; **DB never corrupts** | ~20K |
+| `FULL` | zero loss | ~400 |
+
+`NORMAL` is the right default for web apps. Switch to `FULL` only for
+data where losing the last few transactions is unacceptable (financial
+records, etc.). Numbers vary by hardware — re-run the matrix on your own
+machine before tuning further.

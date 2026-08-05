@@ -78,6 +78,7 @@ export default defineConfig({
 					label: "Database",
 					items: [
 						{ label: "Schema & migrations", slug: "database/schema-migrations" },
+						{ label: "Performance", slug: "database/performance" },
 					],
 				},
 				{ label: "Testing", slug: "testing" },
