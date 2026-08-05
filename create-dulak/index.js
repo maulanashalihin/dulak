@@ -6,7 +6,7 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { execSync } from "node:child_process";
 import { createInterface } from "node:readline/promises";
-import { argv, cwd, exit, stdout, stdin } from "node:process";
+import { argv, exit, stdout, stdin } from "node:process";
 
 const REPO = "maulanashalihin/dulak";
 
@@ -38,6 +38,7 @@ const TEMPLATES = [
 const CLEANUP = [
 	".playwright-mcp",
 	"create-dulak",
+	"site", // the landing/docs site (Astro) — repo-only, not part of a scaffold
 	"data",
 	"dashboard-light.png",
 	".env",
