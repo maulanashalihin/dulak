@@ -43,7 +43,7 @@ SQLite `ALTER TABLE ADD COLUMN` with `NOT NULL` requires a `DEFAULT`.
   migrations run (`db.query(...)`). No raw SQL in routes or handlers.
 - **WAL mode** (`PRAGMA journal_mode = WAL`) — concurrent readers don't
   block the writer.
-- **`synchronous = NORMAL`** — skips the per-commit fsync; measured ~48×
+- **`synchronous = NORMAL`** — skips the per-commit fsync; measured ~27×
   faster writes than the SQLite default `FULL` (see
   [SQLite performance](/docs/database/performance)). Tradeoff: the last
   WAL transactions may be lost on power failure, never corruption.
