@@ -1,0 +1,18 @@
+
+export default new Map([
+["src/content/docs/architecture/conventions.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Farchitecture%2Fconventions.mdx&astroContentModuleFlag=true")],
+["src/content/docs/architecture/overview.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Farchitecture%2Foverview.mdx&astroContentModuleFlag=true")],
+["src/content/docs/architecture/request-lifecycle.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Farchitecture%2Frequest-lifecycle.mdx&astroContentModuleFlag=true")],
+["src/content/docs/auth/google-oauth.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fauth%2Fgoogle-oauth.mdx&astroContentModuleFlag=true")],
+["src/content/docs/auth/password-reset.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fauth%2Fpassword-reset.mdx&astroContentModuleFlag=true")],
+["src/content/docs/auth/sessions-guards.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fauth%2Fsessions-guards.mdx&astroContentModuleFlag=true")],
+["src/content/docs/contributing.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fcontributing.mdx&astroContentModuleFlag=true")],
+["src/content/docs/deployment/configuration.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fdeployment%2Fconfiguration.mdx&astroContentModuleFlag=true")],
+["src/content/docs/deployment/docker.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fdeployment%2Fdocker.mdx&astroContentModuleFlag=true")],
+["src/content/docs/getting-started/installation.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fgetting-started%2Finstallation.mdx&astroContentModuleFlag=true")],
+["src/content/docs/getting-started/introduction.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fgetting-started%2Fintroduction.mdx&astroContentModuleFlag=true")],
+["src/content/docs/templates/react-tailwind.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ftemplates%2Freact-tailwind.mdx&astroContentModuleFlag=true")],
+["src/content/docs/templates/svelte-tailwind.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ftemplates%2Fsvelte-tailwind.mdx&astroContentModuleFlag=true")],
+["src/content/docs/templates/vue-tailwind.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ftemplates%2Fvue-tailwind.mdx&astroContentModuleFlag=true")],
+["src/content/docs/uploads/tus.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fuploads%2Ftus.mdx&astroContentModuleFlag=true")]]);
+		
