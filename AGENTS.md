@@ -14,10 +14,11 @@ contributions broke the architecture by inventing their own layout.
   (versioned SQL applied at startup, see `migrations.ts`).
 - **Inertia v3 + Svelte 5** — in-process SSR; page registry in
   `src/client/pages.ts` with explicit imports.
-- **Tailwind CSS v4** — utility classes in components; `@tailwindcss/cli` as a
-  pre-build step (no PostCSS). Design tokens via CSS variables in
-  `src/client/styles.css`, bridged to Tailwind via `@theme inline` in
-  `src/client/tailwind.css` (see README "Styling").
+- **Vanilla CSS, scoped via Svelte `<style>`** — no CSS framework.
+  `styles.css` holds only global base (tokens, reset, shared UI
+  primitives); component and page styles live in native `<style>` blocks
+  within each `.svelte` SFC, auto-scoped by the Svelte compiler (see
+  "Style" below).
 
 ## Layout
 
@@ -47,8 +48,7 @@ src/
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
 │       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
-│       └── uploads.routes.ts      # /uploads* (tus protocol)
-├── client/                 # React + Inertia (pages/, components/, styles.css)
+├── client/                 # Svelte + Inertia (pages/, components/, styles.css = global base only)
 ├── shared/                 # types.ts, inertia.d.ts (client+server shared)
 ├── migrations/             # versioned SQL schema files (0001, 0002, …)
 └── tests/                  # bun:test E2E suite (in-memory DB)
@@ -86,6 +86,20 @@ src/
 6. **TypeScript**: `strict` + `noUncheckedIndexedAccess` +
    `verbatimModuleSyntax` are on. Type-only imports MUST use `import type`.
    No ORM, no loose `any`; queries are parameterized.
+
+7. **CSS is co-located in `<style>` blocks, not in `styles.css`.**
+   `styles.css` holds only global base: design tokens (`:root`,
+   `[data-theme]`), reset (`*`, `body`, `h1`…), `:focus-visible`, and
+   shared UI primitives used across multiple pages (`.btn`, `.badge`,
+   `.panel`, `.table`, `.avatar`). Everything else lives in a native
+   `<style>` block within the `.svelte` SFC — Svelte's compiler
+   auto-scopes it (adds a hash class to elements and selectors). Use
+   `:global()` for selectors that target slotted content rendered by
+   child components, or ancestor-based selectors like
+   `[data-theme="dark"]`. Never add page-specific or component-specific
+   rules to `styles.css`. The Svelte plugin (`svelte-plugin.ts`)
+   extracts compiled CSS and Bun.build bundles all `<style>` blocks
+   into one output stylesheet.
 
 ## Route conventions
 
@@ -131,25 +145,26 @@ src/
 - New test files must set env (`DATABASE_PATH=:memory:`, `UPLOAD_DIR`, …)
   in `beforeAll` BEFORE importing the app module — mirror
   `tests/app.test.ts` and `tests/tus.test.ts`.
-- Suite must stay green (59 tests): run `bun run typecheck` and
+- Suite must stay green (62 tests): run `bun run typecheck` and
   `bun run test` before finishing. `tsc` only covers `src/` and `scripts/`.
 
 ## Style
 
-- **Styling is done with Tailwind utility classes** in Svelte components
-  (`class="flex items-center gap-2 …"`). Do NOT write component CSS in
-  `src/client/styles.css` — that file holds only design-token CSS variables
-  and `@keyframes`. New styling = new utility classes in the component.
-- Design tokens (`--primary`, `--surface`, `--border`, …) are defined in
-  `src/client/styles.css` and bridged to Tailwind theme tokens via
-  `@theme inline` in `src/client/tailwind.css`. Use the token-based
-  utilities (`bg-surface`, `text-primary`, `border-border`, `text-muted`,
-  `bg-primary-soft`, etc.) so dark mode auto-switches via `var()`.
+- **Styling uses native Svelte `<style>` blocks** in `.svelte` SFCs.
+  Svelte's compiler auto-scopes the CSS (adds a hash class to elements
+  and selectors), preventing leaks. Do NOT write component CSS in
+  `src/client/styles.css` — that file holds only global base (tokens,
+  reset, shared UI primitives like `.btn`/`.badge`/`.panel`/`.table`).
+- Use `:global()` for selectors that target slotted content rendered
+  by child components (e.g., inputs inside `<Field>`, page content
+  inside `<Layout>`), or ancestor-based selectors like
+  `[data-theme="dark"] .foo`.
+- Design tokens (`--primary`, `--surface`, `--border`, …) are defined
+  in `src/client/styles.css` — reference them via `var(--token)` in
+  `<style>` blocks so dark mode auto-switches at runtime.
 - Dark mode uses `[data-theme="dark"]` on `<html>` (not
-  `prefers-color-scheme`). Use the `dark:` variant for one-off dark-only
-  overrides: `dark:bg-green-950 dark:text-green-300`.
-- `@keyframes` that cannot be expressed as utilities live in `styles.css`
-  and are referenced via `animate-[name_duration_ease]`.
+  `prefers-color-scheme`). Use `:global([data-theme="dark"])` for
+  dark-only overrides in scoped `<style>` blocks.
 - Match the repo's current style: 2-space indent, double quotes, semicolons
   (normalized by the editor/agent formatter; `tests/` and the route files are
   the reference). When editing an existing file, match that file's
