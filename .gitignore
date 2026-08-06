@@ -8,3 +8,4 @@ data/uploads/
 .playwright-mcp/
 *.png
 .svelte-css-cache/
+.tailwind.css
