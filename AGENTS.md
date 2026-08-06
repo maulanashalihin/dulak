@@ -14,7 +14,10 @@ contributions broke the architecture by inventing their own layout.
   (versioned SQL applied at startup, see `migrations.ts`).
 - **Inertia v3 + React 19** — in-process SSR; page registry in
   `src/client/pages.ts` with explicit imports.
-- **Vanilla CSS** — no CSS framework (see README "Styling").
+- **Vanilla CSS, co-located** — no CSS framework. `styles.css` holds only
+  global base (tokens, reset, shared UI primitives); component and page
+  styles live in sibling `.css` files imported by each `.tsx` (see "CSS"
+  below).
 
 ## Layout
 
@@ -45,7 +48,7 @@ src/
 │       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
 │       └── uploads.routes.ts      # /uploads* (tus protocol)
-├── client/                 # React + Inertia (pages/, components/, styles.css)
+├── client/                 # React + Inertia (pages/, components/, styles.css = global base only)
 ├── shared/                 # types.ts, inertia.d.ts (client+server shared)
 ├── migrations/             # versioned SQL schema files (0001, 0002, …)
 └── tests/                  # bun:test E2E suite (in-memory DB)
@@ -83,6 +86,16 @@ src/
 6. **TypeScript**: `strict` + `noUncheckedIndexedAccess` +
    `verbatimModuleSyntax` are on. Type-only imports MUST use `import type`.
    No ORM, no loose `any`; queries are parameterized.
+
+7. **CSS is co-located, not centralised.** `styles.css` holds only global
+   base: design tokens (`:root`, `[data-theme]`), reset (`*`, `body`, `h1`…),
+   `:focus-visible`, and shared UI primitives used across multiple pages
+   (`.btn`, `.badge`, `.panel`, `.table`, `.avatar`). Everything else lives
+   in a sibling `.css` file imported by the component or page that uses it
+   (`Brand.css`, `Layout.css`, `Dashboard.css`, …). Never add page-specific
+   or component-specific rules to `styles.css` — it stays small and global.
+   Bun.build bundles all imported `.css` files into one stylesheet via the
+   import graph (`app.tsx` → `pages.ts` → page → component → `.css`).
 
 ## Route conventions
 
@@ -128,7 +141,7 @@ src/
 - New test files must set env (`DATABASE_PATH=:memory:`, `UPLOAD_DIR`, …)
   in `beforeAll` BEFORE importing the app module — mirror
   `tests/app.test.ts` and `tests/tus.test.ts`.
-- Suite must stay green (59 tests): run `bun run typecheck` and
+- Suite must stay green (62 tests): run `bun run typecheck` and
   `bun run test` before finishing. `tsc` only covers `src/` and `scripts/`.
 
 ## Style
