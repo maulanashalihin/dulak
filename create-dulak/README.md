@@ -16,7 +16,7 @@ Or in the current directory:
 bunx create-dulak .
 ```
 
-The interactive prompt is now **2 steps**:
+The interactive prompt uses **arrow-key navigation** (↑/↓ to select, Enter to confirm) — just like `npm create vite`:
 
 1. **Select a JavaScript framework** — React 19, Svelte 5, or Vue 3
 2. **Select a styling approach** — Vanilla CSS or Tailwind CSS v4
@@ -48,12 +48,13 @@ bun create dulak my-app --template svelte-vanilla
 
 ## What it does
 
-1. Prompts for a framework (React, Svelte, Vue).
-2. Prompts for styling (vanilla CSS, Tailwind).
-3. Downloads the selected template branch from GitHub.
-4. Strips dev-only files (`create-dulak/`, screenshots, `.env`, etc.).
-5. Creates `data/` for SQLite and copies `.env.example` → `.env`.
-6. Runs `bun install` (unless `--no-install`).
+1. Prompts for a project name (if not provided).
+2. Prompts for a framework (React, Svelte, Vue) — arrow-key selection.
+3. Prompts for styling (vanilla CSS, Tailwind) — arrow-key selection.
+4. Downloads the selected template branch from GitHub.
+5. Strips dev-only files (`create-dulak/`, screenshots, `.env`, etc.).
+6. Creates `data/` for SQLite and copies `.env.example` → `.env`.
+7. Runs `bun install` (unless `--no-install`).
 
 ## License
 
