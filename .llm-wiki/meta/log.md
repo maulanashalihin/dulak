@@ -88,3 +88,9 @@
 ## [2026-08-05T04:45:36.874Z] observe
 - slug: "obs-2026-08-05-landing-docs-site-live-at-dulak-pages-dev", title: "Landing + docs site live at dulak.pages.dev", relevance: "high"
 
+## [2026-08-06T02:00:41.191Z] observe
+- slug: "obs-2026-08-06-bun-watch-asset-rebuild-ssr-import-chain-covers-most-client-", title: "Bun --watch asset rebuild: SSR import chain covers most client files", relevance: "high"
+
+## [2026-08-06T02:56:53.226Z] observe
+- slug: "obs-2026-08-06-dev-only-sse-hot-reload-on-bun-watch-restart", title: "Dev-only SSE hot-reload on bun --watch restart", relevance: "high"
+

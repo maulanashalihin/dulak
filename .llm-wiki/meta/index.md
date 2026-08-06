@@ -32,9 +32,9 @@
 
 ## Pages
 
-- [[concepts/svelte-5-migration]] — svelte-5-migration *(created: 2026-08-05)*
-- [[concepts/tailwind-v4-setup]] — tailwind-v4-setup *(created: 2026-08-05)*
-- [[entities/elysia-inertia-boilerplate]] — elysia-inertia-boilerplate *(created: 2026-08-05)*
+- [[concepts/svelte-5-migration]] — svelte-5-migration *(created: 2026-08-06)*
+- [[concepts/tailwind-v4-setup]] — tailwind-v4-setup *(created: 2026-08-06)*
+- [[entities/elysia-inertia-boilerplate]] — elysia-inertia-boilerplate *(created: 2026-08-06)*
 
 ## Sources
 
@@ -59,7 +59,9 @@
 - [[sources/obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13]] — "Observation: Hono migration complete: Elysia swapped for Hono 4.13" *(created: 2026-08-05)*
 - [[sources/obs-2026-08-05-landing-docs-site-live-at-dulak-pages-dev]] — "Observation: Landing + docs site live at dulak.pages.dev" *(created: 2026-08-05)*
 - [[sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox]] — "Observation: TypeBox formats not pre-registered in plain @sinclair/typebox" *(created: 2026-08-05)*
-- [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-05)*
+- [[sources/obs-2026-08-06-bun-watch-asset-rebuild-ssr-import-chain-covers-most-client-]] — "Observation: Bun --watch asset rebuild: SSR import chain covers most client files" *(created: 2026-08-06)*
+- [[sources/obs-2026-08-06-dev-only-sse-hot-reload-on-bun-watch-restart]] — "Observation: Dev-only SSE hot-reload on bun --watch restart" *(created: 2026-08-06)*
+- [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-06)*
 
 ---
-*Last updated: 2026-08-05T04:45:36.884Z* | *Total pages: 47*
+*Last updated: 2026-08-06T02:56:53.252Z* | *Total pages: 49*

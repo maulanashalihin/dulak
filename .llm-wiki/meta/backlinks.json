@@ -35,6 +35,7 @@
   "sources/obs-2026-08-03-inertia-v3-in-process-ssr-adapter-for-elysia": [
     "entities/elysia-inertia-boilerplate"
   ],
+  "sources/obs-2026-08-06-bun-watch-asset-rebuild-ssr-import-chain-covers-most-client-": [],
   "sources/elysia-14-hook-order-and-plugin-quirks": [
     "sources/elysia-2-vs-14-differences",
     "entities/elysia-inertia-boilerplate"
@@ -87,6 +88,7 @@
   "sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox": [],
   "sources/obs-2026-08-05-landing-docs-site-live-at-dulak-pages-dev": [],
   "sources/obs-2026-08-04-agents-md-created-codifying-repo-architecture": [],
+  "sources/obs-2026-08-06-dev-only-sse-hot-reload-on-bun-watch-restart": [],
   "sources/obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source": [],
   "sources/obs-2026-08-04-db-ts-stays-single-file-agent-preference-decision": [],
   "sources/obs-2026-08-04-profile-page-with-tus-avatar-upload": [],
