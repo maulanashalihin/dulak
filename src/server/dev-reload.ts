@@ -4,11 +4,11 @@
  * Two triggers drop the connection so the browser reconnects and reloads:
  *  1. `bun --watch` restarts the process on a server-file change (the whole
  *     process dies, killing every SSE connection).
- *  2. The dev client watcher (client-watcher.ts) rebuilds Svelte assets on a
+ *  2. The dev client watcher (client-watcher.ts) rebuilds client assets on a
  *     src/client/** change without restarting, then calls reloadBrowsers()
- *     to close the streams explicitly. `bun --watch` does NOT see .svelte
- *     edits (they are Bun.build entrypoints, not imports of src/index.ts),
- *     so the watcher is what makes client edits hot.
+ *     to close the streams explicitly. `bun --watch` does NOT see
+ *     .svelte/.vue edits (they are Bun.build entrypoints, not imports of
+ *     src/index.ts), so the watcher is what makes client edits hot.
  * This endpoint keeps one SSE connection open per browser tab; the inline
  * client script injected by inertia.ts does a full `location.reload()` on
  * the second `open` (reconnect) — picking up the freshly built assets.

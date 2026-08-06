@@ -24,10 +24,11 @@ if (!isProd || !manifestExists()) {
 const assets = loadManifest();
 const port = config.port;
 
-// Dev-only: watch src/client/** for Svelte edits and rebuild assets live.
+// Dev-only: watch src/client/** for component edits and rebuild assets live.
 // `bun --watch` only sees src/index.ts's import graph, which excludes the
-// Svelte client (Bun.build entrypoints, not imports), so without this a
-// .svelte change never rebuilds. Dynamic-imported so prod never loads it.
+// framework client (Bun.build entrypoints, not imports — except React,
+// where ssr.tsx is statically imported), so without this a .svelte/.vue
+// change never rebuilds. Dynamic-imported so prod never loads it.
 if (!isProd) {
 	const { startClientWatcher } = await import("./server/client-watcher");
 	startClientWatcher(assets);

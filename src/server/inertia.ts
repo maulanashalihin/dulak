@@ -45,7 +45,7 @@ async function renderPage(page: Page): Promise<{ head: string[]; body: string }>
 
 /**
  * Dev-only: drop the cached SSR module so the next render picks up a freshly
- * built dist/ssr.js. Called by the client watcher after rebuilding Svelte
+ * built dist/ssr.js. Called by the client watcher after rebuilding client
  * assets; a no-op in production (the watcher is never started there).
  */
 export function invalidateSsrRenderer(): void {
@@ -186,7 +186,7 @@ export class Inertia {
 	 */
 	private clientBody(page: Page): string {
 		const json = JSON.stringify(page).replace(/\//g, "\\/");
-		return `<script data-page="app" type="application/json">${json}<\/script><div id="app"></div>`;
+		return `<script data-page="app" type="application/json">${json}</script><div id="app"></div>`;
 	}
 
 	/** 422-style validation response, Inertia-aware. */

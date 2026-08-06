@@ -1,10 +1,12 @@
 /**
  * Dev-only client-asset watcher. `bun --watch src/index.ts` only watches the
- * import graph of the entry point — and the Svelte client is NOT in it:
+ * import graph of the entry point — and the framework client is NOT in it:
  * src/client/app.ts and src/client/ssr.ts are passed as string `entrypoints`
  * to Bun.build() in assets.ts, never imported by src/index.ts. So editing a
- * .svelte file does not restart the process and buildClientAssets() never
- * re-runs, leaving the browser on stale assets.
+ * client component (.svelte/.vue) does not restart the process and
+ * buildClientAssets() never re-runs, leaving the browser on stale assets.
+ * (React templates are exempt: ssr.tsx is statically imported by
+ * inertia.ts, so .tsx files ARE in the watch graph.)
  *
  * This module watches src/client/** directly and, on a change:
  *  1. debounces, then re-runs buildClientAssets() (client + SSR bundles);
