@@ -26,6 +26,17 @@ In this repo: the rate limiter is hand-rolled (`rate-limit.ts`), the
 Google OAuth client is plain `fetch` (no SDK), CSS is vanilla by default,
 and the database layer is raw `bun:sqlite` prepared statements — no ORM.
 
+## One runtime, zero setup
+
+Dulak is not a PHP/Laravel-style stack — no separate language runtime,
+package manager, web server, and database to install and wire together
+before your first `php artisan serve`. The whole stack is Bun:
+`Bun.serve` is the HTTP server, `bun:sqlite` is the database, `Bun.build`
+is the bundler, `bun test` is the test runner, `bun install` is the
+package manager. Setup is exactly three steps — install Bun, scaffold
+with `bun create dulak`, run `bun run dev` — and you have a running app
+with auth, migrations, SSR, and tests.
+
 ## One obvious way to do things
 
 Structure is standardized, on purpose: routes only live in

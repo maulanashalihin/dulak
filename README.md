@@ -40,6 +40,12 @@ choice favors the next maintainer — human or AI agent — over cleverness:
   instead of packages that pin the stack, raw `bun:sqlite` instead of an
   ORM. Dependencies are a liability; when a hand-rolled 60-line module does
   the job, it ships.
+- **One runtime, zero setup.** Not a PHP/Laravel-style stack where you
+  install and wire together a language runtime, package manager, web
+  server, and database before you can start. Everything runs on Bun alone:
+  `Bun.serve` is the HTTP server, `bun:sqlite` the database, `Bun.build`
+  the bundler, `bun test` the test runner, `bun install` the package
+  manager. Setup is: install Bun → `bun create dulak` → `bun run dev`.
 - **One obvious way to do things.** A single structural convention (codified
   in `AGENTS.md`): routes in `routes/<feature>.routes.ts` with handlers
   inline, shared logic as flat modules, all SQL in `db.ts`, schema in
