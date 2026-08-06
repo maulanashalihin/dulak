@@ -6,20 +6,21 @@ description: Scaffold a project with create-dulak, or run the repository directl
 ## Scaffold with create-dulak
 
 ```bash
-bun create dulak my-app                # interactive template prompt
-bun create dulak my-app --template vue-tailwind
-bun create dulak .                     # scaffold into the current dir
+bun create dulak@latest my-app                # interactive template prompt
+bun create dulak@latest my-app --template vue-tailwind
+bun create dulak@latest .                     # scaffold into the current dir
 ```
 
-`bun create dulak` is bun's shorthand for `bunx create-dulak`. If your
-local bunx cache ever resolves a stale version, pin it explicitly with
-`bunx create-dulak@latest my-app`.
+`bun create dulak@latest` is bun's shorthand for `bunx create-dulak@latest`.
+Always use `@latest` to avoid bunx resolving a stale cached version.
 
 Available templates:
 
 | Template | Stack |
 | --- | --- |
 | `default` | React 19 + vanilla CSS |
+| `svelte-vanilla` | Svelte 5 + scoped `<style>` CSS |
+| `vue-vanilla` | Vue 3 + scoped `<style>` CSS |
 | `react-tailwind` | React 19 + Tailwind CSS v4 |
 | `svelte-tailwind` | Svelte 5 + Tailwind CSS v4 |
 | `vue-tailwind` | Vue 3 + Tailwind CSS v4 |

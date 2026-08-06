@@ -7,13 +7,13 @@ tests, and Docker. Code: [github.com/maulanashalihin/dulak](https://github.com/m
 ## Usage
 
 ```sh
-bun create dulak my-app
+bun create dulak@latest my-app
 ```
 
 Or in the current directory:
 
 ```sh
-bunx create-dulak .
+bunx create-dulak@latest .
 ```
 
 The interactive prompt uses **arrow-key navigation** (↑/↓ to select, Enter to confirm) — just like `npm create vite`:
@@ -35,7 +35,7 @@ The interactive prompt uses **arrow-key navigation** (↑/↓ to select, Enter t
 Select interactively or via `--template`:
 
 ```sh
-bun create dulak my-app --template svelte-vanilla
+bun create dulak@latest my-app --template svelte-vanilla
 ```
 
 ## Options

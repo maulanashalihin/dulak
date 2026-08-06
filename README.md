@@ -69,12 +69,12 @@ choice favors the next maintainer — human or AI agent — over cleverness:
 
 ```bash
 # Scaffold a new project (prompts for template, installs deps, creates .env)
-bun create dulak my-app
+bun create dulak@latest my-app
 cd my-app
 bun run dev          # http://localhost:4000
 
 # Or pick a template directly:
-bun create dulak my-app --template svelte-tailwind
+bun create dulak@latest my-app --template svelte-vanilla
 ```
 
 ### Templates
@@ -275,7 +275,7 @@ Rules:
 bun test --isolate   # or: bun run test
 ```
 
-59 tests. The suite boots the full app against an in-memory SQLite database
+62 tests. The suite boots the full app against an in-memory SQLite database
 and drives it through `app.request()`: registration/login/logout, guards and
 roles, password reset end to end (via the log mail driver), Inertia protocol
 (409/404/SSR), CSRF, `/health`, static asset serving, and the tus
@@ -342,7 +342,7 @@ bridge cleanly. See the
   relies on the Web `CompressionStream`, which is not reliably present in
   every Bun 1.3.14 context; `node:zlib` is. `busy_timeout = 5000` is set so
   concurrent writes wait instead of failing with SQLITE_BUSY.
-- Prefer Svelte, Vue, or Tailwind? `bun create dulak my-app --template svelte-tailwind`
+- Prefer Svelte, Vue, or Tailwind? `bun create dulak@latest my-app --template svelte-tailwind`
   (or `react-tailwind` / `vue-tailwind`). The server side is adapter-agnostic —
   Inertia v3 works with React, Svelte, or Vue. The Svelte template follows a
   verified migration guide (Bun.build plugin, SSR, API mapping) in the
