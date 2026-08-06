@@ -101,7 +101,7 @@ Each server benchmarked solo (no other server running). Median of 3 runs.
 
 | Endpoint | Dulak (Hono+Bun) | Laravel (FrankenPHP) | Dulak faster |
 | --- | ---: | ---: | ---: |
-| `GET /health` (no DB) | 65,807 req/s | 6,169 req/s | 10.7× |
+| `GET /health` (no DB) | 65,807 req/s | 6,237 req/s | 10.5× |
 | `GET /users/:id` (PK read) | 51,934 req/s | 6,391 req/s | 8.1× |
 | `GET /users?limit=20` (list) | 32,222 req/s | 4,734 req/s | 6.8× |
 | `DELETE /users/:id` (delete) | 27,744 req/s | 5,655 req/s | 4.9× |
@@ -113,6 +113,12 @@ stack → Eloquent ORM (query builder → model hydration → collection) →
 JSON serialization. Dulak uses Hono's zero-overhead router + raw prepared
 statements + Bun's native JSON — no ORM, no model hydration, no collection
 wrapping.
+
+Notably, Laravel's health check (6,237 req/s) and DB point read (6,391
+req/s) are nearly identical — the database adds no measurable overhead.
+At ~7ms per request of framework overhead, the ~0.1ms SQLite query is
+invisible. In Dulak, the same query adds 0.2ms to a 0.76ms HTTP base,
+a visible 26% difference.
 
 **DELETE (4.9×):** The fairest write comparison — no password hashing on
 either side. The gap is pure framework overhead: Eloquent model lookup +
@@ -130,7 +136,7 @@ DELETE), still 4–5× slower than Dulak.
 | --- | ---: | --- |
 | `artisan serve` (single-worker) | ~500 | PHP dev server, not production |
 | RoadRunner (Octane, 4 workers) | ~8,400 | Crashed under c>5 with SQLite |
-| **FrankenPHP (Octane, 8 workers)** | **6,169** | Best stable result |
+| **FrankenPHP (Octane, 8 workers)** | **6,237** | Best stable result |
 FrankenPHP was the only PHP server that stayed up under concurrent load
 with SQLite. RoadRunner crashed repeatedly at concurrency >5 — likely
 SQLite WAL lock contention not handled gracefully. `artisan serve` is
