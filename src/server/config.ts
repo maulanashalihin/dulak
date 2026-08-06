@@ -43,6 +43,9 @@ if (problems.length > 0) {
 
 export const config = {
 	isProd: process.env.NODE_ENV === "production",
+	/** Server-side rendering of Inertia pages. Set SSR=false to ship an empty
+	 *  shell and let the client render (faster boot, no SSR renderer cost). */
+	ssr: process.env.SSR !== "false",
 	port: Number(pick(process.env.PORT, "4000")),
 	/** Absolute base URL — used for email links and OAuth redirect URIs. */
 	appUrl: pick(process.env.APP_URL, "http://localhost:4000").replace(

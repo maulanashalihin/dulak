@@ -14,6 +14,7 @@
  */
 import type { Page } from "@inertiajs/core";
 import type { FlashData, SharedPageProps } from "../shared/types";
+import { config } from "./config";
 import { clearFlash } from "./auth";
 
 /**
@@ -129,7 +130,9 @@ export class Inertia {
 	}
 
 	/**
-	 * Render a page: full HTML (SSR) for browser visits, JSON for Inertia XHR.
+	 * Render a page: full HTML (SSR when enabled) for browser visits, JSON for
+	 * Inertia XHR. When config.ssr is false, ships an empty shell with the page
+	 * payload inlined as JSON so the client renders from scratch (no hydrate).
 	 * Consumes the one-shot flash after building the payload.
 	 */
 	async render(
@@ -145,9 +148,28 @@ export class Inertia {
 			return this.json(page, options.status ?? 200);
 		}
 
-		const { head, body } = await renderPage(page);
+		let head: string[] = [];
+		let body: string;
+		if (config.ssr) {
+			const rendered = await renderPage(page);
+			head = rendered.head;
+			body = rendered.body;
+		} else {
+			body = this.clientBody(page);
+		}
 		clearFlash(this.c.sessionToken);
 		return this.html(head, body, options.status ?? 200);
+	}
+
+	/**
+	 * Non-SSR body: the Inertia v3 page payload inlined as JSON in a
+	 * `<script data-page>` tag, plus an empty mount point. Mirrors the wire
+	 * format `buildSSRBody` produces but omits `data-server-rendered` and the
+	 * rendered HTML, so the client does a plain createApp render (no hydrate).
+	 */
+	private clientBody(page: Page): string {
+		const json = JSON.stringify(page).replace(/\//g, "\\/");
+		return `<script data-page="app" type="application/json">${json}<\/script><div id="app"></div>`;
 	}
 
 	/** 422-style validation response, Inertia-aware. */
