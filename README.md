@@ -32,49 +32,80 @@ flowchart LR
 
 ## Philosophy
 
-**Dulak** is the Banjar word for *bored* — and the name is the manifesto.
-Boring here doesn't mean dull; it means **predictable**. Every choice in
-this repo trades "clever" for "obviously right", so the codebase stays
-followable at a glance for whoever comes next — human or AI agent.
+**Dulak** is the Banjar word for *bored* — and the name is the manifesto:
+code that is "boring" is the most valuable code there is. Boring here does
+not mean dull — it means **predictable**. No surprises, no clever tricks
+that require the next maintainer to reverse-engineer intent. Whoever comes
+later — human or AI agent — should be able to understand the code, change
+it, and not be afraid of breaking it.
 
-- **One runtime, zero setup.** Dulak is not a PHP/Laravel-style stack that
-  needs a language runtime, package manager, web server, and database
-  wired together before you can start. The whole stack is Bun: `Bun.serve`
-  serves HTTP, `bun:sqlite` stores data, `Bun.build` bundles, `bun test`
-  tests, `bun install` installs. Setup is: install Bun → `bun create
-  dulak` → `bun run dev`.
+- **Deliberately boring.** Every choice trades "clever" for "obviously
+  right". When two ways of doing the same thing exist, only one is kept —
+  the simpler one. Route handlers are written inline in their route file
+  instead of being split into abstract controllers. Boring? Yes.
+  Followable at a glance? Far more.
 
-- **Zero-dependency where it's cheap.** Every package is a liability: it
-  must be upgraded, audited, and can break under you. So the rate limiter
-  and OAuth client are hand-rolled, CSS is vanilla by default, and the
-  database layer is raw `bun:sqlite` — no ORM. When 60 lines of our own
-  code do the job, they ship.
+- **Zero-dependency where it's cheap.** Every dependency is a liability:
+  it must be upgraded, audited, and can break under you. When 60 lines of
+  our own code are enough, we write them: the rate limiter is hand-rolled
+  (`rate-limit.ts`), the Google OAuth client is plain `fetch` (no SDK),
+  CSS is vanilla by default, and the database layer is raw `bun:sqlite`
+  prepared statements — no ORM.
 
-- **One obvious way to do things.** Structure is standardized on purpose:
-  routes live in `routes/<feature>.routes.ts`, all SQL in `db.ts`, env in
-  `config.ts`. No feature folders, no second way to do the same thing —
-  when everyone writes the same way, anyone can find anything.
+- **One runtime, zero setup.** Not a PHP/Laravel-style stack — no separate
+  language runtime, package manager, web server, and database to install
+  and wire together before your first `php artisan serve`. The whole stack
+  is Bun: `Bun.serve` is the HTTP server, `bun:sqlite` is the database,
+  `Bun.build` is the bundler, `bun test` is the test runner, `bun install`
+  is the package manager. Setup is exactly three steps — install Bun,
+  scaffold with `bun create dulak`, run `bun run dev` — and you have a
+  running app with auth, migrations, SSR, and tests.
 
-- **Discoverability as a contract.** Given any URL you can name the file
-  that owns it: `/login` → `routes/auth.routes.ts`. Every URL lives in
-  exactly one file, with its GET render and POST actions together. Paste
-  a broken URL and you land in exactly one place.
+- **One obvious way to do things.** Structure is standardized, on purpose:
+  routes only live in `routes/<feature>.routes.ts`, all SQL lives in
+  `db.ts`, environment variables are read only in `config.ts`. No
+  "structural creativity" — that is the point. When everyone writes the
+  same way, anyone can find anything.
+
+- **Discoverability as a contract.** Given a URL you can name the file
+  that owns it: `/login` → `routes/auth.routes.ts`, `/uploads` →
+  `routes/uploads.routes.ts`. Every URL lives in exactly one file, with
+  its GET render and POST actions together. Paste a broken URL and you
+  land in exactly one place — no guessing.
 
 - **Production-shaped, not production.** The guardrails a deployed app
-  needs — migrations, CSRF, rate limiting, security headers, Docker, CI —
-  are wired from day one. The business features are not: the only
-  pre-built feature is auth. The product is yours to add by following the
-  conventions.
+  needs are wired from day one: CSRF, rate limiting, security headers,
+  versioned migrations, graceful shutdown, Docker, CI. But the business
+  features are not — that part is yours. You start from a skeleton that is
+  *shaped* like a production app, not from zero.
 
 - **Boring versions, current versions.** A starter gets forked and
-  maintained for years, so its dependencies decide how much forced
-  maintenance lands on every fork. Dulak pins current stable releases
-  (Hono 4.x, Bun 1.3): upgrades become deliberate, documented migrations,
-  not emergency fixes.
+  maintained for years — its dependencies decide how much forced
+  maintenance lands on the fork owner. Dulak pins **current stable
+  releases** (Hono 4.x, Bun 1.3, Inertia v3) because:
+  - **No inherited rewrite churn.** A dependency whose next major is a
+    full rewrite strands the boilerplate on a legacy track with no upgrade
+    path.
+  - **Breaking changes become schedulable.** On a stable track, upgrades
+    are deliberate, documented migrations you can plan and test — not
+    emergency fixes when a beta dependency shifts under you.
+  - **A new major must prove itself.** It ships when there is a concrete
+    reason (security, ecosystem, maintenance), not because it is the
+    newest thing.
 
-- **Correctness over cleverness.** Synchronous, typed, parameterized
-  queries; fail-fast config; deterministic tests. If a piece can't be
-  explained in one sentence, it doesn't belong in a starter.
+- **Correctness over cleverness.** Synchronous, explicitly typed,
+  parameterized queries; fail-fast configuration; deterministic tests
+  (`bun test --isolate`). Prefer the boring implementation that is
+  obviously correct over the clever one that is hard to verify.
+
+- **Built for AI agents.** The "next maintainer" includes the agent
+  writing the next feature — which, in this project, is the main way the
+  code evolves. That is why conventions are codified where agents read
+  them (`AGENTS.md`), validation errors have exact, documented shapes
+  (TypeBox), mistakes fail at compile time (`strict` +
+  `noUncheckedIndexedAccess`), and the test suite runs deterministically
+  as the safety net. A codebase an agent can extend without inventing
+  conventions is a codebase that stays coherent.
 
 ## Quick start
 
