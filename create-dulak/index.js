@@ -152,10 +152,8 @@ async function main() {
 	if (!target) {
 		const nameResponse = await clack.text({
 			message: "Project name:",
-			placeholder: "my-app",
-			validate(value) {
-				if (value.length === 0) return "Project name is required.";
-			},
+			placeholder: "my-dulak-app",
+			defaultValue: "my-dulak-app",
 		});
 		if (clack.isCancel(nameResponse)) {
 			clack.cancel("Cancelled.");
