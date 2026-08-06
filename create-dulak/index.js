@@ -223,7 +223,10 @@ async function main() {
 			exit(1);
 		}
 
-		template = framework.styling[stylingChoice];
+	template = {
+		...framework.styling[stylingChoice],
+		label: `${framework.label} + ${STYLINGS.find((s) => s.id === stylingChoice)?.label ?? stylingChoice}`,
+	};
 	}
 
 // Download template from GitHub.
