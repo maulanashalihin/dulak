@@ -9,9 +9,11 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
 import { compress } from "./compress";
+import { config } from "./config";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { serveAsset } from "./assets";
 import { pingDb, toPublicUser } from "./db";
+import { devReloadStream } from "./dev-reload";
 import { Inertia, type InertiaAssets } from "./inertia";
 import { inertiaMiddleware, type AppEnv } from "./inertia-middleware";
 import { logError, requestLogger } from "./logger";
@@ -167,6 +169,12 @@ export function createApp(assets: InertiaAssets) {
 		const relPath = c.req.path.slice("/assets/".length);
 		return serveAsset(relPath);
 	});
+	// Dev-only hot-reload SSE: bun --watch restart drops the connection, the
+	// browser's EventSource reconnects, and the inline client script (injected
+	// by inertia.ts) does a full location.reload() to pick up new assets.
+	if (!config.isProd) {
+		app.get("/dev-reload", () => devReloadStream());
+	}
 	// Browser/DevTools well-known probes (e.g. Chrome DevTools JSON) —
 	// return a plain 404 so they never reach the Inertia not-found handler.
 	app.get("/.well-known/*", () => new Response(null, { status: 404 }));
