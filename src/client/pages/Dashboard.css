@@ -1,0 +1,33 @@
+/* Dashboard: stat cards. */
+
+.stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 1rem;
+	margin: 1.5rem 0;
+}
+
+.stat-card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.25rem;
+}
+
+.badge-value {
+	text-transform: capitalize;
+}
+
+.stat-value {
+	font-size: 1.25rem;
+	font-weight: 700;
+}
+
+.stat-label {
+	font-size: 0.82rem;
+	color: var(--muted);
+}

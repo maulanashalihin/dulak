@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Role, SharedPageProps } from "../../shared/types";
 import Brand from "./Brand";
+import "./Layout.css";
 
 type NavItem = {
 	href: string;

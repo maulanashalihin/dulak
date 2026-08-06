@@ -5,8 +5,8 @@
  */
 import { createInertiaApp } from "@inertiajs/react";
 import { createRoot, hydrateRoot } from "react-dom/client";
-import { notFoundPage, pages } from "./pages";
 import "./styles.css";
+import { notFoundPage, pages } from "./pages";
 
 const resolve = (name: string) =>
 	pages[`./pages/${name}.tsx`]?.default ?? notFoundPage!;

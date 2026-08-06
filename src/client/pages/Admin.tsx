@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import Layout from '../components/Layout'
 import type { Paginated, User } from '../../shared/types'
+import './Admin.css'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {

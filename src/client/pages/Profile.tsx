@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import Layout from "../components/Layout";
 import Field from "../components/Field";
+import "./Profile.css";
 
 const CHUNK_SIZE = 256 * 1024;
 

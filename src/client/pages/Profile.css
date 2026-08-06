@@ -1,0 +1,119 @@
+/* Profile: two-column layout, avatar, upload, progress. */
+
+.profile-grid {
+	display: grid;
+	grid-template-columns: 300px 1fr;
+	gap: 1.25rem;
+	align-items: start;
+}
+
+.profile-aside {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.profile-card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	gap: 0.5rem;
+}
+
+.profile-name {
+	margin: 0;
+}
+
+.profile-meta {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.profile-since {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+.profile-upload {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	margin-top: 0.75rem;
+}
+
+.profile-forms {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+	.profile-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Avatar row (used in profile header). */
+
+.avatar-row {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 1.25rem;
+}
+
+.avatar-row-name {
+	margin: 0;
+}
+
+/* Upload zone. */
+
+.upload-zone {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	padding: 1.25rem;
+	border: 1px dashed var(--border);
+	border-radius: var(--radius);
+}
+
+.upload-file {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+.upload-error {
+	color: #b91c1c;
+	font-size: 0.85rem;
+	margin: 0;
+}
+
+.upload-done {
+	color: #15803d;
+	font-weight: 600;
+	margin-top: 0.75rem;
+}
+
+/* Progress bar. */
+
+.progress {
+	margin-top: 1rem;
+	height: 8px;
+	border-radius: 999px;
+	background: var(--border);
+	overflow: hidden;
+}
+
+.progress-bar {
+	height: 100%;
+	border-radius: 999px;
+	background: var(--primary);
+	transition: width 120ms ease;
+}

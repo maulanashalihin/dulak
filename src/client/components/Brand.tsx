@@ -1,4 +1,5 @@
 import { Link } from "@inertiajs/react";
+import "./Brand.css";
 
 /** Brand: inline SVG mark + wordmark, used on the app shell and auth pages. */
 export default function Brand({

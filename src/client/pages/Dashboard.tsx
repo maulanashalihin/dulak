@@ -1,6 +1,7 @@
 import { Head, usePage } from '@inertiajs/react'
 import Layout from '../components/Layout'
 import type { DashboardStats } from '../../shared/types'
+import './Dashboard.css'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
