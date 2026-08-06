@@ -1,6 +1,6 @@
 {
   "name": "create-dulak",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "MIT",
   "description": "Scaffold a new Dulak project — Hono + bun:sqlite + Inertia v3 boilerplate with template selection (React/Svelte/Vue, vanilla CSS/Tailwind).",
   "keywords": [
@@ -11,7 +11,7 @@
     "react",
     "svelte",
     "vue",
-    "tailwind",
+    "vanilla-css",
     "sqlite",
     "boilerplate",
     "ssr",

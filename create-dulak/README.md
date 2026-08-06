@@ -16,19 +16,26 @@ Or in the current directory:
 bunx create-dulak .
 ```
 
+The interactive prompt is now **2 steps**:
+
+1. **Select a JavaScript framework** — React 19, Svelte 5, or Vue 3
+2. **Select a styling approach** — Vanilla CSS or Tailwind CSS v4
+
 ## Templates
 
-| Template         | Stack                              | Branch                    |
-| ---------------- | ---------------------------------- | ------------------------- |
-| `default`        | React 19 + vanilla CSS             | `main`                    |
-| `svelte-tailwind`| Svelte 5 + Tailwind CSS v4         | `template/svelte-tailwind`|
-| `react-tailwind` | React 19 + Tailwind CSS v4         | `template/react-tailwind` |
-| `vue-tailwind`   | Vue 3 + Tailwind CSS v4            | `template/vue-tailwind`   |
+| Template          | Stack                              | Branch                    |
+| ----------------- | ---------------------------------- | ------------------------- |
+| `default`         | React 19 + vanilla CSS             | `main`                    |
+| `svelte-vanilla`  | Svelte 5 + scoped `<style>` CSS    | `template/svelte-vanilla` |
+| `vue-vanilla`     | Vue 3 + scoped `<style>` CSS       | `template/vue-vanilla`    |
+| `react-tailwind`  | React 19 + Tailwind CSS v4         | `template/react-tailwind` |
+| `svelte-tailwind` | Svelte 5 + Tailwind CSS v4         | `template/svelte-tailwind`|
+| `vue-tailwind`    | Vue 3 + Tailwind CSS v4            | `template/vue-tailwind`   |
 
 Select interactively or via `--template`:
 
 ```sh
-bun create dulak my-app --template vue-tailwind
+bun create dulak my-app --template svelte-vanilla
 ```
 
 ## Options
@@ -37,15 +44,16 @@ bun create dulak my-app --template vue-tailwind
 | ---------------- | ------------------------------------------------ |
 | `--help`, `-h`   | Show help                                        |
 | `--no-install`   | Skip running `bun install`                       |
-| `--template <n>` | Use template directly (skip prompt)              |
+| `--template <n>` | Use template directly (skip both prompts)        |
 
 ## What it does
 
-1. Prompts for a template (or uses `--template`).
-2. Downloads the selected template branch from GitHub.
-3. Strips dev-only files (`create-dulak/`, screenshots, `.env`, etc.).
-4. Creates `data/` for SQLite and copies `.env.example` → `.env`.
-5. Runs `bun install` (unless `--no-install`).
+1. Prompts for a framework (React, Svelte, Vue).
+2. Prompts for styling (vanilla CSS, Tailwind).
+3. Downloads the selected template branch from GitHub.
+4. Strips dev-only files (`create-dulak/`, screenshots, `.env`, etc.).
+5. Creates `data/` for SQLite and copies `.env.example` → `.env`.
+6. Runs `bun install` (unless `--no-install`).
 
 ## License
 

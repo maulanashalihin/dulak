@@ -10,29 +10,32 @@ import { argv, exit, stdout, stdin } from "node:process";
 
 const REPO = "maulanashalihin/dulak";
 
-/** Templates — each maps to a git branch in the Dulak repo. */
-const TEMPLATES = [
-	{
-		name: "default",
-		label: "Default (React 19 + vanilla CSS)",
-		ref: "main",
-	},
-	{
-		name: "svelte-tailwind",
-		label: "Svelte 5 + Tailwind CSS v4",
-		ref: "template/svelte-tailwind",
-	},
-	{
-		name: "react-tailwind",
-		label: "React 19 + Tailwind CSS v4",
-		ref: "template/react-tailwind",
-	},
-	{
-		name: "vue-tailwind",
-		label: "Vue 3 + Tailwind CSS v4",
-		ref: "template/vue-tailwind",
-	},
+/**
+ * Templates are a 2D matrix: framework × styling.
+ * Each combination maps to a git branch in the Dulak repo.
+ *
+ * Frameworks:  React (default → main), Svelte, Vue
+ * Styling:     vanilla CSS (co-located / scoped <style>), Tailwind CSS v4
+ */
+const FRAMEWORKS = [
+	{ id: "react", label: "React 19", styling: { vanilla: { ref: "main", name: "default" }, tailwind: { ref: "template/react-tailwind", name: "react-tailwind" } } },
+	{ id: "svelte", label: "Svelte 5", styling: { vanilla: { ref: "template/svelte-vanilla", name: "svelte-vanilla" }, tailwind: { ref: "template/svelte-tailwind", name: "svelte-tailwind" } } },
+	{ id: "vue", label: "Vue 3", styling: { vanilla: { ref: "template/vue-vanilla", name: "vue-vanilla" }, tailwind: { ref: "template/vue-tailwind", name: "vue-tailwind" } } },
 ];
+
+const STYLINGS = [
+	{ id: "vanilla", label: "Vanilla CSS (co-located, no framework)" },
+	{ id: "tailwind", label: "Tailwind CSS v4" },
+];
+
+/** Flatten the matrix for --template lookup and help text. */
+const ALL_TEMPLATES = FRAMEWORKS.flatMap((fw) =>
+	Object.entries(fw.styling).map(([styleId, info]) => ({
+		name: info.name,
+		ref: info.ref,
+		label: `${fw.label} + ${STYLINGS.find((s) => s.id === styleId)?.label ?? styleId}`,
+	})),
+);
 
 /** Files/dirs to strip from the scaffolded project. */
 const CLEANUP = [
@@ -67,18 +70,20 @@ ${c.bold("Usage:")}
 ${c.bold("Options:")}
   --help, -h          Show this help
   --no-install        Skip running bun install
-  --template <name>   Skip prompt, use template directly
-                      ${c.dim("default | svelte-tailwind | react-tailwind | vue-tailwind")}
+  --template <name>   Skip prompts, use template directly
+                      ${c.dim(ALL_TEMPLATES.map((t) => t.name).join(" | "))}
 
 ${c.bold("Templates:")}
   default            React 19 + vanilla CSS
-  svelte-tailwind    Svelte 5 + Tailwind CSS v4
+  svelte-vanilla     Svelte 5 + scoped <style> CSS
+  vue-vanilla        Vue 3 + scoped <style> CSS
   react-tailwind     React 19 + Tailwind CSS v4
+  svelte-tailwind    Svelte 5 + Tailwind CSS v4
   vue-tailwind       Vue 3 + Tailwind CSS v4
 
 ${c.bold("Examples:")}
   ${c.cyan("bun create dulak")} my-app
-  ${c.cyan("bun create dulak")} my-app --template svelte-tailwind
+  ${c.cyan("bun create dulak")} my-app --template svelte-vanilla
   ${c.cyan("bun create dulak")} my-app --no-install
 
 ${c.bold("Links:")}
@@ -94,15 +99,32 @@ async function prompt(question) {
 	return answer.trim();
 }
 
-/** Prompt for template selection with arrow-key navigation. */
-async function promptTemplate() {
-	console.log(`${c.bold("Select a template:")}`);
-	TEMPLATES.forEach((t, i) => {
-		console.log(`  ${c.cyan(`${i + 1}.`)} ${t.label}`);
+/** Prompt for framework selection (step 1). */
+async function promptFramework() {
+	console.log(`\n${c.bold("Step 1 — Select a JavaScript framework:")}`);
+	FRAMEWORKS.forEach((fw, i) => {
+		console.log(`  ${c.cyan(`${i + 1}.`)} ${fw.label}`);
 	});
-	const answer = await prompt(`${c.cyan("?")} Template number [1]: `);
-	const idx = Math.max(0, Math.min(TEMPLATES.length - 1, Number(answer) - 1));
-	return TEMPLATES[idx] ?? TEMPLATES[0];
+	const answer = await prompt(`${c.cyan("?")} Framework number [1]: `);
+	const idx = Math.max(0, Math.min(FRAMEWORKS.length - 1, Number(answer) - 1));
+	return FRAMEWORKS[idx] ?? FRAMEWORKS[0];
+}
+
+/** Prompt for styling selection (step 2). */
+async function promptStyling(framework) {
+	console.log(`\n${c.bold("Step 2 — Select a styling approach:")}`);
+	STYLINGS.forEach((s, i) => {
+		console.log(`  ${c.cyan(`${i + 1}.`)} ${s.label}`);
+	});
+	const answer = await prompt(`${c.cyan("?")} Styling number [1]: `);
+	const idx = Math.max(0, Math.min(STYLINGS.length - 1, Number(answer) - 1));
+	const styling = STYLINGS[idx] ?? STYLINGS[0];
+	return framework.styling[styling.id];
+}
+
+/** Resolve a --template name to a template object. */
+function resolveTemplate(name) {
+	return ALL_TEMPLATES.find((t) => t.name === name);
 }
 
 function runInstall(targetDir) {
@@ -160,26 +182,27 @@ async function main() {
 		}
 	}
 
-	// Select template.
+	// Select template: --template bypasses both prompts.
 	let template;
 	if (templateName) {
-		template = TEMPLATES.find((t) => t.name === templateName);
+		template = resolveTemplate(templateName);
 		if (!template) {
 			console.error(
 				c.red(
-					`✗ Unknown template "${templateName}". Available: ${TEMPLATES.map((t) => t.name).join(", ")}`,
+					`✗ Unknown template "${templateName}". Available: ${ALL_TEMPLATES.map((t) => t.name).join(", ")}`,
 				),
 			);
 			exit(1);
 		}
 	} else {
-		template = await promptTemplate();
+		const framework = await promptFramework();
+		template = await promptStyling(framework);
 	}
 
 	// Download template from GitHub.
 	const ref = template.ref;
 	const gigetRef = ref === "main" ? `github:${REPO}` : `github:${REPO}#${ref}`;
-	console.log(`${c.cyan("↓")} Downloading Dulak (${template.label})...`);
+	console.log(`\n${c.cyan("↓")} Downloading Dulak (${template.label})...`);
 	try {
 		await downloadTemplate(gigetRef, {
 			dir: targetDir,
