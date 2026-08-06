@@ -76,6 +76,12 @@ Through a real HTTP server (Hono + `bun:sqlite`, concurrent load, JSON
 | Update (`PUT /users/:id`) | 25,337 | 0.62ms | 3.28ms |
 | Delete (`DELETE /users/:id`) | 27,744 | 1.41ms | 5.29ms |
 
+The no-DB health check (63K) is only 17% faster than the DB point read
+(52K) — not 10× faster as you might expect. That's because HTTP overhead
+(connection handling, Hono routing, JSON serialization) costs ~16µs per
+request, while the SQLite query itself adds only ~2µs. The database is so
+fast that it's barely visible in the HTTP path.
+
 The gap between direct (95K) and HTTP (20K) writes is request handling —
 routing, JSON parsing, response serialization — which is ~5× the raw
 commit cost. Reads drop ~10× (526K → 52K) because the per-request HTTP
@@ -98,7 +104,6 @@ Each server benchmarked solo (no other server running). Median of 3 runs.
 | `GET /users/:id` (PK read) | 51,934 req/s | 6,391 req/s | 8.1× |
 | `GET /users?limit=20` (list) | 32,222 req/s | 4,734 req/s | 6.8× |
 | `DELETE /users/:id` (delete) | 27,744 req/s | 5,655 req/s | 4.9× |
-
 ### Why the gap
 
 **Reads (7–10×):** Laravel routes through kernel bootstrap → middleware
