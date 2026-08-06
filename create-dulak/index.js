@@ -2,9 +2,9 @@
 
 import * as clack from "@clack/prompts";
 import { downloadTemplate } from "giget";
-import { rm, mkdir, copyFile, readdir } from "node:fs/promises";
+import { rm, mkdir, copyFile, readdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, resolve, basename } from "node:path";
 import { execSync } from "node:child_process";
 import { argv, exit } from "node:process";
 
@@ -261,6 +261,18 @@ await mkdir(join(targetDir, "data"), { recursive: true });
 const envExample = join(targetDir, ".env.example");
 if (existsSync(envExample)) {
 	await copyFile(envExample, join(targetDir, ".env"));
+}
+
+// Rename package.json "name" to the project name (not "dulak").
+const pkgPath = join(targetDir, "package.json");
+if (existsSync(pkgPath)) {
+	const pkg = JSON.parse(await readFile(pkgPath, "utf8"));
+	pkg.name = basename(targetDir);
+	pkg.version = "0.0.0";
+	pkg.private = true;
+	delete pkg.repository;
+	delete pkg.keywords;
+	await writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
 }
 
 // Install dependencies.
