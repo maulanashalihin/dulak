@@ -24,6 +24,15 @@ if (!isProd || !manifestExists()) {
 const assets = loadManifest();
 const port = config.port;
 
+// Dev-only: watch src/client/** for Svelte edits and rebuild assets live.
+// `bun --watch` only sees src/index.ts's import graph, which excludes the
+// Svelte client (Bun.build entrypoints, not imports), so without this a
+// .svelte change never rebuilds. Dynamic-imported so prod never loads it.
+if (!isProd) {
+	const { startClientWatcher } = await import("./server/client-watcher");
+	startClientWatcher(assets);
+}
+
 const server = Bun.serve({
 	port,
 	fetch: createApp(assets).fetch,

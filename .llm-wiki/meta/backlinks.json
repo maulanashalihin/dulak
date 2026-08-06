@@ -40,6 +40,8 @@
     "entities/elysia-inertia-boilerplate"
   ],
   "sources/boilerplate-v010-released-and-pat-workflow-scope": [],
+  "sources/obs-2026-08-06-svelte-css-scoping-breaks-on-inertia-link-via-svelte-element": [],
+  "sources/obs-2026-08-06-bun-watch-does-not-see-svelte-client-files-dev-client-watche": [],
   "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": [
     "entities/elysia-inertia-boilerplate"
   ],

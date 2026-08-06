@@ -82,3 +82,12 @@
 ## [2026-08-05T01:14:22.346Z] observe
 - slug: "obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox", title: "TypeBox formats not pre-registered in plain @sinclair/typebox", relevance: "high"
 
+## [2026-08-06T03:25:37.818Z] retro
+- category: "uncategorized"
+
+## [2026-08-06T03:25:56.703Z] observe
+- slug: "obs-2026-08-06-svelte-css-scoping-breaks-on-inertia-link-via-svelte-element", title: "Svelte CSS scoping breaks on Inertia Link via svelte:element", relevance: "critical"
+
+## [2026-08-06T03:25:56.742Z] observe
+- slug: "obs-2026-08-06-bun-watch-does-not-see-svelte-client-files-dev-client-watche", title: "bun --watch does not see Svelte client files — dev client watcher needed", relevance: "critical"
+

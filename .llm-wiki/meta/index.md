@@ -32,9 +32,9 @@
 
 ## Pages
 
-- [[concepts/svelte-5-migration]] — svelte-5-migration *(created: 2026-08-05)*
-- [[concepts/tailwind-v4-setup]] — tailwind-v4-setup *(created: 2026-08-05)*
-- [[entities/elysia-inertia-boilerplate]] — elysia-inertia-boilerplate *(created: 2026-08-05)*
+- [[concepts/svelte-5-migration]] — svelte-5-migration *(created: 2026-08-06)*
+- [[concepts/tailwind-v4-setup]] — tailwind-v4-setup *(created: 2026-08-06)*
+- [[entities/elysia-inertia-boilerplate]] — elysia-inertia-boilerplate *(created: 2026-08-06)*
 
 ## Sources
 
@@ -57,7 +57,9 @@
 - [[sources/obs-2026-08-05-hono-4-13-integration-gotchas-verified-from-source]] — "Observation: Hono 4.13 integration gotchas (verified from source)" *(created: 2026-08-05)*
 - [[sources/obs-2026-08-05-hono-migration-complete-elysia-swapped-for-hono-4-13]] — "Observation: Hono migration complete: Elysia swapped for Hono 4.13" *(created: 2026-08-05)*
 - [[sources/obs-2026-08-05-typebox-formats-not-pre-registered-in-plain-sinclair-typebox]] — "Observation: TypeBox formats not pre-registered in plain @sinclair/typebox" *(created: 2026-08-05)*
-- [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-05)*
+- [[sources/obs-2026-08-06-bun-watch-does-not-see-svelte-client-files-dev-client-watche]] — "Observation: bun --watch does not see Svelte client files — dev client watcher needed" *(created: 2026-08-06)*
+- [[sources/obs-2026-08-06-svelte-css-scoping-breaks-on-inertia-link-via-svelte-element]] — "Observation: Svelte CSS scoping breaks on Inertia Link via svelte:element" *(created: 2026-08-06)*
+- [[sources/SRC-2026-08-03-001]] — SRC-2026-08-03-001 *(created: 2026-08-06)*
 
 ---
-*Last updated: 2026-08-05T01:14:22.347Z* | *Total pages: 45*
+*Last updated: 2026-08-06T03:25:56.743Z* | *Total pages: 47*

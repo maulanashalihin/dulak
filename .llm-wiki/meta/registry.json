@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-08-05T01:14:22.347Z",
+  "last_updated": "2026-08-06T03:25:56.743Z",
   "pages": {
     "concepts/server-driven-ui": {
       "type": "concept",
@@ -14,8 +14,8 @@
     "concepts/tailwind-v4-setup": {
       "type": "page",
       "title": "tailwind-v4-setup",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/csrf-origin-check": {
       "type": "concept",
@@ -38,8 +38,8 @@
     "concepts/svelte-5-migration": {
       "type": "page",
       "title": "svelte-5-migration",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "concepts/partial-reloads": {
       "type": "concept",
@@ -156,6 +156,41 @@
       "status": "insight",
       "category": "project"
     },
+    "sources/obs-2026-08-06-svelte-css-scoping-breaks-on-inertia-link-via-svelte-element": {
+      "type": "source",
+      "title": "\"Observation: Svelte CSS scoping breaks on Inertia Link via svelte:element\"",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
+      "slug": "obs-2026-08-06-svelte-css-scoping-breaks-on-inertia-link-via-svelte-element",
+      "status": "observation",
+      "relevance": "critical",
+      "observed_at": "2026-08-06T03:25:56.702Z",
+      "tags": [
+        "svelte",
+        "css",
+        "inertia",
+        "scoping",
+        "link-component"
+      ]
+    },
+    "sources/obs-2026-08-06-bun-watch-does-not-see-svelte-client-files-dev-client-watche": {
+      "type": "source",
+      "title": "\"Observation: bun --watch does not see Svelte client files — dev client watcher needed\"",
+      "created": "2026-08-06",
+      "updated": "2026-08-06",
+      "slug": "obs-2026-08-06-bun-watch-does-not-see-svelte-client-files-dev-client-watche",
+      "status": "observation",
+      "relevance": "critical",
+      "observed_at": "2026-08-06T03:25:56.742Z",
+      "tags": [
+        "bun",
+        "watch",
+        "svelte",
+        "dev",
+        "assets",
+        "hot-reload"
+      ]
+    },
     "sources/obs-2026-08-03-sql-migration-runner-for-bun-sqlite": {
       "type": "source",
       "title": "\"Observation: SQL migration runner for bun:sqlite\"",
@@ -238,7 +273,7 @@
     "sources/SRC-2026-08-03-001": {
       "type": "source",
       "title": "SRC-2026-08-03-001",
-      "created": "2026-08-05",
+      "created": "2026-08-06",
       "updated": "2026-08-03",
       "format": "markdown",
       "source_id": "SRC-2026-08-03-001",
@@ -494,8 +529,8 @@
     "entities/elysia-inertia-boilerplate": {
       "type": "page",
       "title": "elysia-inertia-boilerplate",
-      "created": "2026-08-05",
-      "updated": "2026-08-05"
+      "created": "2026-08-06",
+      "updated": "2026-08-06"
     },
     "entities/react-19": {
       "type": "entity",

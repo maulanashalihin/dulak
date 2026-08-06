@@ -646,7 +646,7 @@
     color: var(--muted);
   }
 
-  .sidebar-link {
+  .sidebar :global(.sidebar-link) {
     display: flex;
     align-items: center;
     gap: 0.65rem;
@@ -660,13 +660,13 @@
       color 120ms ease;
   }
 
-  .sidebar-link:hover {
+  .sidebar :global(.sidebar-link:hover) {
     text-decoration: none;
     background: var(--primary-soft);
     color: var(--text);
   }
 
-  .sidebar-link-active {
+  .sidebar :global(.sidebar-link-active) {
     background: var(--primary-soft);
     color: var(--primary);
     font-weight: 600;
@@ -678,7 +678,7 @@
     color: var(--muted);
   }
 
-  .sidebar-link-active .sidebar-link-icon {
+  :global(.sidebar-link-active) .sidebar-link-icon {
     color: var(--primary);
   }
 
@@ -961,7 +961,7 @@
     margin: 0.35rem 0;
   }
 
-  .user-menu-item {
+  .user-menu :global(.user-menu-item) {
     display: flex;
     align-items: center;
     gap: 0.55rem;
@@ -978,7 +978,7 @@
     transition: background 120ms ease;
   }
 
-  .user-menu-item:hover {
+  .user-menu :global(.user-menu-item:hover) {
     text-decoration: none;
     background: var(--primary-soft);
   }
