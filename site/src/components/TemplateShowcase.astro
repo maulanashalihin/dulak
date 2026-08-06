@@ -2,86 +2,15 @@
 import { Code } from "astro-expressive-code/components";
 const templates = [
   {
-    id: "vue",
-    lang: "vue",
-    name: "vue-tailwind",
-    label: "Vue 3",
-    stack: "Vue 3 + Tailwind CSS v4",
-    code: `<script setup lang="ts">
-import { Head, Link, useForm } from "@inertiajs/vue3";
-import AuthLayout from "../components/AuthLayout.vue";
-import Field from "../components/Field.vue";
-
-defineProps<{ googleEnabled?: boolean; notice?: string | null }>();
-
-const form = useForm({ email: "", password: "" });
-
-function submit() {
-  form.post("/login");
-}
-</script>
-
-<template>
-  <Head><title>Login</title></Head>
-  <AuthLayout>
-    <h1>Welcome back</h1>
-    <form @submit.prevent="submit" novalidate>
-      <Field id="email" label="Email" :error="form.errors.email">
-        <input id="email" type="email" v-model="form.email"
-               @change="form.clearErrors('email')" />
-      </Field>
-      <button class="btn btn-primary btn-block" type="submit"
-              :disabled="form.processing">
-        {{ form.processing ? "Signing in…" : "Sign in" }}
-      </button>
-    </form>
-  </AuthLayout>
-</template>`,
-  },
-  {
-    id: "svelte",
-    lang: "svelte",
-    name: "svelte-tailwind",
-    label: "Svelte 5",
-    stack: "Svelte 5 + Tailwind CSS v4",
-    code: `<script lang="ts">
-  import { Link, useForm } from '@inertiajs/svelte'
-  import AuthLayout from '../components/AuthLayout.svelte'
-  import Field from '../components/Field.svelte'
-
-  let { googleEnabled = false, notice = null } = $props()
-
-  const form = useForm({ email: '', password: '' })
-
-  function submit(e: SubmitEvent) {
-    e.preventDefault()
-    form.post('/login')
-  }
-</script>
-
-<AuthLayout>
-  <h1>Welcome back</h1>
-  <form onsubmit={submit} novalidate>
-    <Field id="email" label="Email" error={form.errors.email}>
-      <input id="email" type="email" bind:value={form.email}
-             onchange={() => form.clearErrors('email')} />
-    </Field>
-    <button class="btn btn-primary btn-block" type="submit"
-            disabled={form.processing}>
-      {form.processing ? 'Signing in…' : 'Sign in'}
-    </button>
-  </form>
-</AuthLayout>`,
-  },
-  {
     id: "react",
     lang: "tsx",
-    name: "react-tailwind",
+    name: "default (React 19 + vanilla CSS)",
     label: "React 19",
-    stack: "React 19 + Tailwind CSS v4",
+    stack: "React 19 + vanilla CSS",
     code: `import { Head, Link, useForm } from "@inertiajs/react";
 import AuthLayout from "../components/AuthLayout";
 import Field from "../components/Field";
+import "../components/AuthLayout.css";
 
 export default function Login() {
   const form = useForm({ email: "", password: "" });
@@ -94,7 +23,7 @@ export default function Login() {
   return (
     <AuthLayout>
       <Head title="Login" />
-      <h1>Welcome back</h1>
+      <h1 className="auth-sub">Welcome back</h1>
       <form onSubmit={submit} noValidate>
         <Field id="email" label="Email" error={form.errors.email}>
           <input
@@ -112,12 +41,83 @@ export default function Login() {
   );
 }`,
   },
+  {
+    id: "svelte",
+    lang: "svelte",
+    name: "svelte-vanilla (Svelte 5 + scoped <style>)",
+    label: "Svelte 5",
+    stack: "Svelte 5 + scoped <style> CSS",
+    code: `<script lang="ts">
+  import { Link, useForm } from '@inertiajs/svelte'
+  import AuthLayout from '../components/AuthLayout.svelte'
+  import Field from '../components/Field.svelte'
+
+  let { googleEnabled = false, notice = null } = $props()
+
+  const form = useForm({ email: '', password: '' })
+
+  function submit(e: SubmitEvent) {
+    e.preventDefault()
+    form.post('/login')
+  }
+</script>
+
+<AuthLayout>
+  <h1 class="auth-sub">Welcome back</h1>
+  <form onsubmit={submit} novalidate>
+    <Field id="email" label="Email" error={form.errors.email}>
+      <input id="email" type="email" bind:value={form.email}
+             onchange={() => form.clearErrors('email')} />
+    </Field>
+    <button class="btn btn-primary btn-block" type="submit"
+            disabled={form.processing}>
+      {form.processing ? 'Signing in…' : 'Sign in'}
+    </button>
+  </form>
+</AuthLayout>`,
+  },
+  {
+    id: "vue",
+    lang: "vue",
+    name: "vue-vanilla (Vue 3 + scoped <style>)",
+    label: "Vue 3",
+    stack: "Vue 3 + scoped <style> CSS",
+    code: `<script setup lang="ts">
+import { Head, Link, useForm } from "@inertiajs/vue3";
+import AuthLayout from "../components/AuthLayout.vue";
+import Field from "../components/Field.vue";
+
+defineProps<{ googleEnabled?: boolean; notice?: string | null }>();
+
+const form = useForm({ email: "", password: "" });
+
+function submit() {
+  form.post("/login");
+}
+</script>
+
+<template>
+  <Head><title>Login</title></Head>
+  <AuthLayout>
+    <h1 class="auth-sub">Welcome back</h1>
+    <form @submit.prevent="submit" novalidate>
+      <Field id="email" label="Email" :error="form.errors.email">
+        <input id="email" type="email" v-model="form.email"
+               @change="form.clearErrors('email')" />
+      </Field>
+      <button class="btn btn-primary btn-block" type="submit"
+              :disabled="form.processing">
+        {{ form.processing ? "Signing in…" : "Sign in" }}
+      </button>
+    </form>
+  </AuthLayout>
+</template>`,
+  },
 ];
 ---
-
 <section class="dl-templates">
   <h2 class="dl-section-title">One server. <span class="dl-gradient">Three clients.</span></h2>
-  <p class="dl-section-sub">Pick a frontend — the same Login page, in your framework.</p>
+  <p class="dl-section-sub">Pick a framework and styling — the same Login page, in your stack.</p>
 
   <div class="dl-tabs">
     <div class="dl-tab-buttons">

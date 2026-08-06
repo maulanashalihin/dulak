@@ -11,7 +11,7 @@ export default defineConfig({
 		starlight({
 			title: "Dulak",
 			description:
-				"Deliberately boring full-stack boilerplate: Hono + bun:sqlite + Inertia v3 on Bun, with React/Svelte/Vue + Tailwind templates.",
+				"Deliberately boring full-stack boilerplate: Hono + bun:sqlite + Inertia v3 on Bun, with React/Svelte/Vue templates (vanilla CSS or Tailwind).",
 			favicon: "/favicon.svg",
 			logo: {
 				src: "./src/assets/logo.svg",
@@ -69,10 +69,13 @@ export default defineConfig({
 				{
 					label: "Templates",
 					items: [
-						{ label: "react-tailwind", slug: "templates/react-tailwind" },
-						{ label: "svelte-tailwind", slug: "templates/svelte-tailwind" },
-						{ label: "vue-tailwind", slug: "templates/vue-tailwind" },
-					],
+					{ label: "default (React + vanilla CSS)", slug: "getting-started/installation" },
+					{ label: "svelte-vanilla", slug: "templates/svelte-vanilla" },
+					{ label: "vue-vanilla", slug: "templates/vue-vanilla" },
+					{ label: "react-tailwind", slug: "templates/react-tailwind" },
+					{ label: "svelte-tailwind", slug: "templates/svelte-tailwind" },
+					{ label: "vue-tailwind", slug: "templates/vue-tailwind" },
+				],
 				},
 				{
 					label: "Database",
