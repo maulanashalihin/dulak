@@ -9,9 +9,10 @@ The Banjar word for *bored* — a deliberately boring full-stack starter.
 [![npm](https://img.shields.io/npm/v/create-dulak?color=%23059669&label=create-dulak)](https://www.npmjs.com/package/create-dulak)
 
 A full-stack starter running entirely on **Bun**: **Hono** for HTTP,
-**bun:sqlite** for data, **Inertia v3** for server-driven UI — with React,
-Svelte, and Vue templates. Auth, uploads, migrations, tests, Docker — wired
-end to end.
+**bun:sqlite** for data, **Inertia v3** for server-driven UI with
+**in-process SSR** — no separate SSR server, it runs inside the same Bun
+process — with React, Svelte, and Vue templates. Auth, uploads,
+migrations, tests, Docker — wired end to end.
 
 ```mermaid
 flowchart LR
