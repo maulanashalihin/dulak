@@ -32,44 +32,49 @@ flowchart LR
 
 ## Philosophy
 
-**Dulak** is the Banjar word for *bored* — the name is the philosophy. Every
-choice favors the next maintainer — human or AI agent — over cleverness:
+**Dulak** is the Banjar word for *bored* — and the name is the manifesto.
+Boring here doesn't mean dull; it means **predictable**. Every choice in
+this repo trades "clever" for "obviously right", so the codebase stays
+followable at a glance for whoever comes next — human or AI agent.
 
-- **Zero-dependency where it's cheap.** Vanilla CSS by default (Tailwind v4
-  available as a template), a hand-rolled rate limiter and OAuth client
-  instead of packages that pin the stack, raw `bun:sqlite` instead of an
-  ORM. Dependencies are a liability; when a hand-rolled 60-line module does
-  the job, it ships.
-- **One runtime, zero setup.** Not a PHP/Laravel-style stack where you
-  install and wire together a language runtime, package manager, web
-  server, and database before you can start. Everything runs on Bun alone:
-  `Bun.serve` is the HTTP server, `bun:sqlite` the database, `Bun.build`
-  the bundler, `bun test` the test runner, `bun install` the package
-  manager. Setup is: install Bun → `bun create dulak` → `bun run dev`.
-- **One obvious way to do things.** A single structural convention (codified
-  in `AGENTS.md`): routes in `routes/<feature>.routes.ts` with handlers
-  inline, shared logic as flat modules, all SQL in `db.ts`, schema in
-  versioned migrations. No feature folders, no second way to do the same
-  thing.
-- **Discoverability as a contract.** Given any URL you can derive the file
-  that owns it: `src/server/routes/` mirrors URL namespaces, every URL lives
-  in exactly one file (GET renders + POST actions together), and new
-  features get their own `<feature>.routes.ts`. Tests run deterministically
-  (`bun test --isolate`). The repo is built to be extended safely by anyone.
-- **Production-shaped, not production.** The guardrails a deployed app needs
-  — migrations, CSRF, rate limiting, security headers, session rotation,
-  graceful shutdown, CI, Docker — are wired from day one, so you start with a
-  skeleton that is *shaped* like a production app. But it is not one: the
-  only pre-built feature is auth, and anything deployment-specific
-  (Redis-backed rate limiting for horizontal scaling, CDN, observability) is
-  a deliberate swap point. The product is yours to add by following the
+- **One runtime, zero setup.** Dulak is not a PHP/Laravel-style stack that
+  needs a language runtime, package manager, web server, and database
+  wired together before you can start. The whole stack is Bun: `Bun.serve`
+  serves HTTP, `bun:sqlite` stores data, `Bun.build` bundles, `bun test`
+  tests, `bun install` installs. Setup is: install Bun → `bun create
+  dulak` → `bun run dev`.
+
+- **Zero-dependency where it's cheap.** Every package is a liability: it
+  must be upgraded, audited, and can break under you. So the rate limiter
+  and OAuth client are hand-rolled, CSS is vanilla by default, and the
+  database layer is raw `bun:sqlite` — no ORM. When 60 lines of our own
+  code do the job, they ship.
+
+- **One obvious way to do things.** Structure is standardized on purpose:
+  routes live in `routes/<feature>.routes.ts`, all SQL in `db.ts`, env in
+  `config.ts`. No feature folders, no second way to do the same thing —
+  when everyone writes the same way, anyone can find anything.
+
+- **Discoverability as a contract.** Given any URL you can name the file
+  that owns it: `/login` → `routes/auth.routes.ts`. Every URL lives in
+  exactly one file, with its GET render and POST actions together. Paste
+  a broken URL and you land in exactly one place.
+
+- **Production-shaped, not production.** The guardrails a deployed app
+  needs — migrations, CSRF, rate limiting, security headers, Docker, CI —
+  are wired from day one. The business features are not: the only
+  pre-built feature is auth. The product is yours to add by following the
   conventions.
-- **Boring versions, current versions.** Hono 4.x (stable, runtime-agnostic),
-  Bun 1.3. Upgrades are deliberate decisions, not defaults.
-- **Correctness over cleverness.** Synchronous, explicitly typed,
-  parameterized queries, fail-fast config, documented decisions (see
-  "Notes / decisions" below). If a piece can't be explained in one sentence,
-  it doesn't belong in a starter.
+
+- **Boring versions, current versions.** A starter gets forked and
+  maintained for years, so its dependencies decide how much forced
+  maintenance lands on every fork. Dulak pins current stable releases
+  (Hono 4.x, Bun 1.3): upgrades become deliberate, documented migrations,
+  not emergency fixes.
+
+- **Correctness over cleverness.** Synchronous, typed, parameterized
+  queries; fail-fast config; deterministic tests. If a piece can't be
+  explained in one sentence, it doesn't belong in a starter.
 
 ## Quick start
 
