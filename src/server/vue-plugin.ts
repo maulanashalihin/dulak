@@ -8,11 +8,20 @@
  * `export function render` is attached to that component via a rename +
  * `__sfc__.render = render`. `bindingMetadata` from compileScript makes the
  * template resolve script-setup bindings through `$setup`/`$props`.
+ *
+ * `<style>` / `<style scoped>` blocks are compiled with compileStyle, written
+ * to temp `.css` files, and appended as `import "<path>"` statements. Bun.build
+ * bundles these imports into the single output stylesheet (scoped selectors
+ * carry the `data-v-xxxx` attribute id derived from the filename hash).
  */
 import { createHash } from "node:crypto";
-import { compileScript, compileTemplate, parse } from "@vue/compiler-sfc";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { compileScript, compileStyle, compileTemplate, parse } from "@vue/compiler-sfc";
 
-export function vuePlugin() {
+const TMP_CSS_DIR = "/tmp/dulak-vue-css";
+mkdirSync(TMP_CSS_DIR, { recursive: true });
+
+export function vuePlugin({ ssr = false }: { ssr?: boolean } = {}) {
 	return {
 		name: "vue-plugin",
 		setup(build: any) {
@@ -26,11 +35,6 @@ export function vuePlugin() {
 				const { descriptor, errors } = parse(source, { filename });
 				if (errors.length > 0)
 					throw new Error(errors.map((e) => e.message).join("\n"));
-				if (descriptor.styles.length > 0) {
-					throw new Error(
-						`<style> in SFC is not supported by this build (${filename}) — use global styles`,
-					);
-				}
 				if (descriptor.script && !descriptor.scriptSetup) {
 					throw new Error(
 						`Only <script setup> is supported (${filename})`,
@@ -63,7 +67,31 @@ export function vuePlugin() {
 						code += "__sfc__.render = render;\nexport default __sfc__;\n";
 					}
 				}
-				return { contents: code, loader: "ts" };
+
+			// Compile each <style> block to a temp .css file and import it so
+			// Bun.build bundles the styles into the client output stylesheet.
+			// Skipped for the SSR build (target: "bun" can't resolve .css imports
+			// and the CSS is already in the client bundle, loaded via <link>).
+			if (!ssr) {
+				for (const style of descriptor.styles) {
+					const compiled = compileStyle({
+						source: style.content,
+						filename,
+						id,
+						scoped: style.scoped,
+					});
+					if (compiled.errors.length > 0)
+						throw new Error(
+							compiled.errors.map((e) => String(e)).join("\n"),
+						);
+					const base = filename.split("/").pop()!.replace(/\.vue$/, "");
+					const cssPath = `${TMP_CSS_DIR}/${base}.vue.css`;
+					writeFileSync(cssPath, compiled.code);
+					code += `\nimport "${cssPath}";\n`;
+				}
+			}
+
+			return { contents: code, loader: "ts" };
 			});
 		},
 	};

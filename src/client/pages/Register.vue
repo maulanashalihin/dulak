@@ -7,9 +7,6 @@ defineProps<{ googleEnabled?: boolean }>();
 
 const form = useForm({ name: "", email: "", password: "" });
 
-const inputClass =
-	"w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary";
-
 function submit() {
 	form.post("/register");
 }
@@ -19,21 +16,14 @@ function submit() {
 	<Head><title>Register</title></Head>
 
 	<AuthLayout>
-		<h1 class="text-[1.6rem] m-0 mb-1 tracking-tight">Create your account</h1>
-		<p class="text-muted mb-5">Start building with the boilerplate in seconds.</p>
+		<h1>Create your account</h1>
+		<p class="auth-sub">Start building with the boilerplate in seconds.</p>
 
 		<template v-if="googleEnabled">
-			<a
-				class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 w-full border border-border rounded-lg bg-surface font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
-				href="/auth/google"
-			>
+			<a class="btn btn-block btn-google" href="/auth/google">
 				Register with Google
 			</a>
-			<div class="flex items-center gap-3 text-muted text-xs my-5">
-				<span class="flex-1 h-px bg-border" />
-				or
-				<span class="flex-1 h-px bg-border" />
-			</div>
+			<div class="divider">or</div>
 		</template>
 
 		<form @submit.prevent="submit" novalidate>
@@ -44,7 +34,6 @@ function submit() {
 					name="name"
 					autocomplete="name"
 					autofocus
-					:class="inputClass"
 					v-model="form.name"
 					@change="form.clearErrors('name')"
 				/>
@@ -56,7 +45,6 @@ function submit() {
 					type="email"
 					name="email"
 					autocomplete="email"
-					:class="inputClass"
 					v-model="form.email"
 					@change="form.clearErrors('email')"
 				/>
@@ -68,15 +56,14 @@ function submit() {
 					type="password"
 					name="password"
 					autocomplete="new-password"
-					:class="inputClass"
 					v-model="form.password"
 					@change="form.clearErrors('password')"
 				/>
-				<p class="text-xs text-muted mt-1">At least 8 characters.</p>
+				<p class="field-hint">At least 8 characters.</p>
 			</Field>
 
 			<button
-				class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 w-full border border-primary rounded-lg bg-primary text-white font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline disabled:opacity-60 disabled:cursor-not-allowed"
+				class="btn btn-primary btn-block"
 				type="submit"
 				:disabled="form.processing"
 			>
@@ -84,7 +71,7 @@ function submit() {
 			</button>
 		</form>
 
-		<p class="mt-5 text-center text-muted text-sm">
+		<p class="auth-alt">
 			Already have an account? <Link href="/login">Log in</Link>
 		</p>
 	</AuthLayout>

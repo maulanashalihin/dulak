@@ -132,27 +132,25 @@ function handleLogout() {
 </script>
 
 <template>
-	<div class="grid grid-cols-[260px_1fr] min-h-screen bg-bg max-md:grid-cols-1">
+	<div class="dash">
 		<!-- Mobile backdrop -->
 		<div
 			v-if="sidebarOpen"
-			class="fixed inset-0 bg-black/50 z-[25] animate-[fade-in_120ms_ease]"
+			class="dash-backdrop"
 			aria-hidden="true"
 			@click="sidebarOpen = false"
 		></div>
 
 		<!-- Sidebar -->
 		<aside
-			:class="`sticky top-0 self-start h-screen flex flex-col bg-surface border-r border-border z-30 max-md:fixed max-md:top-0 max-md:left-0 max-md:w-[280px] max-md:max-w-[85vw] max-md:-translate-x-full max-md:transition-transform max-md:shadow-card${sidebarOpen ? ' max-md:translate-x-0' : ''}`"
+			:class="['sidebar', sidebarOpen ? 'sidebar-open' : '']"
 			aria-label="Primary"
 		>
-			<div
-				class="flex items-center justify-between gap-2 px-5 border-b border-border h-16 shrink-0"
-			>
+			<div class="sidebar-head">
 				<Brand :href="user ? '/dashboard' : '/login'" />
 				<button
 					type="button"
-					class="hidden items-center justify-center w-9 h-9 border border-border rounded-lg bg-transparent text-text cursor-pointer max-md:flex"
+					class="sidebar-close"
 					aria-label="Close navigation"
 					@click="sidebarOpen = false"
 				>
@@ -172,22 +170,19 @@ function handleLogout() {
 				</button>
 			</div>
 
-			<nav class="flex-1 overflow-y-auto px-3 py-4">
-				<p
-					class="mx-3 my-2 text-xs font-bold uppercase tracking-wider text-muted"
-				>
-					Menu
-				</p>
-				<ul class="list-none m-0 p-0 flex flex-col gap-0.5">
+			<nav class="sidebar-nav">
+				<p class="sidebar-section">Menu</p>
+				<ul>
 					<li v-for="item in items" :key="item.href">
 						<Link
 							:href="item.href"
-							:class="`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-text text-sm font-medium transition-colors hover:bg-primary-soft hover:no-underline${item.match(currentPath) ? ' bg-primary-soft text-primary font-semibold' : ''}`"
+							:class="[
+								'sidebar-link',
+								item.match(currentPath) ? 'sidebar-link-active' : '',
+							]"
 							:aria-current="item.match(currentPath) ? 'page' : undefined"
 						>
-							<span
-								:class="`inline-flex shrink-0 ${item.match(currentPath) ? 'text-primary' : 'text-muted'}`"
-							>
+							<span class="sidebar-link-icon">
 								<svg
 									v-if="item.href === '/dashboard'"
 									viewBox="0 0 24 24"
@@ -242,23 +237,21 @@ function handleLogout() {
 				</ul>
 			</nav>
 
-			<div class="p-3 border-t border-border">
-				<div class="p-3.5 rounded-[10px] bg-bg border border-border">
-					<p class="m-0 text-sm font-bold">Dulak</p>
-					<p class="mt-0.5 text-xs text-muted">Bun · SQLite · Inertia v3</p>
+			<div class="sidebar-foot">
+				<div class="sidebar-foot-card">
+					<p class="sidebar-foot-title">Dulak</p>
+					<p class="sidebar-foot-sub">Bun · SQLite · Inertia v3</p>
 				</div>
 			</div>
 		</aside>
 
 		<!-- Main column -->
-		<div class="flex flex-col min-w-0">
-			<header
-				class="sticky top-0 z-20 flex items-center justify-between gap-4 px-5 py-2.5 bg-surface/88 backdrop-saturate-[1.8] backdrop-blur border-b border-border h-16 max-md:px-4"
-			>
-				<div class="flex items-center gap-3 flex-1 min-w-0">
+		<div class="dash-main">
+			<header class="topbar">
+				<div class="topbar-left">
 					<button
 						type="button"
-						class="hidden items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 max-md:flex"
+						class="topbar-toggle"
 						aria-label="Open navigation"
 						:aria-expanded="sidebarOpen"
 						@click="sidebarOpen = !sidebarOpen"
@@ -277,10 +270,8 @@ function handleLogout() {
 							<path d="M3 6h18M3 12h18M3 18h18" />
 						</svg>
 					</button>
-					<label
-						class="relative flex items-center w-full max-w-[360px] h-10 px-2.5 border border-border rounded-lg bg-bg text-muted transition-colors focus-within:border-primary focus-within:shadow-[0_0_0_3px_var(--primary-soft)] max-[960px]:hidden"
-					>
-						<span class="inline-flex text-muted shrink-0">
+					<label class="topbar-search">
+						<span class="topbar-search-icon">
 							<svg
 								viewBox="0 0 24 24"
 								width="16"
@@ -300,20 +291,15 @@ function handleLogout() {
 							type="search"
 							placeholder="Search…"
 							aria-label="Search"
-							class="flex-1 min-w-0 border-none outline-none bg-transparent text-text text-sm px-1 placeholder:text-muted"
 						/>
-						<kbd
-							class="font-mono text-xs px-1 py-0.5 border border-border rounded text-muted bg-surface shrink-0"
-						>
-							⌘K
-						</kbd>
+						<kbd class="topbar-search-kbd">⌘K</kbd>
 					</label>
 				</div>
 
-				<div class="flex items-center gap-2 shrink-0">
+				<div class="topbar-right">
 					<button
 						type="button"
-						class="relative inline-flex items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 transition-colors hover:bg-primary-soft hover:no-underline"
+						class="topbar-icon-btn"
 						aria-label="Notifications"
 					>
 						<svg
@@ -330,15 +316,12 @@ function handleLogout() {
 							<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
 							<path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
 						</svg>
-						<span
-							class="absolute top-2 right-[9px] w-1.5 h-1.5 rounded-full bg-primary border-2 border-surface"
-							aria-hidden="true"
-						></span>
+						<span class="topbar-dot" aria-hidden="true"></span>
 					</button>
 
 					<button
 						type="button"
-						class="inline-flex items-center justify-center w-10 h-10 border border-border rounded-lg bg-surface text-text cursor-pointer shrink-0 transition-colors hover:bg-primary-soft hover:no-underline"
+						class="topbar-icon-btn"
 						aria-label="Toggle theme"
 						@click="toggleTheme"
 					>
@@ -375,38 +358,28 @@ function handleLogout() {
 						</svg>
 					</button>
 
-					<div v-if="user" ref="menuRef" class="relative">
+					<div v-if="user" ref="menuRef" class="user-menu">
 						<button
 							type="button"
-							class="flex items-center gap-2 h-10 px-2.5 py-1 border border-border rounded-full bg-surface text-text cursor-pointer transition-colors hover:bg-primary-soft max-md:p-1"
+							class="user-menu-trigger"
 							aria-haspopup="menu"
 							:aria-expanded="menuOpen"
 							@click="menuOpen = !menuOpen"
 						>
 							<img
 								v-if="user.avatarUrl"
-								class="w-8 h-8 rounded-full object-cover"
+								class="avatar avatar-img"
 								:src="user.avatarUrl"
 								alt=""
 							/>
-							<span
-								v-else
-								class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-xs font-bold tracking-tight shrink-0"
-								aria-hidden="true"
-							>
+							<span v-else class="avatar" aria-hidden="true">
 								{{ initials(user.name) }}
 							</span>
-							<span
-								class="flex flex-col items-start leading-tight max-md:hidden"
-							>
-								<span class="text-sm font-semibold max-w-[140px] truncate">
-									{{ user.name }}
-								</span>
-								<span class="text-xs text-muted capitalize">
-									{{ user.role }}
-								</span>
+							<span class="user-menu-meta">
+								<span class="user-menu-name">{{ user.name }}</span>
+								<span class="user-menu-role">{{ user.role }}</span>
 							</span>
-							<span class="inline-flex text-muted max-md:hidden">
+							<span class="user-menu-chevron">
 								<svg
 									viewBox="0 0 24 24"
 									width="14"
@@ -425,36 +398,32 @@ function handleLogout() {
 
 						<div
 							v-if="menuOpen"
-							class="absolute top-full right-0 mt-2 w-60 bg-surface border border-border rounded-xl shadow-card p-1 z-40 animate-[menu-in_120ms_ease]"
+							class="user-menu-panel"
 							role="menu"
 						>
-							<div class="flex items-center gap-1.5 px-2.5 pt-2 pb-2.5">
+							<div class="user-menu-head">
 								<img
 									v-if="user.avatarUrl"
-									class="w-11 h-11 rounded-full object-cover"
+									class="avatar avatar-lg avatar-img"
 									:src="user.avatarUrl"
 									alt=""
 								/>
 								<span
 									v-else
-									class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary text-white text-sm font-bold shrink-0"
+									class="avatar avatar-lg"
 									aria-hidden="true"
 								>
 									{{ initials(user.name) }}
 								</span>
-								<div class="flex flex-col min-w-0">
-									<span class="text-sm font-semibold truncate">
-										{{ user.name }}
-									</span>
-									<span class="text-xs text-muted truncate">
-										{{ user.email }}
-									</span>
+								<div class="user-menu-head-meta">
+									<span class="user-menu-head-name">{{ user.name }}</span>
+									<span class="user-menu-head-email">{{ user.email }}</span>
 								</div>
 							</div>
-							<div class="h-px bg-border my-1.5"></div>
+							<div class="user-menu-divider"></div>
 							<Link
 								href="/dashboard"
-								class="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-text text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
+								class="user-menu-item"
 								role="menuitem"
 							>
 								Dashboard
@@ -462,19 +431,19 @@ function handleLogout() {
 							<Link
 								v-if="user.role === 'admin'"
 								href="/admin"
-								class="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-text text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
+								class="user-menu-item"
 								role="menuitem"
 							>
 								Admin console
 							</Link>
-							<div class="h-px bg-border my-1.5"></div>
+							<div class="user-menu-divider"></div>
 							<button
 								type="button"
-								class="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg bg-transparent text-danger text-sm text-left cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
+								class="user-menu-item user-menu-danger"
 								role="menuitem"
 								@click="handleLogout"
 							>
-								<span class="inline-flex text-danger">
+								<span class="user-menu-item-icon">
 									<svg
 										viewBox="0 0 24 24"
 										width="16"
@@ -494,48 +463,624 @@ function handleLogout() {
 							</button>
 						</div>
 					</div>
-					<div v-else class="flex items-center gap-2">
-						<Link
-							href="/login"
-							class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-border rounded-lg bg-transparent text-text font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
-						>
-							Log in
-						</Link>
-						<Link
-							href="/register"
-							class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-primary rounded-lg bg-primary text-white font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline"
-						>
-							Register
-						</Link>
+					<div v-else class="topbar-auth">
+						<Link href="/login" class="btn btn-ghost">Log in</Link>
+						<Link href="/register" class="btn btn-primary">Register</Link>
 					</div>
 				</div>
 			</header>
 
-			<div
-				v-if="flash?.success"
-				class="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-green-200 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
-			>
+			<div v-if="flash?.success" class="flash flash-success">
 				{{ String(flash.success) }}
 			</div>
-			<div
-				v-if="flash?.error"
-				class="w-full max-w-[1200px] mx-auto mt-4 px-4 py-3 text-sm font-medium rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
-			>
+			<div v-if="flash?.error" class="flash flash-error">
 				{{ String(flash.error) }}
 			</div>
 
-			<main
-				class="flex-1 w-full max-w-[1200px] mx-auto px-5 py-6 max-md:px-4 max-md:py-5"
-			>
-				<slot />
-			</main>
+			<main class="content"><slot /></main>
 
-			<footer
-				class="mt-auto px-5 py-3.5 flex items-center justify-between gap-3 text-muted text-xs border-t border-border dark:text-[#b6bdcb] max-md:px-4 max-md:py-3"
-			>
+			<footer class="footer">
 				<span>Dulak boilerplate</span>
-				<span>Bun · Hono · bun:sqlite · Inertia v3</span>
+				<span class="footer-stack">
+					Bun · Hono · bun:sqlite · Inertia v3
+				</span>
 			</footer>
 		</div>
 	</div>
 </template>
+
+<style>
+/* Dashboard shell: sidebar + topbar + content + footer.
+   Unscoped: the shell wraps page slot content (e.g. .page-sub is rendered by
+   pages) and uses ancestor [data-theme] on <html>, so scoping would break
+   those rules. Class names are dash/sidebar/topbar-prefixed and unique. */
+
+.dash {
+	display: grid;
+	grid-template-columns: 260px 1fr;
+	min-height: 100vh;
+	background: var(--bg);
+}
+
+.dash-main {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+/* Content + flash + footer (scoped inside .dash). */
+
+.content {
+	flex: 1;
+	width: 100%;
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 2rem 1.5rem 4rem;
+}
+
+.page-sub {
+	color: var(--muted);
+}
+
+.dash .content {
+	max-width: 1200px;
+	padding: 1.5rem 1.25rem 2.5rem;
+}
+
+.flash {
+	width: 100%;
+	max-width: 960px;
+	margin: 1rem auto 0;
+	padding: 0.75rem 1rem;
+	font-size: 0.92rem;
+	font-weight: 500;
+	border-radius: 8px;
+	border: 1px solid transparent;
+}
+
+.flash-success {
+	background: #f0fdf4;
+	color: #15803d;
+	border-color: #bbf7d0;
+}
+
+.flash-error {
+	background: #fef2f2;
+	color: #b91c1c;
+	border-color: #fecaca;
+}
+
+[data-theme="dark"] .flash-success {
+	background: #052e16;
+	color: #86efac;
+	border-color: #14532d;
+}
+
+[data-theme="dark"] .flash-error {
+	background: #450a0a;
+	color: #fca5a5;
+	border-color: #7f1d1d;
+}
+
+.dash .flash {
+	max-width: 1200px;
+	margin: 1rem auto 0;
+}
+
+.footer {
+	margin-top: auto;
+	padding: 0.85rem 1.5rem;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	color: var(--muted);
+	font-size: 0.8rem;
+	border-top: 1px solid var(--border);
+}
+
+.footer-stack {
+	opacity: 1;
+}
+
+[data-theme="dark"] .footer {
+	color: #b6bdcb;
+}
+
+.dash .footer {
+	padding: 0.85rem 1.25rem;
+}
+
+/* Sidebar. */
+
+.sidebar {
+	position: sticky;
+	top: 0;
+	align-self: start;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background: var(--surface);
+	border-right: 1px solid var(--border);
+	z-index: 30;
+}
+
+.sidebar-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0 1.25rem;
+	border-bottom: 1px solid var(--border);
+	height: 64px;
+	flex-shrink: 0;
+}
+
+.sidebar-close {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--text);
+	cursor: pointer;
+}
+
+.sidebar-nav {
+	flex: 1;
+	overflow-y: auto;
+	padding: 1rem 0.75rem;
+}
+
+.sidebar-nav ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.sidebar-section {
+	margin: 0.5rem 0.75rem 0.4rem;
+	font-size: 0.72rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--muted);
+}
+
+.sidebar-link {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	padding: 0.55rem 0.75rem;
+	border-radius: 8px;
+	color: var(--text);
+	font-size: 0.92rem;
+	font-weight: 500;
+	transition:
+		background 120ms ease,
+		color 120ms ease;
+}
+
+.sidebar-link:hover {
+	text-decoration: none;
+	background: var(--primary-soft);
+	color: var(--text);
+}
+
+.sidebar-link-active {
+	background: var(--primary-soft);
+	color: var(--primary);
+	font-weight: 600;
+}
+
+.sidebar-link-icon {
+	display: inline-flex;
+	flex-shrink: 0;
+	color: var(--muted);
+}
+
+.sidebar-link-active .sidebar-link-icon {
+	color: var(--primary);
+}
+
+.sidebar-foot {
+	padding: 0.75rem;
+	border-top: 1px solid var(--border);
+}
+
+.sidebar-foot-card {
+	padding: 0.85rem 0.9rem;
+	border-radius: 10px;
+	background: var(--bg);
+	border: 1px solid var(--border);
+}
+
+.sidebar-foot-title {
+	margin: 0;
+	font-size: 0.85rem;
+	font-weight: 700;
+}
+
+.sidebar-foot-sub {
+	margin: 0.15rem 0 0;
+	font-size: 0.75rem;
+	color: var(--muted);
+}
+
+/* Topbar. */
+
+.topbar {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.6rem 1.25rem;
+	background: color-mix(in srgb, var(--surface) 88%, transparent);
+	backdrop-filter: saturate(180%) blur(8px);
+	border-bottom: 1px solid var(--border);
+	height: 64px;
+}
+
+.topbar-left {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex: 1;
+	min-width: 0;
+}
+
+.topbar-toggle {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--surface);
+	color: var(--text);
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.topbar-right {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-shrink: 0;
+}
+
+.topbar-search {
+	position: relative;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	max-width: 360px;
+	height: 40px;
+	padding: 0 0.6rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg);
+	color: var(--muted);
+	transition:
+		border-color 120ms ease,
+		box-shadow 120ms ease;
+}
+
+.topbar-search:focus-within {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.topbar-search-icon {
+	display: inline-flex;
+	color: var(--muted);
+	flex-shrink: 0;
+}
+
+.topbar-search input {
+	flex: 1;
+	min-width: 0;
+	border: none;
+	outline: none;
+	background: transparent;
+	color: var(--text);
+	font: inherit;
+	font-size: 0.9rem;
+	padding: 0 0.4rem;
+}
+
+.topbar-search input::placeholder {
+	color: var(--muted);
+}
+
+.topbar-search-kbd {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 0.7rem;
+	padding: 0.1rem 0.35rem;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	color: var(--muted);
+	background: var(--surface);
+	flex-shrink: 0;
+}
+
+.topbar-icon-btn {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--surface);
+	color: var(--text);
+	cursor: pointer;
+	flex-shrink: 0;
+	transition:
+		background 120ms ease,
+		border-color 120ms ease;
+}
+
+.topbar-icon-btn:hover {
+	background: var(--primary-soft);
+	text-decoration: none;
+}
+
+.topbar-dot {
+	position: absolute;
+	top: 8px;
+	right: 9px;
+	width: 7px;
+	height: 7px;
+	border-radius: 999px;
+	background: var(--primary);
+	border: 2px solid var(--surface);
+}
+
+.topbar-auth {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+/* User menu. */
+
+.user-menu {
+	position: relative;
+}
+
+.user-menu-trigger {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	height: 40px;
+	padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--surface);
+	color: var(--text);
+	cursor: pointer;
+	font: inherit;
+	transition:
+		background 120ms ease,
+		border-color 120ms ease;
+}
+
+.user-menu-trigger:hover {
+	background: var(--primary-soft);
+}
+
+.user-menu-meta {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	line-height: 1.2;
+}
+
+.user-menu-name {
+	font-size: 0.85rem;
+	font-weight: 600;
+	max-width: 140px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.user-menu-role {
+	font-size: 0.72rem;
+	color: var(--muted);
+	text-transform: capitalize;
+}
+
+.user-menu-chevron {
+	display: inline-flex;
+	color: var(--muted);
+}
+
+.user-menu-panel {
+	position: absolute;
+	top: calc(100% + 0.5rem);
+	right: 0;
+	width: 240px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	box-shadow: var(--shadow);
+	padding: 0.4rem;
+	z-index: 40;
+	animation: menu-in 120ms ease;
+}
+
+@keyframes menu-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.user-menu-head {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.5rem 0.6rem 0.65rem;
+}
+
+.user-menu-head-meta {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.user-menu-head-name {
+	font-size: 0.88rem;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.user-menu-head-email {
+	font-size: 0.76rem;
+	color: var(--muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.user-menu-divider {
+	height: 1px;
+	background: var(--border);
+	margin: 0.35rem 0;
+}
+
+.user-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	width: 100%;
+	padding: 0.55rem 0.6rem;
+	border: none;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--text);
+	font: inherit;
+	font-size: 0.88rem;
+	text-align: left;
+	cursor: pointer;
+	transition: background 120ms ease;
+}
+
+.user-menu-item:hover {
+	text-decoration: none;
+	background: var(--primary-soft);
+}
+
+.user-menu-item-icon {
+	display: inline-flex;
+	color: var(--muted);
+}
+
+.user-menu-danger {
+	color: var(--danger);
+}
+
+.user-menu-danger .user-menu-item-icon {
+	color: var(--danger);
+}
+
+/* Backdrop for mobile sidebar. */
+
+.dash-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgb(0 0 0 / 0.5);
+	z-index: 25;
+	animation: fade-in 120ms ease;
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+/* Responsive. */
+
+@media (max-width: 960px) {
+	.topbar-search {
+		display: none;
+	}
+}
+
+@media (max-width: 768px) {
+	.dash {
+		grid-template-columns: 1fr;
+	}
+
+	.sidebar {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 280px;
+		max-width: 85vw;
+		transform: translateX(-100%);
+		transition: transform 200ms ease;
+		box-shadow: var(--shadow);
+	}
+
+	.sidebar-open {
+		transform: translateX(0);
+	}
+
+	.sidebar-close {
+		display: inline-flex;
+	}
+
+	.topbar-toggle {
+		display: inline-flex;
+	}
+
+	.user-menu-meta {
+		display: none;
+	}
+
+	.user-menu-chevron {
+		display: none;
+	}
+
+	.user-menu-trigger {
+		padding: 0.25rem;
+	}
+
+	.topbar {
+		padding: 0.6rem 1rem;
+	}
+
+	.dash .content {
+		padding: 1.25rem 1rem 2rem;
+	}
+
+	.dash .footer {
+		padding: 0.75rem 1rem;
+	}
+}
+</style>

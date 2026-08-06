@@ -34,10 +34,11 @@ flowchart LR
 **Dulak** is the Banjar word for *bored* — the name is the philosophy. Every
 choice favors the next maintainer — human or AI agent — over cleverness:
 
-- **Minimal dependencies.** Tailwind CSS v4 (via `@tailwindcss/cli`, no
-  PostCSS), a hand-rolled rate limiter and OAuth client instead of packages
-  that pin the stack, raw `bun:sqlite` instead of an ORM. Dependencies are a
-  liability; when a hand-rolled 60-line module does the job, it ships.
+- **Minimal dependencies.** A hand-rolled rate limiter and OAuth client
+  instead of packages that pin the stack, raw `bun:sqlite` instead of an
+  ORM, native scoped `<style>` blocks instead of a CSS framework.
+  Dependencies are a liability; when a hand-rolled 60-line module does the
+  job, it ships.
 - **One obvious way to do things.** A single structural convention (codified
   in `AGENTS.md`): routes in `routes/<feature>.routes.ts` with handlers
   inline, shared logic as flat modules, all SQL in `db.ts`, schema in
@@ -80,13 +81,14 @@ bunx create-dulak my-app --template svelte-tailwind
 | Template          | Stack                              | Branch                    |
 | ----------------- | ---------------------------------- | ------------------------- |
 | `default`         | React 19 + vanilla CSS             | `main`                    |
+| `vue-vanilla`     | Vue 3 + scoped CSS                 | `template/vue-vanilla`    |
 | `svelte-tailwind` | Svelte 5 + Tailwind CSS v4         | `template/svelte-tailwind`|
 | `react-tailwind`  | React 19 + Tailwind CSS v4         | `template/react-tailwind` |
 
-The `default` template (this branch) uses React 19 with vanilla CSS — no
-CSS framework. The `svelte-tailwind` and `react-tailwind` templates add
-Tailwind CSS v4 (via `@tailwindcss/cli`, no PostCSS) with the same auth,
-roles, SSR, and test suite.
+The `vue-vanilla` template (this branch) uses Vue 3 with native scoped
+`<style>` blocks — no CSS framework. The `svelte-tailwind` and
+`react-tailwind` templates add Tailwind CSS v4 with the same auth, roles,
+SSR, and test suite.
 
 ### Scripts
 
@@ -198,9 +200,7 @@ src/
 │   ├── pages.ts            # explicit page registry (shared by SSR + bundle)
 │   ├── pages/              # Login, Register, Dashboard, ForgotPassword,
 │   │                       # ResetPassword, Admin, NotFound (.vue)
-│   ├── components/         # Layout, AuthLayout, Brand, Field (.vue)
-│   ├── tailwind.css        # @import tailwindcss + @theme inline (token bridge)
-│   └── styles.css          # design-token CSS variables + @keyframes only
+│   ├── styles.css          # global base: tokens, reset, shared UI primitives
 ├── shared/
 │   ├── types.ts            # User, Role, FlashData, SharedPageProps, Paginated
 │   └── inertia.d.ts        # InertiaConfig augmentation → typed props.auth
@@ -299,23 +299,24 @@ gracefully).
 
 ## Styling
 
-**Tailwind CSS v4** — all component styling uses Tailwind utility classes
-directly in Vue components (`class="flex items-center gap-2 …"`).
-Design tokens (colors, radius, shadow) are defined as CSS variables in
-`src/client/styles.css` and bridged to Tailwind theme tokens via
-`@theme inline` in `src/client/tailwind.css`, so utilities like
-`bg-surface`, `text-primary`, and `border-border` auto-switch on dark mode
-via `var()` resolution — no duplicated values.
+**Native scoped CSS** — component styling lives in `<style scoped>` blocks
+inside each `.vue` SFC (Vue scopes them via a `data-v-xxxx` attribute), with
+shared UI primitives (`.btn`, `.badge`, `.panel`, `.table`, `.avatar`), design
+tokens, reset, and `@keyframes` in `src/client/styles.css`. No CSS framework.
+
+Design tokens (colors, radius, shadow) are CSS variables in
+`src/client/styles.css`, so dark mode auto-switches via `var()` resolution —
+no duplicated values.
 
 Dark mode uses `[data-theme="dark"]` on `<html>` (set by an inline head
-script to avoid FOUC). The `dark:` variant maps to this attribute, so
-one-off dark overrides use `dark:bg-green-950 dark:text-green-300`.
+script to avoid FOUC). One-off dark overrides use
+`[data-theme="dark"] .selector { … }`.
 
-`src/client/styles.css` holds **only** design-token CSS variables and
-`@keyframes` — no component CSS. New styling is new utility classes in the
-component. The Tailwind CLI (`@tailwindcss/cli`) runs as a pre-build step
-in `src/server/assets.ts` (no PostCSS), outputting `src/client/.tailwind.css`
-which is imported before `styles.css` in `app.ts`.
+The Vue build plugin (`src/server/vue-plugin.ts`) compiles each `<style>`
+block with `@vue/compiler-sfc`'s `compileStyle`, writes it to a temp `.css`
+file, and appends an `import` so `Bun.build` bundles every component's styles
+into one output stylesheet. `styles.css` is imported first in `app.ts`, then
+the page registry, so component styles cascade after the global base.
 
 ## Notes / decisions
 

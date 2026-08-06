@@ -3,16 +3,119 @@ import Brand from "./Brand.vue";
 </script>
 
 <template>
-	<main
-		class="min-h-screen flex items-center justify-center p-6 bg-[radial-gradient(700px_320px_at_50%_-10%,var(--primary-soft),transparent_70%)] bg-bg"
-	>
-		<div
-			class="w-full max-w-[400px] bg-surface border border-border rounded-radius shadow-card p-8"
-		>
-			<div class="flex justify-center mb-6">
-				<Brand href="/" />
-			</div>
+	<main class="auth">
+		<div class="auth-card">
+			<Brand href="/" class="auth-brand" />
 			<slot />
 		</div>
 	</main>
 </template>
+
+<style>
+/* Centered card layout for guest pages (login / register / forgot / reset).
+   Unscoped: the rules target slot content rendered by the guest pages and
+   an ancestor [data-theme] on <html>, so scoping would break them. */
+
+.auth {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5rem;
+	background:
+		radial-gradient(
+			700px 320px at 50% -10%,
+			var(--primary-soft),
+			transparent 70%
+		),
+		var(--bg);
+}
+
+.auth-card {
+	width: 100%;
+	max-width: 400px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+	padding: 2rem;
+}
+
+.auth-brand {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 1.5rem;
+}
+
+.auth-sub {
+	color: var(--muted);
+	margin-bottom: 1.25rem;
+}
+
+.auth-alt {
+	margin-top: 1.25rem;
+	text-align: center;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+
+/* Inline status notice on auth pages. */
+
+.notice {
+	padding: 0.75rem 1rem;
+	border-radius: 8px;
+	font-size: 0.9rem;
+	margin-bottom: 1.25rem;
+}
+
+.notice-success {
+	background: #f0fdf4;
+	color: #15803d;
+	border: 1px solid #bbf7d0;
+}
+
+[data-theme="dark"] .notice-success {
+	background: #052e16;
+	color: #86efac;
+	border-color: #14532d;
+}
+
+/* Google button + divider. */
+
+.btn-google {
+	border-color: var(--border);
+	background: var(--surface);
+	font-weight: 600;
+}
+
+.btn-google:hover {
+	background: var(--primary-soft);
+}
+
+.divider {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	color: var(--muted);
+	font-size: 0.8rem;
+	margin: 1.25rem 0;
+}
+
+.divider::before,
+.divider::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: var(--border);
+}
+
+.form-row {
+	display: flex;
+	justify-content: flex-end;
+	margin: -0.25rem 0 1rem;
+}
+
+.link-small {
+	font-size: 0.85rem;
+}
+</style>
