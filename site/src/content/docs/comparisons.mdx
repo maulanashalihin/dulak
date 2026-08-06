@@ -1,0 +1,190 @@
+---
+title: Dulak vs. other frameworks
+description: How Dulak differs from Next.js, Nuxt, SvelteKit, Laravel, CodeIgniter, Rails, and Express — and when to pick which.
+---
+
+Dulak is not a framework — it is a **boilerplate**: a production-shaped
+starting point you fork and own. Frameworks give you primitives and let you
+wire them; Dulak ships the wiring already done (auth, uploads, migrations,
+SSR, tests, Docker) and gets out of your way. That distinction shapes every
+comparison below.
+
+## Dulak vs. Next.js
+
+Next.js is the most popular **React meta-framework** — file-based routing,
+server components, streaming RSC, and a large deployment ecosystem
+(Vercel, edge runtimes).
+
+| | Dulak | Next.js |
+| --- | --- | --- |
+| Shape | Boilerplate you own | Framework you build on top of |
+| Runtime | Bun only | Node, or Vercel/Cloudflare edge runtimes |
+| Database | `bun:sqlite`, zero-ORM, in-process | Bring your own (Postgres, PlanetScale, …) + ORM |
+| Auth | Wired: argon2id, DB sessions, OAuth, reset | DIY or third-party (NextAuth, Clerk, …) |
+| SSR | In-process `renderToString`, no SSR server | Server components / streaming RSC |
+| Opinion on structure | One obvious way, codified | Framework conventions + your choices |
+
+**Pick Dulak when** you want a single Bun process with auth, uploads, and
+migrations already wired, and you are fine with SQLite as the starting
+database. **Pick Next.js when** you need React server components, edge
+deployment, or a large plugin ecosystem and are willing to wire auth,
+uploads, and persistence yourself.
+
+## Dulak vs. Nuxt
+
+Nuxt is the most popular **Vue meta-framework** — file-based routing, server
+routes, `useFetch` data loading, and Nitro as a universal server engine
+deployable to Node, Vercel, Cloudflare, and more.
+
+| | Dulak | Nuxt |
+| --- | --- | --- |
+| Shape | Boilerplate you own | Framework you build on top of |
+| Client | React, Svelte 5, or Vue 3 (template choice) | Vue 3 only |
+| Runtime | Bun only | Node, Vercel, Cloudflare, static (via Nitro) |
+| Database | `bun:sqlite`, zero-ORM, in-process | Bring your own + ORM (Prisma, Drizzle, …) |
+| Auth | Wired: argon2id, DB sessions, OAuth, reset | DIY or `nuxt-auth` module |
+| SSR | In-process `renderToString`, no SSR server | Nitro SSR / hybrid rendering |
+| Uploads | tus v1 resumable, demonstrated by avatar | DIY or community module |
+
+Dulak offers Vue 3 as a **template**, not a framework lock-in — the server
+side (Hono, SQL, auth) is identical across the React, Svelte, and Vue
+templates. Nuxt couples the server and client to Vue's conventions and
+Nitro's server model. **Pick Nuxt when** Vue is your whole stack and you
+want its routing, data loading, and Nitro deploy targets. **Pick Dulak**
+when you want the server decoupled from the client, or might swap client
+frameworks later.
+
+## Dulak vs. SvelteKit
+
+SvelteKit is the official **Svelte meta-framework** — file-based routing,
+server `load` functions, and adapters for multiple runtimes.
+
+| | Dulak | SvelteKit |
+| --- | --- | --- |
+| Client | React, Svelte 5, or Vue 3 (template choice) | Svelte only |
+| Database | `bun:sqlite`, in-process, zero-ORM | Bring your own |
+| Auth | Wired end to end | DIY or community adapters |
+| Runtime | Bun | Node, Vercel, Cloudflare, static |
+| Uploads | tus v1 resumable, demonstrated by avatar | DIY |
+
+Dulak offers Svelte 5 as a **template**, not a framework lock-in — the
+server side (Hono, SQL, auth) is identical across the React, Svelte, and Vue
+templates. SvelteKit couples the server and client to Svelte's conventions.
+**Pick SvelteKit when** Svelte is your whole stack and you want its routing
+and loading model. **Pick Dulak** when you want the server decoupled from
+the client, or might swap client frameworks later.
+
+## Dulak vs. Laravel
+
+Laravel is the most popular **PHP MVC framework** — Eloquent ORM, migrations,
+jobs, queues, Blade templates, and a massive package ecosystem.
+
+| | Dulak | Laravel |
+| --- | --- | --- |
+| Runtime | One: Bun | PHP runtime + Composer + web server + DB driver |
+| Language | TypeScript end to end | PHP on the server, separate client build |
+| Setup | `bun create dulak` → `bun run dev` | Install PHP, Composer, web server, DB |
+| Database | `bun:sqlite`, raw SQL, no ORM | Eloquent ORM + migrations |
+| Auth | Wired, argon2id, DB sessions | Breeze / Jetstream (scaffolded, then you maintain) |
+| Philosophy | Boring, zero-dep where cheap | Convention over configuration, many dependencies |
+
+The core difference is **one runtime vs. four**. Dulak's whole stack is
+Bun; Laravel glues together a language, a package manager, a web server,
+and a database. **Pick Laravel when** you want the ORM, jobs, queues, and
+ecosystem of a mature MVC framework and accept the multi-toolchain setup.
+**Pick Dulak when** you want TypeScript everywhere, a single runtime, raw
+SQL, and a lighter dependency surface.
+
+## Dulak vs. CodeIgniter
+
+CodeIgniter is a lightweight **PHP MVC framework** — small footprint, minimal
+dependencies, and a reputation for speed and simplicity. It ships routing,
+controllers, models, and a query builder, but fewer batteries than Laravel.
+
+| | Dulak | CodeIgniter |
+| --- | --- | --- |
+| Runtime | One: Bun | PHP runtime + Composer + web server + DB driver |
+| Language | TypeScript end to end | PHP on the server, separate client build |
+| Setup | `bun create dulak` → `bun run dev` | Install PHP, Composer, web server, DB |
+| Database | `bun:sqlite`, raw SQL, no ORM | Query builder (no full ORM by default) |
+| Auth | Wired, argon2id, DB sessions, OAuth, reset | DIY or `shield` (CodeIgniter Shield) |
+| Philosophy | Boring, zero-dep where cheap | Lightweight, explicit, minimal magic |
+
+CodeIgniter and Dulak share a taste for **lightweight and explicit** over
+magic-heavy — both favor a small dependency surface and code you can follow.
+The difference is runtime and language: CodeIgniter is PHP on a traditional
+LAMP-style stack, Dulak is TypeScript on a single Bun process with auth and
+uploads already wired. **Pick CodeIgniter when** you want a lightweight PHP
+framework you know and trust its ecosystem. **Pick Dulak when** you want
+TypeScript everywhere, one runtime, and the full stack wired from day one.
+
+## Dulak vs. Rails
+
+Rails is the canonical **Ruby full-stack framework** — ActiveRecord, MVC
+convention, Hotwire/Turbo, and the original "convention over configuration"
+philosophy.
+
+| | Dulak | Rails |
+| --- | --- | --- |
+| Runtime | One: Bun | Ruby runtime + Bundler + web server + DB driver |
+| Language | TypeScript end to end | Ruby on the server, separate client build |
+| Setup | `bun create dulak` → `bun run dev` | Install Ruby, Bundler, web server, DB |
+| Database | `bun:sqlite`, raw SQL, no ORM | ActiveRecord ORM + migrations |
+| Auth | Wired, argon2id, DB sessions | Devise (scaffolded, then you maintain) |
+| Real-time | Bring your own | Hotwire/Turbo + Action Cable built in |
+
+Rails and Dulak share a philosophy — convention over configuration, one
+obvious way to do things — but differ on runtime and language. **Pick
+Rails when** you want Ruby, ActiveRecord, and Hotwire and accept the
+multi-toolchain setup. **Pick Dulak when** you want TypeScript everywhere,
+a single Bun runtime, and raw SQL.
+
+## Dulak vs. Express
+
+Express is the most widely-used **Node HTTP framework** — a minimal router
+that ships with nothing but routing. Pairing it with a template engine
+(EJS, Pug) gives you server-rendered HTML, but everything else is yours to
+wire.
+
+| | Dulak | Express |
+| --- | --- | --- |
+| What you get | Auth, SSR, uploads, migrations, tests, Docker | A router |
+| Rendering | Inertia v3 + React/Svelte/Vue with SSR | Server templates, no SPA transition |
+| Database | `bun:sqlite` + migrations | Bring your own |
+| Validation | TypeBox schemas → 422 payloads | Manual or extra lib |
+| Security | CSRF, rate limit, security headers, argon2id | DIY at every layer |
+
+Express is the "build everything yourself" path. Dulak is the "it is
+already built, boringly" path. **Pick Express when** you want total
+control and minimal dependencies and are willing to wire every layer.
+**Pick Dulak when** you want those layers wired with consistent conventions
+and a test suite that proves they work.
+
+## When Dulak is *not* the right pick
+
+Dulak is a starting point, not a scale-everything platform. It is the wrong
+choice when:
+
+- You need a **microservice** — Dulak is a single-process monolith.
+- You need **Postgres / MySQL from day one** — the database layer is
+  `bun:sqlite` (swap it out, but that is your migration to own).
+- You need **edge rendering** across global regions — Dulak runs in one
+  Bun process.
+- You want a **framework that abstracts the server away** — Dulak exposes
+  it: you write Hono routes and raw SQL, and that is the point.
+
+## Summary
+
+| Need | Reach for |
+| --- | --- |
+| Wired full-stack on Bun, own the code | **Dulak** |
+| React server components, edge deploy | Next.js |
+| Vue end to end, Nitro deploy targets | Nuxt |
+| Svelte end to end | SvelteKit |
+| Mature PHP MVC + ORM ecosystem | Laravel |
+| Lightweight PHP MVC, minimal deps | CodeIgniter |
+| Minimal router, build it yourself | Express |
+
+Dulak's bet: for a large class of apps, a boring, pinned, single-runtime
+boilerplate with auth and uploads already wired is a faster and more
+maintainable starting point than assembling a framework stack yourself.

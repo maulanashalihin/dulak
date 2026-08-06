@@ -34,7 +34,8 @@ export default defineConfig({
 						{ label: "Installation", slug: "getting-started/installation" },
 					],
 				},
-				{ label: "Philosophy", slug: "philosophy" },
+			{ label: "Philosophy", slug: "philosophy" },
+			{ label: "Dulak vs. other frameworks", slug: "comparisons" },
 				{
 					label: "Architecture",
 					items: [
