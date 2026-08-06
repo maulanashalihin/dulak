@@ -1,9 +1,9 @@
 /**
  * Client asset pipeline:
- *  1. Tailwind v4 CLI compiles src/client/tailwind.css → src/client/.tailwind.css
- *  2. Bun.build bundles the Svelte client (app.ts) with the Svelte plugin
- *  3. Bun.build bundles the SSR entry (ssr.ts) with generate: 'server' → dist/ssr.js
- *  4. dist/assets/* (content-hashed) + dist/manifest.json
+ *  1. Bun.build bundles the Svelte client (app.ts) with the Svelte plugin
+ *     (component <style> blocks are extracted to temp CSS files and bundled)
+ *  2. Bun.build bundles the SSR entry (ssr.ts) with generate: 'server' → dist/ssr.js
+ *  3. dist/assets/* (content-hashed) + dist/manifest.json
  * The asset version doubles as the Inertia version for cache busting.
  */
 import { createHash } from "node:crypto";
@@ -15,18 +15,11 @@ import { sveltePlugin } from "./svelte-plugin";
 const DIST_DIR = "dist";
 const ASSETS_DIR = `${DIST_DIR}/assets`;
 const MANIFEST_PATH = `${DIST_DIR}/manifest.json`;
-const TAILWIND_INPUT = "src/client/tailwind.css";
-const TAILWIND_OUTPUT = "src/client/.tailwind.css";
-
-async function compileTailwind(): Promise<void> {
-	await Bun.$`bunx @tailwindcss/cli -i ${TAILWIND_INPUT} -o ${TAILWIND_OUTPUT} --minify`.quiet();
-}
 
 export async function buildClientAssets(): Promise<void> {
-	// 1. Compile Tailwind v4 → static CSS (no PostCSS needed).
-	await compileTailwind();
-
-	// 2. Client bundle: Svelte compiled for browser.
+	// 1. Client bundle: Svelte compiled for browser. Component <style> blocks
+	// are extracted by the Svelte plugin into temp CSS files and re-imported,
+	// so Bun.build bundles them into a single output stylesheet.
 	const result = await Bun.build({
 		entrypoints: ["src/client/app.ts"],
 		outdir: ASSETS_DIR,
@@ -50,7 +43,7 @@ export async function buildClientAssets(): Promise<void> {
 	if (!js) throw new Error("No JS entrypoint produced by Bun.build");
 	const css = result.outputs.find((o) => o.path.endsWith(".css"));
 
-	// 3. SSR bundle: Svelte compiled for server-side rendering. Loaded lazily
+	// 2. SSR bundle: Svelte compiled for server-side rendering. Loaded lazily
 	// by src/server/inertia.ts (dist/ssr.js must not be statically imported —
 	// it doesn't exist on a fresh clone until this build runs).
 	await Bun.build({
@@ -64,7 +57,7 @@ export async function buildClientAssets(): Promise<void> {
 		sourcemap: "external",
 	});
 
-	// 4. Manifest with content-hashed asset version.
+	// 3. Manifest with content-hashed asset version.
 	const digest = createHash("sha256");
 	for (const file of [js, css].filter((f): f is typeof js => Boolean(f))) {
 		digest.update(readFileSync(file.path));

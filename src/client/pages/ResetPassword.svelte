@@ -21,10 +21,8 @@
 <svelte:head><title>Reset password</title></svelte:head>
 
 <AuthLayout>
-  <h1 class="text-[1.6rem] m-0 mb-1 tracking-tight">Choose a new password</h1>
-  <p class="text-muted mb-5">
-    Set a new password for <strong>{email}</strong>.
-  </p>
+  <h1>Choose a new password</h1>
+  <p class="auth-sub">Set a new password for <strong>{email}</strong>.</p>
 
   <form onsubmit={submit} novalidate>
     <Field id="password" label="New password" error={form.errors.password}>
@@ -34,11 +32,10 @@
         name="password"
         autocomplete="new-password"
         autofocus
-        class="w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary"
         bind:value={form.password}
         onchange={() => form.clearErrors('password')}
       />
-      <p class="text-xs text-muted mt-1">At least 8 characters.</p>
+      <p class="field-hint">At least 8 characters.</p>
     </Field>
 
     <Field
@@ -51,20 +48,17 @@
         type="password"
         name="passwordConfirmation"
         autocomplete="new-password"
-        class="w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary"
         bind:value={form.passwordConfirmation}
         onchange={() => form.clearErrors('passwordConfirmation')}
       />
     </Field>
 
     {#if form.errors.token}
-      <p class="text-danger text-xs mb-4" role="alert">
-        {form.errors.token}
-      </p>
+      <p class="field-error" role="alert">{form.errors.token}</p>
     {/if}
 
     <button
-      class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 w-full border border-primary rounded-lg bg-primary text-white font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline disabled:opacity-60 disabled:cursor-not-allowed"
+      class="btn btn-primary btn-block"
       type="submit"
       disabled={form.processing}
     >
@@ -72,7 +66,7 @@
     </button>
   </form>
 
-  <p class="mt-5 text-center text-muted text-sm">
+  <p class="auth-alt">
     <Link href="/login">Back to login</Link>
   </p>
 </AuthLayout>

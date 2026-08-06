@@ -4,12 +4,9 @@
   let { href, class: className = '' }: { href: string; class?: string } = $props()
 </script>
 
-<Link
-  href={href}
-  class={`inline-flex items-center gap-2 font-bold text-text tracking-tight hover:no-underline ${className}`}
->
+<Link href={href} class={`brand${className ? ` ${className}` : ''}`}>
   <svg
-    class="text-primary shrink-0"
+    class="brand-mark"
     viewBox="0 0 32 32"
     width="28"
     height="28"
@@ -21,3 +18,27 @@
   </svg>
   <span>Dulak</span>
 </Link>
+
+<style>
+  /* `.brand` is applied to the @inertiajs/svelte <Link> (a component that
+     renders <a>), so Svelte's static CSS analyzer cannot see it — keep the
+     rule global so it is emitted rather than stripped as "unused". */
+  :global(.brand) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  :global(.brand:hover) {
+    text-decoration: none;
+  }
+
+  .brand-mark {
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+</style>

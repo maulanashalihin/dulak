@@ -1,10 +1,8 @@
 /* ---------------------------------------------------------------------------
-   Dulak boilerplate — design tokens + keyframes only.
-   All component styling is done via Tailwind utility classes in the Svelte
-   components. This file defines the CSS custom properties that Tailwind's
-   @theme inline (in tailwind.css) bridges to utility tokens, plus two
-   @keyframes that cannot be expressed as utilities.
-
+   Dulak boilerplate — global base: design tokens, reset, and shared UI
+   primitives (buttons, badges, panels, tables, avatars). Component-specific
+   and page-specific styles are co-located as sibling .css files imported
+   by each component/page; Bun.build bundles them all into one stylesheet.
    Light/dark via [data-theme] on <html> (set by an inline head script to
    avoid FOUC; toggled by the dashboard topbar). Defaults to light.
 --------------------------------------------------------------------------- */
@@ -40,24 +38,216 @@
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.5);
 }
 
-/* --- Keyframes (cannot be Tailwind utilities) ---------------------------- */
+/* --- Reset --- */
 
-@keyframes menu-in {
-	from {
-		opacity: 0;
-		transform: translateY(-4px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family:
+		ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif;
+	background: var(--bg);
+	color: var(--text);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+h1 {
+	font-size: 1.6rem;
+	margin: 0 0 0.25rem;
+	letter-spacing: -0.02em;
+}
+
+h2 {
+	font-size: 1.1rem;
+	margin: 0 0 0.75rem;
+}
+
+p {
+	margin: 0 0 0.75rem;
+}
+
+a {
+	color: var(--primary);
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+/* --- Accessibility --- */
+
+:focus-visible {
+	outline: 2px solid var(--primary);
+	outline-offset: 2px;
+}
+
+/* --- Buttons (shared UI primitive) --- */
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	padding: 0.55rem 1rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+	font-weight: 600;
+	font-size: 0.92rem;
+	cursor: pointer;
+	transition:
+		background 120ms ease,
+		border-color 120ms ease,
+		transform 60ms ease;
+}
+
+.btn:hover {
+	text-decoration: none;
+	background: var(--primary-soft);
+}
+
+.btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.btn-primary {
+	background: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+.btn-primary:hover {
+	background: var(--primary-hover);
+	border-color: var(--primary-hover);
+}
+
+.btn-ghost {
+	background: transparent;
+}
+
+.btn-block {
+	width: 100%;
+}
+
+@media (max-width: 640px) {
+	.btn {
+		min-height: 44px; /* touch target */
 	}
 }
 
-@keyframes fade-in {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
+/* --- Badges (shared UI primitive) --- */
+
+.badge {
+	display: inline-block;
+	padding: 0.15rem 0.5rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.badge-user {
+	background: var(--primary-soft);
+	color: var(--primary);
+}
+
+.badge-admin {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+[data-theme="dark"] .badge-admin {
+	background: #451a03;
+	color: #fcd34d;
+}
+
+/* --- Panel (shared UI primitive) --- */
+
+.panel {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 1.5rem;
+}
+
+/* --- Table (shared UI primitive) --- */
+
+.table-wrap {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.92rem;
+}
+
+.table th,
+.table td {
+	text-align: left;
+	padding: 0.6rem 0.75rem;
+	border-bottom: 1px solid var(--border);
+	white-space: nowrap;
+}
+
+.table thead th {
+	color: var(--muted);
+	font-size: 0.78rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	background: var(--bg);
+}
+
+.table tbody tr {
+	transition: background 100ms ease;
+}
+
+.table tbody tr:hover {
+	background: var(--primary-soft);
+}
+
+.table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+.table-empty {
+	text-align: center;
+	color: var(--muted);
+	padding: 1.5rem;
+}
+
+/* --- Avatar (shared UI primitive) --- */
+
+.avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 999px;
+	background: var(--primary);
+	color: #fff;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	flex-shrink: 0;
+}
+
+.avatar-lg {
+	width: 44px;
+	height: 44px;
+	font-size: 0.95rem;
+}
+
+.avatar-img {
+	object-fit: cover;
 }

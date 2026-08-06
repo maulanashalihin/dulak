@@ -7,7 +7,7 @@ The Banjar word for *bored* — a deliberately boring full-stack starter.
 [![Bun](https://img.shields.io/badge/runtime-Bun_1.3-black?logo=bun&logoColor=white)](https://bun.sh)
 
 A production-shaped, full-stack boilerplate: **Hono** (HTTP) + **bun:sqlite**
-(database) + **Inertia v3 / React 19** (server-driven UI with in-process SSR),
+(database) + **Inertia v3 / Svelte 5** (server-driven UI with in-process SSR),
 running entirely on **Bun**. Auth (register / login / logout / forgot-password /
 Google OAuth), roles, rate limiting, tus uploads, migrations, tests, and Docker
 are wired end to end.
@@ -34,10 +34,10 @@ flowchart LR
 **Dulak** is the Banjar word for *bored* — the name is the philosophy. Every
 choice favors the next maintainer — human or AI agent — over cleverness:
 
-- **Minimal dependencies.** Tailwind CSS v4 (via `@tailwindcss/cli`, no
-  PostCSS), a hand-rolled rate limiter and OAuth client instead of packages
-  that pin the stack, raw `bun:sqlite` instead of an ORM. Dependencies are a
-  liability; when a hand-rolled 60-line module does the job, it ships.
+- **Minimal dependencies.** Native scoped CSS in Svelte `<style>` blocks
+  (no CSS framework), a hand-rolled rate limiter and OAuth client instead of
+  packages that pin the stack, raw `bun:sqlite` instead of an ORM. Dependencies
+  are a liability; when a hand-rolled 60-line module does the job, it ships.
 - **One obvious way to do things.** A single structural convention (codified
   in `AGENTS.md`): routes in `routes/<feature>.routes.ts` with handlers
   inline, shared logic as flat modules, all SQL in `db.ts`, schema in
@@ -72,7 +72,7 @@ cd my-app
 bun run dev          # http://localhost:4000
 
 # Or pick a template directly:
-bunx create-dulak my-app --template svelte-tailwind
+bunx create-dulak my-app --template svelte
 ```
 
 ### Templates
@@ -80,13 +80,13 @@ bunx create-dulak my-app --template svelte-tailwind
 | Template          | Stack                              | Branch                    |
 | ----------------- | ---------------------------------- | ------------------------- |
 | `default`         | React 19 + vanilla CSS             | `main`                    |
-| `svelte-tailwind` | Svelte 5 + Tailwind CSS v4         | `template/svelte-tailwind`|
+| `svelte`          | Svelte 5 + scoped `<style>` CSS    | `template/svelte-vanilla` |
 | `react-tailwind`  | React 19 + Tailwind CSS v4         | `template/react-tailwind` |
 
-The `default` template (this branch) uses React 19 with vanilla CSS — no
-CSS framework. The `svelte-tailwind` and `react-tailwind` templates add
-Tailwind CSS v4 (via `@tailwindcss/cli`, no PostCSS) with the same auth,
-roles, SSR, and test suite.
+The `svelte` template (this branch) uses Svelte 5 with native scoped CSS in
+`<style>` blocks — no CSS framework. The `default` template uses React 19
+with vanilla CSS; `react-tailwind` adds Tailwind CSS v4. All share the same
+auth, roles, SSR, and test suite.
 
 ### Scripts
 
@@ -199,9 +199,7 @@ src/
 │   ├── pages/              # Login, Register, Dashboard, ForgotPassword,
 │   │                       # ResetPassword, Admin, NotFound (.svelte)
 │   ├── components/         # Layout, AuthLayout, Brand, Field (.svelte)
-│   ├── tailwind.css        # @import tailwindcss + @theme inline (token bridge)
-│   └── styles.css          # design-token CSS variables + @keyframes only
-├── shared/
+│   └── styles.css          # design tokens, reset, shared UI primitives (.btn, .badge, .panel, .table, .avatar)
 │   ├── types.ts            # User, Role, FlashData, SharedPageProps, Paginated
 │   └── inertia.d.ts        # InertiaConfig augmentation → typed props.auth
 ├── migrations/             # versioned SQL schema files (0001, 0002, …)
@@ -299,23 +297,23 @@ gracefully).
 
 ## Styling
 
-**Tailwind CSS v4** — all component styling uses Tailwind utility classes
-directly in Svelte components (`class="flex items-center gap-2 …"`).
-Design tokens (colors, radius, shadow) are defined as CSS variables in
-`src/client/styles.css` and bridged to Tailwind theme tokens via
-`@theme inline` in `src/client/tailwind.css`, so utilities like
-`bg-surface`, `text-primary`, and `border-border` auto-switch on dark mode
-via `var()` resolution — no duplicated values.
+**Native scoped CSS** — each Svelte component styles itself with a `<style>`
+block that the Svelte compiler auto-scopes (a hash class is added to the
+component's elements and selectors). Design tokens (colors, radius, shadow)
+are defined as CSS variables in `src/client/styles.css`, referenced from
+component styles via `var(--primary)` etc., so dark mode "just works" with
+no duplicated values.
 
 Dark mode uses `[data-theme="dark"]` on `<html>` (set by an inline head
-script to avoid FOUC). The `dark:` variant maps to this attribute, so
-one-off dark overrides use `dark:bg-green-950 dark:text-green-300`.
+script to avoid FOUC). One-off dark overrides use
+`:global([data-theme='dark']) .selector` in a component's `<style>`.
 
-`src/client/styles.css` holds **only** design-token CSS variables and
-`@keyframes` — no component CSS. New styling is new utility classes in the
-component. The Tailwind CLI (`@tailwindcss/cli`) runs as a pre-build step
-in `src/server/assets.ts` (no PostCSS), outputting `src/client/.tailwind.css`
-which is imported before `styles.css` in `app.ts`.
+`src/client/styles.css` holds the global base: design tokens, reset, and
+shared UI primitives (`.btn`, `.badge`, `.panel`, `.table`, `.avatar`).
+Component-specific styles live in each component's `<style>` block. The
+Svelte plugin (`src/server/svelte-plugin.ts`) extracts compiled CSS to temp
+files and re-imports them so Bun.build bundles every component's scoped CSS
+into one output stylesheet.
 
 ## Notes / decisions
 
@@ -340,9 +338,8 @@ which is imported before `styles.css` in `app.ts`.
 - gzip compression is a custom middleware (`compress.ts`) — Hono's built-in
   relies on the Web `CompressionStream`, which is not reliably present in
   every Bun 1.3.14 context; `node:zlib` is. `busy_timeout = 5000` is set so
-  concurrent writes wait instead of failing with SQLITE_BUSY.
-- Prefer Svelte or Tailwind? `bunx create-dulak my-app --template svelte-tailwind`
-  (or `react-tailwind`). The server side is adapter-agnostic — Inertia v3
-  works with React, Svelte, or Vue. A verified Svelte 5 migration guide
-  (Bun.build plugin, SSR, API mapping) is in the
+- Prefer React or Tailwind? `bunx create-dulak my-app --template react-tailwind`
+  (or the React + vanilla CSS `default` template). The server side is
+  adapter-agnostic — Inertia v3 works with React, Svelte, or Vue. A verified
+  Svelte 5 migration guide (Bun.build plugin, SSR, API mapping) is in the
   [Svelte 5 migration guide](.llm-wiki/wiki/concepts/svelte-5-migration.md).

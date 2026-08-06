@@ -16,30 +16,18 @@
 <svelte:head><title>Login</title></svelte:head>
 
 <AuthLayout>
-  <h1 class="text-[1.6rem] m-0 mb-1 tracking-tight">Welcome back</h1>
-  <p class="text-muted mb-5">Log in to your account to continue.</p>
+  <h1>Welcome back</h1>
+  <p class="auth-sub">Log in to your account to continue.</p>
 
   {#if notice}
-    <div
-      class="px-4 py-3 rounded-lg text-sm mb-5 border border-green-200 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
-      role="status"
-    >
-      {notice}
-    </div>
+    <div class="notice notice-success" role="status">{notice}</div>
   {/if}
 
   {#if googleEnabled}
-    <a
-      class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 w-full border border-border rounded-lg bg-surface font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-soft hover:no-underline"
-      href="/auth/google"
-    >
+    <a class="btn btn-block btn-google" href="/auth/google">
       Log in with Google
     </a>
-    <div class="flex items-center gap-3 text-muted text-xs my-5">
-      <span class="flex-1 h-px bg-border" />
-      or
-      <span class="flex-1 h-px bg-border" />
-    </div>
+    <div class="divider">or</div>
   {/if}
 
   <form onsubmit={submit} novalidate>
@@ -50,7 +38,6 @@
         name="email"
         autocomplete="email"
         autofocus
-        class="w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary"
         bind:value={form.email}
         onchange={() => form.clearErrors('email')}
       />
@@ -62,18 +49,19 @@
         type="password"
         name="password"
         autocomplete="current-password"
-        class="w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary"
         bind:value={form.password}
         onchange={() => form.clearErrors('password')}
       />
     </Field>
 
-    <div class="flex justify-end -mt-1 mb-4">
-      <Link href="/forgot-password" class="text-sm">Forgot your password?</Link>
+    <div class="form-row">
+      <Link href="/forgot-password" class="link-small">
+        Forgot your password?
+      </Link>
     </div>
 
     <button
-      class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 w-full border border-primary rounded-lg bg-primary text-white font-semibold text-sm cursor-pointer transition-colors hover:bg-primary-hover hover:border-primary-hover hover:no-underline disabled:opacity-60 disabled:cursor-not-allowed"
+      class="btn btn-primary btn-block"
       type="submit"
       disabled={form.processing}
     >
@@ -81,7 +69,7 @@
     </button>
   </form>
 
-  <p class="mt-5 text-center text-muted text-sm">
+  <p class="auth-alt">
     No account yet? <Link href="/register">Create one</Link>
   </p>
 </AuthLayout>
