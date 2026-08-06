@@ -82,14 +82,17 @@ bun create dulak my-app --template svelte-tailwind
 | Template          | Stack                              | Branch                    |
 | ----------------- | ---------------------------------- | ------------------------- |
 | `default`         | React 19 + vanilla CSS             | `main`                    |
+| `svelte-vanilla`  | Svelte 5 + scoped `<style>` CSS    | `template/svelte-vanilla` |
+| `vue-vanilla`     | Vue 3 + scoped `<style>` CSS       | `template/vue-vanilla`    |
 | `svelte-tailwind` | Svelte 5 + Tailwind CSS v4         | `template/svelte-tailwind`|
 | `react-tailwind`  | React 19 + Tailwind CSS v4         | `template/react-tailwind` |
 | `vue-tailwind`    | Vue 3 + Tailwind CSS v4            | `template/vue-tailwind`   |
 
-The `default` template (this branch) uses React 19 with vanilla CSS — no
-CSS framework. The `svelte-tailwind`, `react-tailwind`, and `vue-tailwind`
-templates add Tailwind CSS v4 (via `@tailwindcss/cli`, no PostCSS) with the
-same auth, roles, SSR, and test suite.
+The `default` template (this branch) uses React 19 with co-located vanilla
+CSS — no CSS framework. The `svelte-vanilla` and `vue-vanilla` templates
+use native scoped `<style>` blocks (Svelte/Vue SFCs). The `*-tailwind`
+templates add Tailwind CSS v4 (via `@tailwindcss/cli`, no PostCSS) with
+the same auth, roles, SSR, and test suite.
 
 ### Scripts
 
