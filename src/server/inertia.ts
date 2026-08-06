@@ -27,13 +27,30 @@ import { clearFlash } from "./auth";
  */
 type RenderPage = (page: Page) => Promise<{ head: string[]; body: string }>;
 const SSR_RENDERER = "../../dist/ssr.js";
+// Cache key appended to the import specifier so a rebuild (which overwrites
+// dist/ssr.js on disk) can bust Bun's module cache and load the fresh module.
+// tsc cannot resolve an interpolated specifier, which is exactly why the
+// original code used a non-literal const — the interpolation preserves that.
+let ssrCacheKey = 0;
 let renderPageFn: RenderPage | null = null;
 async function renderPage(page: Page): Promise<{ head: string[]; body: string }> {
 	if (!renderPageFn) {
-		const mod = (await import(SSR_RENDERER)) as { renderPage: RenderPage };
+		const mod = (await import(
+			`${SSR_RENDERER}?v=${ssrCacheKey}`
+		)) as { renderPage: RenderPage };
 		renderPageFn = mod.renderPage;
 	}
 	return renderPageFn(page);
+}
+
+/**
+ * Dev-only: drop the cached SSR module so the next render picks up a freshly
+ * built dist/ssr.js. Called by the client watcher after rebuilding client
+ * assets; a no-op in production (the watcher is never started there).
+ */
+export function invalidateSsrRenderer(): void {
+	renderPageFn = null;
+	ssrCacheKey++;
 }
 
 export interface InertiaAssets {
@@ -165,11 +182,11 @@ export class Inertia {
 	 * Non-SSR body: the Inertia v3 page payload inlined as JSON in a
 	 * `<script data-page>` tag, plus an empty mount point. Mirrors the wire
 	 * format `buildSSRBody` produces but omits `data-server-rendered` and the
-	 * rendered HTML, so the client does a plain createApp render (no hydrate).
+	 * rendered HTML, so the client does a plain mount (no hydrate).
 	 */
 	private clientBody(page: Page): string {
 		const json = JSON.stringify(page).replace(/\//g, "\\/");
-		return `<script data-page="app" type="application/json">${json}<\/script><div id="app"></div>`;
+		return `<script data-page="app" type="application/json">${json}</script><div id="app"></div>`;
 	}
 
 	/** 422-style validation response, Inertia-aware. */
