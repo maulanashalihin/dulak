@@ -72,7 +72,7 @@ cd my-app
 bun run dev          # http://localhost:4000
 
 # Or pick a template directly:
-bunx create-dulak my-app --template svelte
+bunx create-dulak my-app --template svelte-vanilla
 ```
 
 ### Templates
@@ -80,13 +80,17 @@ bunx create-dulak my-app --template svelte
 | Template          | Stack                              | Branch                    |
 | ----------------- | ---------------------------------- | ------------------------- |
 | `default`         | React 19 + vanilla CSS             | `main`                    |
-| `svelte`          | Svelte 5 + scoped `<style>` CSS    | `template/svelte-vanilla` |
+| `svelte-vanilla`  | Svelte 5 + scoped `<style>` CSS    | `template/svelte-vanilla` |
+| `vue-vanilla`     | Vue 3 + scoped `<style>` CSS       | `template/vue-vanilla`    |
+| `svelte-tailwind` | Svelte 5 + Tailwind CSS v4         | `template/svelte-tailwind`|
 | `react-tailwind`  | React 19 + Tailwind CSS v4         | `template/react-tailwind` |
+| `vue-tailwind`    | Vue 3 + Tailwind CSS v4            | `template/vue-tailwind`   |
 
-The `svelte` template (this branch) uses Svelte 5 with native scoped CSS in
-`<style>` blocks — no CSS framework. The `default` template uses React 19
-with vanilla CSS; `react-tailwind` adds Tailwind CSS v4. All share the same
-auth, roles, SSR, and test suite.
+The `svelte-vanilla` template (this branch) uses Svelte 5 with native scoped
+CSS in `<style>` blocks — no CSS framework. The `default` and `vue-vanilla`
+templates also use vanilla CSS (React with co-located `.css` files, Vue
+with native `<style>` blocks). The `*-tailwind` templates add Tailwind CSS
+v4 with the same auth, roles, SSR, and test suite.
 
 ### Scripts
 
@@ -338,8 +342,9 @@ into one output stylesheet.
 - gzip compression is a custom middleware (`compress.ts`) — Hono's built-in
   relies on the Web `CompressionStream`, which is not reliably present in
   every Bun 1.3.14 context; `node:zlib` is. `busy_timeout = 5000` is set so
-- Prefer React or Tailwind? `bunx create-dulak my-app --template react-tailwind`
-  (or the React + vanilla CSS `default` template). The server side is
-  adapter-agnostic — Inertia v3 works with React, Svelte, or Vue. A verified
-  Svelte 5 migration guide (Bun.build plugin, SSR, API mapping) is in the
+- Prefer React, Vue, or Tailwind? `bunx create-dulak my-app --template
+  vue-vanilla` (or `react-tailwind`, `vue-tailwind`). The server side is
+  adapter-agnostic — Inertia v3 works with React, Svelte, or Vue. A
+  verified Svelte 5 migration guide (Bun.build plugin, SSR, API mapping)
+  is in the
   [Svelte 5 migration guide](.llm-wiki/wiki/concepts/svelte-5-migration.md).
