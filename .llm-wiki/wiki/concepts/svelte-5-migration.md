@@ -1,10 +1,10 @@
 # Swapping React for Svelte 5 in the Dulak boilerplate
 
-Dulak (Elysia + Bun + Inertia) ships with React 19, but Inertia.js v3 supports Svelte 5 natively (`@inertiajs/svelte`). This guide is verified working: Bun.build + custom Svelte plugin for client bundling, Svelte SSR via `svelte/server`, and the Inertia Svelte adapter for routing/forms.
+Dulak (Hono + Bun + Inertia) ships with React 19, but Inertia.js v3 supports Svelte 5 natively (`@inertiajs/svelte`). This guide is verified working: Bun.build + custom Svelte plugin for client bundling, Svelte SSR via `svelte/server`, and the Inertia Svelte adapter for routing/forms.
 
 ## Prerequisites
 
-- Dulak boilerplate (Elysia 1.4 + Bun 1.3 + Inertia v3)
+- Dulak boilerplate (Hono 4.13 + Bun 1.3 + Inertia v3)
 - Basic understanding of Svelte 5 runes (`$state`, `$props`, `$derived`)
 - All React integration points in the boilerplate are mapped below
 
@@ -107,7 +107,7 @@ createInertiaApp({
   setup({ el, App }) {
     new App({ target: el, hydrate: el.hasAttribute('data-server-rendered') });
   },
-  title: (title) => title ? `${title} — Elysia Inertia` : 'Elysia Inertia',
+  title: (title) => title ? `${title} — Dulak` : 'Dulak',
   progress: { color: '#059669' },
 });
 ```
@@ -131,7 +131,7 @@ export async function renderPage(page: Page) {
     page,
     render,  // svelte/server render function
     resolve: (name) => pages[`./pages/${name}.svelte`] ?? notFoundPage!,
-    title: (title) => title ? `${title} — Elysia Inertia` : 'Elysia Inertia',
+    title: (title) => title ? `${title} — Dulak` : 'Dulak',
   });
 }
 ```

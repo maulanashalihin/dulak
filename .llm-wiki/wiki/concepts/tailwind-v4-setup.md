@@ -1,6 +1,6 @@
 # Tailwind CSS v4 integration with Bun.build (no PostCSS)
 
-Tailwind v4 can be integrated into the Dulak boilerplate (Elysia + Bun + Inertia) **without any PostCSS**, using only `@tailwindcss/cli`. Verified working: utility classes generate, dark mode auto-switches via `[data-theme]`, and the build pipeline still produces content-hashed CSS.
+Tailwind v4 can be integrated into the Dulak boilerplate (Hono + Bun + Inertia) **without any PostCSS**, using only `@tailwindcss/cli`. Verified working: utility classes generate, dark mode auto-switches via `[data-theme]`, and the build pipeline still produces content-hashed CSS.
 
 ## Prerequisites
 
