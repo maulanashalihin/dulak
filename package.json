@@ -21,6 +21,7 @@
     "start": "NODE_ENV=production bun run src/index.ts",
     "db:seed": "bun run scripts/seed.ts",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json",
+    "lint": "biome lint src tests scripts create-dulak",
     "test": "bun test --isolate"
   },
   "dependencies": {
@@ -33,7 +34,7 @@
     "@tailwindcss/cli": "^4.3.3",
     "@types/bun": "^1.2.0",
     "svelte-check": "^4.7.4",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^5.8.0"
+    "@biomejs/biome": "^2.5.7",
+    "tailwindcss": "^4.3.3"
   }
 }

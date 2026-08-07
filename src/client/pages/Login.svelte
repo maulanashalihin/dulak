@@ -49,7 +49,6 @@
         type="email"
         name="email"
         autocomplete="email"
-        autofocus
         class="w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text text-[0.95rem] focus:outline-2 focus:outline-primary focus:-outline-offset-1 focus:border-primary"
         bind:value={form.email}
         onchange={() => form.clearErrors('email')}

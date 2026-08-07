@@ -10,3 +10,5 @@ data/uploads/
 src/client/.tailwind.css
 
 .llm-wiki/meta/
+.svelte-css-cache/
+site/.astro/
