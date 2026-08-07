@@ -1,0 +1,54 @@
+---
+title: tus resumable uploads
+description: The tus protocol v1 implementation, server and client.
+---
+
+Uploads use the [tus protocol v1](https://tus.io/protocols/resumable-upload)
+at `/uploads` — resumable, chunked uploads with SQLite state and on-disk
+storage. The profile avatar upload demonstrates it end to end.
+
+## Protocol coverage
+
+Core protocol + five extensions, all spec-compliant:
+
+- **Core**: OPTIONS (capabilities), POST (creation → 201 + `Location`),
+  HEAD (`Upload-Offset`/`Upload-Length`), PATCH (`application/offset+octet-stream`,
+  415/409/413 error codes)
+- **creation** / **creation-with-upload**: `Upload-Metadata` (base64
+  key-value pairs), initial chunk on POST
+- **termination**: DELETE → 204, file + row removed
+- **expiration**: `Upload-Expires` + background sweep
+- **checksum**: `Upload-Checksum` (sha1/256/384/512/md5, 460 on mismatch)
+- `X-HTTP-Method-Override` hook for clients without PATCH/DELETE
+
+## Concurrency & safety
+
+- **Auth + ownership** on every endpoint: the session cookie is required
+  (401) and uploads belong to their creator (404 otherwise).
+- **Atomic offset advancement**: `UPDATE ... WHERE offset = ?` — concurrent
+  PATCHes race safely, losers get 409 and re-sync via HEAD.
+- **Unguessable ids**: 128-bit random base64url ids; files are effectively
+  private by entropy.
+- **Stored-XSS guard**: `/uploads` responses carry `script-src 'none'` in
+  the CSP, and avatars are restricted to raster image types (no SVG).
+
+## Client (Profile avatar)
+
+The client implements the correct resumable pattern:
+
+1. POST creation with `Upload-Length` + `Upload-Metadata`
+2. HEAD to reconcile the offset (resume after interruption)
+3. Chunked PATCH (256KB) with progress
+4. Link the completed upload as the avatar; `router.reload()` refreshes
+   shared props
+
+Interrupted uploads are remembered in `localStorage` and resumed when the
+same file is re-selected.
+
+## Config
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `UPLOAD_DIR` | `./data/uploads` | upload bytes on disk |
+| `TUS_MAX_SIZE` | `0` | max upload size in bytes (`0` = unlimited) |
+| `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL (`0` = no expiry) |

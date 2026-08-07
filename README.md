@@ -67,12 +67,12 @@ choice favors the next maintainer — human or AI agent — over cleverness:
 
 ```bash
 # Scaffold a new project (prompts for template, installs deps, creates .env)
-bunx create-dulak my-app
+bun create dulak@latest my-app
 cd my-app
 bun run dev          # http://localhost:4000
 
 # Or pick a template directly:
-bunx create-dulak my-app --template svelte-tailwind
+bun create dulak@latest my-app --template svelte-tailwind
 ```
 
 ### Templates
@@ -137,7 +137,7 @@ roles, SSR, and test suite.
 | `MAILTRAP_API_TOKEN` | — | required when `MAIL_DRIVER=mailtrap` |
 | `MAILTRAP_INBOX_ID` | — | use the sandbox endpoint when set |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
-| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `10` / `60` | requests per window on auth endpoints |
+| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `30` / `60` | requests per window on auth endpoints |
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
 | `TUS_MAX_SIZE` | `0` | max upload size in bytes (`0` = unlimited) |
 | `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL in seconds (`0` = no expiry) |
@@ -270,7 +270,7 @@ Rules:
 bun test --isolate   # or: bun run test
 ```
 
-59 tests. The suite boots the full app against an in-memory SQLite database
+63 tests (snapshot — the suite grows; AGENTS.md only requires it stays green). The suite boots the full app against an in-memory SQLite database
 and drives it through `app.request()`: registration/login/logout, guards and
 roles, password reset end to end (via the log mail driver), Inertia protocol
 (409/404/SSR), CSRF, `/health`, static asset serving, and the tus
@@ -341,7 +341,7 @@ which is imported before `styles.css` in `app.tsx`.
   relies on the Web `CompressionStream`, which is not reliably present in
   every Bun 1.3.14 context; `node:zlib` is. `busy_timeout = 5000` is set so
   concurrent writes wait instead of failing with SQLITE_BUSY.
-- Prefer Svelte or Tailwind? `bunx create-dulak my-app --template svelte-tailwind`
+- Prefer Svelte or Tailwind? `bun create dulak@latest my-app --template svelte-tailwind`
   (or `react-tailwind`). The server side is adapter-agnostic — Inertia v3
   works with React, Svelte, or Vue. A verified Svelte 5 migration guide
   (Bun.build plugin, SSR, API mapping) is in the

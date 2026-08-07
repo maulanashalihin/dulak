@@ -1,0 +1,48 @@
+---
+import "../styles/landing.css";
+import Hero from "../components/Hero.astro";
+import StatsStrip from "../components/StatsStrip.astro";
+import BenchPreview from "../components/BenchPreview.astro";
+import FeatureGrid from "../components/FeatureGrid.astro";
+import TemplateShowcase from "../components/TemplateShowcase.astro";
+import Faq from "../components/Faq.astro";
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Deliberately boring full-stack boilerplate — Hono + bun:sqlite + Inertia v3 (in-process SSR) on Bun." />
+    <meta property="og:image" content="/og-image.webp" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/og-image.webp" />
+    <link rel="icon" href="/favicon.svg" />
+  </head>
+  <body>
+    <header class="dl-nav">
+      <a class="dl-nav-brand" href="/">
+        <img src="/favicon.svg" alt="" width="24" height="24" />
+        <span>Dulak</span>
+      </a>
+      <nav class="dl-nav-links">
+        <a href="/getting-started/introduction/">Docs</a>
+        <a href="https://github.com/maulanashalihin/dulak" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <Hero />
+      <StatsStrip />
+      <BenchPreview />
+      <FeatureGrid />
+      <TemplateShowcase />
+      <Faq />
+    </main>
+
+    <footer class="dl-footer">
+      <span>Dulak — the Banjar word for <em>bored</em>.</span>
+      <a href="/getting-started/introduction/">Read the docs</a>
+    </footer>
+  </body>
+</html>

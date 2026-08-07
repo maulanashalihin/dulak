@@ -1,0 +1,20 @@
+---
+title: Docker
+description: Multi-stage Dockerfile and docker-compose.
+---
+
+```bash
+docker compose up -d --build
+```
+
+- Multi-stage `Dockerfile` on `oven/bun:1.3-alpine`: client assets are
+  prebuilt in the build stage; the runtime stage ships production
+  dependencies only.
+- `./data` volume keeps the SQLite database across restarts; the healthcheck
+  hits `/health` (with `PRAGMA busy_timeout`, concurrent writes wait instead
+  of failing).
+- The container listens on port 4000 (`EXPOSE 4000`).
+
+Alternatives: `bun build --compile` for a single binary, or plain
+`bun run start` behind your process supervisor — it handles SIGTERM
+gracefully (drains in-flight requests, closes the DB).
