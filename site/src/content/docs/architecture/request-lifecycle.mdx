@@ -33,6 +33,12 @@ Then the route: guards run (`requireAuth`, `guestOnly`, `requireRole`),
 TypeBox validation runs, and the handler renders the Inertia page — full
 SSR HTML for browser visits, JSON for `X-Inertia` requests.
 
+**SSR skip for authenticated routes.** SSR provides zero value behind an
+auth wall (no SEO, client hydrates and replaces server HTML anyway). When
+`SSR=true`, authenticated routes (dashboard, profile, admin) ship an empty
+shell + JSON payload; public routes (login, register, landing) keep full
+SSR. This cuts server CPU/memory on the routes that need it least.
+
 **Errors** (`app.onError`): validation failures map to 422 Inertia page
 payloads with friendly field messages; `/uploads` errors stay JSON with tus
 headers; unknown errors → 500. **Not found** (`app.notFound`): Inertia

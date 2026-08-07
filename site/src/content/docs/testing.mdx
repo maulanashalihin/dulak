@@ -5,7 +5,7 @@ description: How the E2E suite works and how to add tests.
 
 The suite is **end-to-end, not unit** — it boots the full app against an
 in-memory SQLite database and drives it through `app.request()` (no port,
-no server process). 63 tests across two files:
+no server process) across two files:
 
 - `tests/app.test.ts` — auth, guards, roles, password reset, Inertia
   protocol (409/404/SSR), CSRF, health, static assets
@@ -78,3 +78,25 @@ in a new test FILE (each `--isolate` process gets fresh globals).
 Keep tests deterministic: no sleeps, no external network (fetch is mocked
 in the Google OAuth block), and control time explicitly where it matters
 (the expiration sweep takes `now` as a parameter for this reason).
+
+## Browser testing
+
+The E2E suite covers server behavior (status codes, redirects, Inertia
+payloads, CSRF, auth). It does **not** catch client-side errors — a page
+can return 200 with a valid payload and still crash in the browser because
+of a prop shape mismatch, a missing import, or a Svelte/React runtime
+error.
+
+When testing UI changes manually, **the browser console is the source of
+truth**:
+
+1. Open DevTools → Console before interacting with the page.
+2. Reload and watch for red errors (runtime exceptions, failed imports,
+   hydration mismatches).
+3. Check the Network tab for failed asset loads (404 on JS/CSS, wrong
+   manifest paths).
+4. A blank page with no console error usually means the Inertia component
+   name doesn't match a registered page — check `src/client/pages.ts`.
+
+`bun run typecheck` and `bun run build` catch type and compile errors, but
+neither runs the client code. Only the browser does.

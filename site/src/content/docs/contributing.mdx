@@ -17,7 +17,8 @@ convention rules (a condensed version is on the
 
 ```bash
 bun run typecheck
-bun run test        # = bun test --isolate — NEVER plain bun test
+bun run lint         # = biome lint src tests scripts create-dulak
+bun run test         # = bun test --isolate — NEVER plain bun test
 ```
 
 - The suite must stay green.
@@ -25,6 +26,9 @@ bun run test        # = bun test --isolate — NEVER plain bun test
   closes the DB in `afterAll` as if process-isolated.
 - `tsc` only covers `src/` and `scripts/` — template branches use
   `svelte-check` / `vue-tsc` instead.
+- Biome lints `.ts`/`.js` across all branches. Vue SFCs (`.vue`) are
+  natively supported; Svelte SFCs (`.svelte`) are excluded (false positives
+  on reactive `$:` syntax) — `svelte-check` covers those.
 
 ## Committing
 
