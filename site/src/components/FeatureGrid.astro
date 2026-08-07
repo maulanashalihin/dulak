@@ -40,17 +40,19 @@ const features: Feature[] = [
 ---
 
 <section class="dl-features">
-  <h2 class="dl-section-title">Everything wired, <span class="dl-gradient">nothing invented</span></h2>
+  <h2 class="dl-section-title">Everything wired, <span class="dl-accent">nothing invented</span></h2>
   <p class="dl-section-sub">The guardrails a deployed app needs, from day one.</p>
   <div class="dl-feature-grid">
     {features.map((f) => (
       <div class="dl-feature-card">
-        <span class="dl-feature-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d={f.icon} />
-          </svg>
-        </span>
-        <h3>{f.title}</h3>
+        <div class="dl-feature-head">
+          <span class="dl-feature-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d={f.icon} />
+            </svg>
+          </span>
+          <h3>{f.title}</h3>
+        </div>
         <p>{f.blurb}</p>
       </div>
     ))}
@@ -61,11 +63,8 @@ const features: Feature[] = [
   .dl-features { max-width: 960px; margin: 0 auto 4.5rem; padding: 0 1.5rem; }
   .dl-section-title { font-size: 1.7rem; letter-spacing: -0.02em; text-align: center; }
   .dl-section-sub { text-align: center; color: #8b95a5; margin: 0.4rem 0 2.2rem; }
-  .dl-gradient {
-    background: linear-gradient(100deg, #34d399, #059669 55%, #0d9488);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  .dl-accent {
+    color: #34d399;
   }
   .dl-feature-grid {
     display: grid;
@@ -84,14 +83,24 @@ const features: Feature[] = [
     transform: translateY(-2px);
     box-shadow: 0 12px 32px rgba(5, 150, 105, 0.12);
   }
+  .dl-feature-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.8rem;
+  }
+  .dl-feature-head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
   .dl-feature-icon {
     display: inline-flex;
-    padding: 0.55rem;
+    padding: 0.5rem;
     border-radius: 0.5rem;
     background: rgba(5, 150, 105, 0.12);
     color: #34d399;
-    margin-bottom: 0.8rem;
+    flex-shrink: 0;
   }
-  .dl-feature-card h3 { margin: 0 0 0.45rem; font-size: 1.02rem; }
+  .dl-feature-head h3 { margin: 0; font-size: 1.05rem; }
   .dl-feature-card p { margin: 0; font-size: 0.88rem; line-height: 1.55; color: #9aa4b2; }
 </style>

@@ -83,13 +83,6 @@ a {
 	margin: 0.4rem 0 0;
 }
 
-.dl-gradient {
-	background: linear-gradient(100deg, #34d399, #059669 55%, #0d9488);
-	-webkit-background-clip: text;
-	background-clip: text;
-	color: transparent;
-}
-
 /* --- Footer --- */
 
 .dl-footer {
