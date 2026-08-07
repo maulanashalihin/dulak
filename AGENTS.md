@@ -144,6 +144,20 @@ src/
 - Suite must stay green (62 tests): run `bun run typecheck` and
   `bun run test` before finishing. `tsc` only covers `src/` and `scripts/`.
 
+
+## Browser testing
+
+- When testing in the browser, ALWAYS open the browser console (DevTools →
+  Console) and check for errors/warnings. Client-side runtime errors
+  (failed imports, React runtime errors, hydration mismatches, bad Inertia
+  props, network 4xx/5xx on XHR) do NOT show up in `bun run typecheck` or
+  the build — the build compiles, the page renders, and the bug is silent
+  until you read the console. A green build + green tests does NOT mean the
+  page works; the console is the source of truth for client-side failures.
+- Use the `browser` tool (`xd://browser`) to drive a real tab and read
+  `console` output, or screenshot DevTools. Do not declare a UI change
+  verified without having read the console for the page you changed.
+
 ## Style
 
 - Match the repo's current style: 2-space indent, double quotes, semicolons
