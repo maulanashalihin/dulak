@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["src/**", "tests/**", "scripts/**", "create-dulak/**", "!**/*.vue", "!**/.tailwind.css", "!**/*.css"]
+    "includes": ["src/**", "tests/**", "scripts/**", "create-dulak/**", "!**/.tailwind.css", "!**/*.css"]
   },
   "formatter": {
     "enabled": false
