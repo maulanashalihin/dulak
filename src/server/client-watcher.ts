@@ -15,9 +15,9 @@
  *     version/js/css — no process restart needed);
  *  3. invalidates the cached SSR renderer so the next render re-imports the
  *     freshly built dist/ssr.js (Bun's module cache would otherwise hold the
- *     old module for the life of the process);
- *  4. drops the /dev-reload SSE connections so each browser tab reconnects
- *     and the inline reload script does a full location.reload().
+ *     old module for the life of the process).
+ * After rebuild, the browser picks up the new version on the next request
+ * (manual refresh; the old SSE auto-reload was removed as too disruptive).
  *
  * Production never imports this module (see src/index.ts), so there is no
  * file watcher and zero overhead in prod.
@@ -25,7 +25,6 @@
 import { watch } from "node:fs";
 import { buildClientAssets, loadManifest } from "./assets";
 import { invalidateSsrRenderer, type InertiaAssets } from "./inertia";
-import { reloadBrowsers } from "./dev-reload";
 
 const DEBOUNCE_MS = 150;
 const CLIENT_DIR = "src/client";
@@ -49,9 +48,9 @@ export function startClientWatcher(assets: InertiaAssets): void {
       // new version + hashed filenames on the next request.
       Object.assign(assets, loadManifest());
       invalidateSsrRenderer();
-      reloadBrowsers();
+
       console.log(
-        `Client assets rebuilt → version ${assets.version} (browser reload triggered)`,
+        `Client assets rebuilt → version ${assets.version}`,
       );
     } catch (err) {
       // Keep serving the previous assets; the editor will save again.
