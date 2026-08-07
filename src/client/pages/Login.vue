@@ -52,7 +52,6 @@ function submit() {
 					type="email"
 					name="email"
 					autocomplete="email"
-					autofocus
 					:class="inputClass"
 					v-model="form.email"
 					@change="form.clearErrors('email')"

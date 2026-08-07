@@ -131,9 +131,8 @@ src/
 - New test files must set env (`DATABASE_PATH=:memory:`, `UPLOAD_DIR`, …)
   in `beforeAll` BEFORE importing the app module — mirror
   `tests/app.test.ts` and `tests/tus.test.ts`.
-- Suite must stay green (59 tests): run `bun run typecheck` and
+- Suite must stay green: run `bun run typecheck` and
   `bun run test` before finishing. `tsc` only covers `src/` and `scripts/`.
-
 
 ## Browser testing
 

@@ -43,7 +43,6 @@ function submit() {
 					type="text"
 					name="name"
 					autocomplete="name"
-					autofocus
 					:class="inputClass"
 					v-model="form.name"
 					@change="form.clearErrors('name')"

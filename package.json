@@ -21,6 +21,7 @@
     "start": "NODE_ENV=production bun run src/index.ts",
     "db:seed": "bun run scripts/seed.ts",
     "typecheck": "vue-tsc --noEmit",
+    "lint": "biome lint src tests scripts create-dulak",
     "test": "bun test --isolate"
   },
   "dependencies": {
@@ -31,7 +32,7 @@
     "vue": "^3.5.40"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.3.3",
+    "@biomejs/biome": "^2.5.7",
     "@types/bun": "^1.2.0",
     "@vue/compiler-sfc": "^3.5.40",
     "tailwindcss": "^4.3.3",

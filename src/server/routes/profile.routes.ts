@@ -86,7 +86,7 @@ export const profileRoutes = () => {
 				status: 422,
 			});
 		}
-		updateUserAvatar.run("/uploads/" + upload.id, user.id);
+		updateUserAvatar.run(`/uploads/${upload.id}`, user.id);
 		return new Response(null, { status: 204 });
 	});
 
