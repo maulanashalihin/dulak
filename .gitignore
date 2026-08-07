@@ -9,3 +9,5 @@ data/uploads/
 *.png
 .svelte-css-cache/
 .tailwind.css
+
+.llm-wiki/meta/
