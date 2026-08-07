@@ -1,0 +1,40 @@
+---
+title: Introduction
+description: What Dulak is and why it exists.
+---
+
+Dulak is a production-shaped full-stack boilerplate running entirely on **Bun**:
+
+- **Hono 4.x** — HTTP layer, served via `Bun.serve`
+- **bun:sqlite** — synchronous, zero-ORM database
+- **Inertia v3 / React 19** — server-driven UI with in-process SSR
+- **Bun >= 1.3** — runtime, bundler, and test runner
+
+The name is the philosophy — *dulak* is the Banjar word for **bored**. Every
+choice favors the next maintainer, human or AI agent, over cleverness:
+zero-dependency where it's cheap, one obvious way to do things, and
+discoverability as a contract.
+
+## What's included
+
+- Auth: register / login / logout / forgot & reset password, Google OAuth
+- Roles (`user` / `admin`) with route guards
+- Resumable uploads (tus protocol v1) — demonstrated by the avatar upload
+- Versioned SQL migrations applied at startup
+- Rate limiting, CSRF, security headers, batched request logging, gzip
+- 62-test E2E suite (`bun test --isolate`)
+- Multi-stage Docker, CI, graceful shutdown
+- Templates: React, Svelte 5, and Vue 3 clients with Tailwind CSS v4
+
+## Getting started
+
+Scaffold a new project in seconds:
+
+```bash
+bun create dulak@latest my-app --template vue-tailwind
+cd my-app
+bun run dev   # http://localhost:4000
+```
+
+See [Installation](/getting-started/installation/) for details, or browse the
+[GitHub repository](https://github.com/maulanashalihin/dulak).

@@ -1,0 +1,53 @@
+---
+title: Sessions & guards
+description: DB-backed sessions, cookies, and route guards.
+---
+
+## Sessions
+
+Sessions are **DB-backed, not JWT** — logout revokes the session server-side
+instantly. The flow:
+
+- `createSession(userId)` generates a 256-bit random token; the DB stores
+  only its SHA-256 hash (`hashToken`). A DB leak cannot expose valid tokens.
+- The raw token lives in the `session` cookie:
+  `httpOnly`, `SameSite=Lax`, `Secure` in production, 30-day expiry.
+- `resolveUser(token)` looks up the session, lazily deletes it when expired,
+  and returns the user row.
+- Sessions are **rotated** on login/register (session-fixation defense) and
+  password changes delete other sessions for the user.
+
+## Flash messages
+
+One-shot flash messages live on the session row (`sessions.flash`), set via
+`setFlash(token, { success | error })`, merged into the next Inertia page
+payload, and cleared on render.
+
+## Guards
+
+Guards are Hono middleware — return a `Response` to short-circuit, or
+`await next()`:
+
+```ts
+app.get("/dashboard", requireAuth, (c) => c.var.inertia.render("Dashboard", {}));
+app.get("/admin", requireRole("admin"), (c) => ...);
+```
+
+| Guard | Redirects to |
+| --- | --- |
+| `requireAuth` | `/login` when signed out |
+| `guestOnly` | `/dashboard` when signed in |
+| `requireRole("admin")` | `/login` (guest) or `/dashboard` (non-admin) |
+
+## CSRF
+
+SameSite=Lax cookie + an Origin check on unsafe methods (non-browser clients
+that omit `Origin` are allowed). Cross-origin POST/PUT/PATCH/DELETE with a
+mismatched host get 403.
+
+## Rate limiting
+
+Auth endpoints are rate-limited by an in-memory fixed-window limiter keyed by
+`X-Forwarded-For`/peer IP (Bun's `server.requestIP` via `c.env`). Configure
+via `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW`. Swap the store for
+Redis behind the same hook signature when scaling horizontally.

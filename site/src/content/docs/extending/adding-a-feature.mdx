@@ -1,0 +1,128 @@
+---
+title: Adding a feature
+description: A complete walkthrough — add a /posts resource end to end.
+---
+
+The boilerplate's promise is that a URL leads to exactly one file. Here is
+the full path of adding a new feature — a paginated `/posts` list — end to
+end, following the conventions.
+
+## 1. The route file
+
+File = URL namespace, so `/posts` lives in `src/server/routes/posts.routes.ts`:
+
+```ts
+import { Hono } from "hono";
+import { requireAuth } from "../auth";
+import type { AppEnv } from "../inertia-middleware";
+import { listPosts } from "../db";
+
+export const postsRoutes = () => {
+ const app = new Hono<AppEnv>();
+
+ app.get("/posts", requireAuth, (c) =>
+  c.var.inertia.render("Posts", { posts: listPosts.all(50) }),
+ );
+
+ return app;
+};
+```
+
+## 2. Mount it
+
+One line in `src/server/app.ts`, next to the other routes:
+
+```ts
+app.route("/", postsRoutes());
+```
+
+## 3. Data
+
+All SQL lives in `db.ts` as prepared statements. If the table doesn't
+exist yet, add a migration first (see
+[Database & migrations](/database/schema-migrations/)):
+
+```sql
+-- migrations/0005_posts.sql
+CREATE TABLE posts (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ user_id INTEGER NOT NULL REFERENCES users(id),
+ title TEXT NOT NULL,
+ body TEXT NOT NULL,
+ created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+```
+
+Then the statement in `db.ts`:
+
+```ts
+export interface PostRow {
+ id: number;
+ title: string;
+ createdAt: string;
+}
+export const listPosts = db.query<PostRow, []>(
+ `SELECT id, title, created_at AS createdAt FROM posts ORDER BY id DESC LIMIT ?`,
+);
+```
+
+## 4. The page component
+
+`src/client/pages/Posts.tsx` — a plain Inertia page using shared props:
+
+```tsx
+import { Head, usePage } from "@inertiajs/react";
+import type { Post } from "../../shared/types";
+import Layout from "../components/Layout";
+
+export default function Posts() {
+ const { posts } = usePage().props as { posts: Post[] };
+ return (
+  <Layout>
+   <Head title="Posts" />
+   <h1>Posts</h1>
+   <ul>
+    {posts.map((p) => (
+     <li key={p.id}>{p.title}</li>
+    ))}
+   </ul>
+  </Layout>
+ );
+}
+```
+
+Add the shared type in `src/shared/types.ts`, then register the page in
+`src/client/pages.ts` (the registry is explicit — Bun removed
+`import.meta.glob`):
+
+```ts
+import Posts from "./pages/Posts";
+// ...
+"./pages/Posts": { default: Posts },
+```
+
+## 5. Test it
+
+Add to `tests/app.test.ts` following the existing pattern — register a
+user, use the session cookie, hit the page:
+
+```ts
+it("serves /posts to authenticated users", async () => {
+ const cookie = await registerUser("posts@example.com");
+ const res = await call("/posts", { headers: { ...xhr, cookie } });
+ expect(res.status).toBe(200);
+ expect((await page(res)).component).toBe("Posts");
+});
+```
+
+## 6. Verify
+
+```bash
+bun run typecheck
+bun run test        # bun test --isolate
+```
+
+That's the whole loop: route file → mount → migration/`db.ts` → page +
+registry + types → test. Every URL follows the same shape — add the POST
+action to the same file, guard it, and validate with a TypeBox schema as
+`auth.routes.ts` does.

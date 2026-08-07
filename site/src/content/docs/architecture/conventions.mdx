@@ -1,0 +1,60 @@
+---
+title: Conventions
+description: The structural rules that keep new code consistent (AGENTS.md).
+---
+
+These rules are codified in `AGENTS.md` at the repo root — read it before
+writing or restructuring code.
+
+## Routes: file = URL namespace
+
+- Routes live in `src/server/routes/<feature>.routes.ts` with handlers inline.
+- Given any URL, the file name follows from its first segment:
+  `/posts*` → `routes/posts.routes.ts`. Every URL is defined in exactly one
+  file — GET renders and POST actions for the same path live together.
+- `pages.routes.ts` is the app shell only (`/`, `/dashboard`, `/admin`).
+- Infra endpoints (`/health`, `/assets/*`) stay in `app.ts`.
+
+```ts
+// routes/auth.routes.ts — sub-app per feature, mounted via app.route()
+export const authRoutes = () => {
+  const app = new Hono<AppEnv>();
+  app.get("/login", guestOnly, (c) => c.var.inertia.render("Login", {}));
+  app.post("/login", validateJson(loginBody), async (c) => { ... });
+  return app;
+};
+```
+
+## Server layout
+
+- `src/server/` is flat except `routes/`. No feature subfolders.
+- Shared/transport-independent logic becomes a single flat module — extract
+  only when reused across routes, not to slim a file.
+- **All SQL lives in `db.ts`** as prepared statements (`db.query(...)`),
+  created once after migrations run. Schema changes are new numbered
+  migration files — never edit an applied migration.
+- **Env is read once in `config.ts`**, validated, fails fast. Never read
+  `process.env` elsewhere.
+
+## Validation & types
+
+- Validation via **TypeBox schemas** (`src/server/validation.ts`) at route
+  level; `app.onError` maps `ValidationFailed` to Inertia 422 page payloads
+  (`VALIDATION_MESSAGES` in `auth.routes.ts`).
+- TypeScript: `strict` + `noUncheckedIndexedAccess` + `verbatimModuleSyntax`.
+  Type-only imports MUST use `import type`. No ORM, no loose `any`.
+
+## Hono integration notes
+
+- Middleware runs in registration order; global `app.use()` middleware must
+  precede the routes they cover.
+- Middleware/guards MUST call `next()` to continue — returning `undefined`
+  without `next()` errors with "Context is not finalized".
+- Hono converts HEAD → GET (body stripped, headers kept) but `c.req.method`
+  still reports "HEAD"; the tus `dispatch` relies on this.
+- `c.header()`-queued headers are dropped when a handler returns a custom
+  `Response` — cookie helpers append to `c.res.headers` instead.
+- The `/*` wildcard produces no named param — derive path segments from
+  `c.req.path` (see `uploads.routes.ts`).
+- `@sinclair/typebox` does not pre-register string formats — `email` is
+  registered in `validation.ts`.

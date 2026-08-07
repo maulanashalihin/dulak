@@ -1,0 +1,52 @@
+---
+title: Request lifecycle
+description: What happens to every request.
+---
+
+Every request flows through a middleware chain registered in `app.ts`, in
+this order:
+
+```
+requestLogger → checkOrigin → secureHeaders → compress → inertiaMiddleware
+→ routes → onError / notFound
+```
+
+1. **`requestLogger`** — generates the correlation id (`x-request-id`),
+   times the request, batches the log line (no syscall per request; flushed
+   every 50ms to stdout, errors go to stderr immediately).
+2. **`checkOrigin`** — CSRF defense: unsafe methods (POST/PUT/PATCH/DELETE)
+   with an `Origin` header whose host mismatches get 403. Non-browser
+   clients that omit `Origin` are allowed.
+3. **`secureHeaders`** — hardening headers (CSP, nosniff, frame denial,
+   referrer policy, permissions policy, HSTS). For `/uploads` responses the
+   CSP `script-src` becomes `'none'` (attacker-controlled bytes can never
+   execute scripts).
+4. **`compress`** — gzip for `/assets/*` and SSR HTML only. JSON/API
+   responses pass through untouched (they are small and must never be
+   transformed).
+5. **`inertiaMiddleware`** — resolves the session from the cookie and sets
+   typed context variables: `user`, `flash`, `sessionToken`, `inertia`
+   (`AppEnv.Variables`). Runs for every request, including unmatched ones,
+   so error handlers can rely on it.
+
+Then the route: guards run (`requireAuth`, `guestOnly`, `requireRole`),
+TypeBox validation runs, and the handler renders the Inertia page — full
+SSR HTML for browser visits, JSON for `X-Inertia` requests.
+
+**SSR skip for authenticated routes.** SSR provides zero value behind an
+auth wall (no SEO, client hydrates and replaces server HTML anyway). When
+`SSR=true`, authenticated routes (dashboard, profile, admin) ship an empty
+shell + JSON payload; public routes (login, register, landing) keep full
+SSR. This cuts server CPU/memory on the routes that need it least.
+
+**Errors** (`app.onError`): validation failures map to 422 Inertia page
+payloads with friendly field messages; `/uploads` errors stay JSON with tus
+headers; unknown errors → 500. **Not found** (`app.notFound`): Inertia
+`NotFound` page, except `/uploads` which stays JSON.
+
+## Middleware rules of thumb
+
+- Return a `Response` to short-circuit the chain; call `await next()` to
+  continue.
+- Never read a response body unless you rebuild the response afterwards —
+  bodies are one-shot streams (this bit the gzip middleware once).
