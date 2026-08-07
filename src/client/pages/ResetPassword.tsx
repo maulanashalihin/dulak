@@ -29,7 +29,6 @@ export default function ResetPassword({ email, token }: { email: string; token: 
             type="password"
             name="password"
             autoComplete="new-password"
-            autoFocus
             value={data.password}
             onChange={(e) => {
               clearErrors('password')

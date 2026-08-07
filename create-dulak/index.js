@@ -134,7 +134,7 @@ async function main() {
 	}
 
 	const noInstall = args.includes("--no-install");
-	const templateFlag = args.findIndex((a) => a === "--template");
+	const templateFlag = args.indexOf("--template");
 	const templateName = templateFlag !== -1 ? args[templateFlag + 1] : null;
 
 	const positional = args.filter(
@@ -272,7 +272,7 @@ if (existsSync(pkgPath)) {
 	pkg.private = true;
 	delete pkg.repository;
 	delete pkg.keywords;
-	await writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+	await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 }
 
 // Install dependencies.

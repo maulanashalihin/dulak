@@ -37,7 +37,6 @@ export default function Register({ googleEnabled }: { googleEnabled: boolean }) 
             type="text"
             name="name"
             autoComplete="name"
-            autoFocus
             value={data.name}
             onChange={(e) => {
               clearErrors('name')

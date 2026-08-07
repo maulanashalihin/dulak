@@ -20,7 +20,7 @@ bun run typecheck
 bun run test        # = bun test --isolate — NEVER plain bun test
 ```
 
-- The suite is 62 tests and must stay green.
+- The suite must stay green.
 - `--isolate` is required: each test file sets its env in `beforeAll` and
   closes the DB in `afterAll` as if process-isolated.
 - `tsc` only covers `src/` and `scripts/` — template branches use

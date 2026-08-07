@@ -169,7 +169,7 @@ export async function handlePost(
 		await appendBytes(id, buf);
 		initialOffset = buf.byteLength;
 		const res = advanceOffset.get(buf.byteLength, id, 0);
-		if (!res || res.n !== 1) {
+		if (res?.n !== 1) {
 			// Race: shouldn't happen on a fresh row, but stay safe.
 			removeFile(id);
 			deleteUpload.run(id);
@@ -260,7 +260,7 @@ export async function handlePatch(
 
 	await appendBytes(id, buf);
 	const res = advanceOffset.get(buf.byteLength, id, row.offset);
-	if (!res || res.n !== 1) {
+	if (res?.n !== 1) {
 		// Concurrent PATCH raced us — tell the client to re-sync via HEAD.
 		return errorResponse(409, "Offset conflict (concurrent write)");
 	}

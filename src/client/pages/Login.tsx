@@ -48,7 +48,6 @@ export default function Login({
             type="email"
             name="email"
             autoComplete="email"
-            autoFocus
             value={data.email}
             onChange={(e) => {
               clearErrors('email')

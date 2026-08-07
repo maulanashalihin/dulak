@@ -189,7 +189,7 @@ the same auth, roles, SSR, and test suite.
 | `MAILTRAP_API_TOKEN` | — | required when `MAIL_DRIVER=mailtrap` |
 | `MAILTRAP_INBOX_ID` | — | use the sandbox endpoint when set |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
-| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `10` / `60` | requests per window on auth endpoints |
+| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `30` / `60` | requests per window on auth endpoints |
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
 | `TUS_MAX_SIZE` | `0` | max upload size in bytes (`0` = unlimited) |
 | `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL in seconds (`0` = no expiry) |
@@ -321,7 +321,7 @@ Rules:
 bun test --isolate   # or: bun run test
 ```
 
-62 tests. The suite boots the full app against an in-memory SQLite database
+63 tests (snapshot — the suite grows; AGENTS.md only requires it stays green). The suite boots the full app against an in-memory SQLite database
 and drives it through `app.request()`: registration/login/logout, guards and
 roles, password reset end to end (via the log mail driver), Inertia protocol
 (409/404/SSR), CSRF, `/health`, static asset serving, and the tus

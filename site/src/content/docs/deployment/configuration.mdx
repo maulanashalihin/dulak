@@ -18,7 +18,7 @@ and fails fast with a clear message. Never read `process.env` elsewhere.
 | `MAILTRAP_API_TOKEN` | — | required when `MAIL_DRIVER=mailtrap` |
 | `MAILTRAP_INBOX_ID` | — | sandbox endpoint when set |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
-| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `10` / `60` | requests per window on auth endpoints |
+| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `30` / `60` | requests per window on auth endpoints |
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
 | `TUS_MAX_SIZE` | `0` | max upload size (`0` = unlimited) |
 | `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL (`0` = no expiry) |
