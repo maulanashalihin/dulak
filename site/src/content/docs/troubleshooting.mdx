@@ -1,0 +1,79 @@
+---
+title: Troubleshooting
+description: Common issues and their fixes.
+---
+
+## The dev server ignores config changes
+
+`astro.config.mjs` and `src/content.config.ts` are read at startup — after
+changing them (logo, sidebar, collection schema), **restart `npm run dev`**.
+Content files and components hot-reload; config does not.
+
+## The scaffolder runs an old version
+
+If `bunx create-dulak` behaves like an older release (no 2-step prompt),
+a stale package cache is being used. Always use `@latest`:
+
+```bash
+bun create dulak@latest my-app    # always pin @latest to avoid cache
+bunx create-dulak@latest my-app   # equivalent
+```
+
+## One-time 409 + full page reload in dev
+
+`bun --watch` rebuilds client assets on change, which changes the Inertia
+asset version — an already-open tab does one `409 + X-Inertia-Location`
+full reload, then settles back to SPA navigation. Normal. Refresh after a
+server restart if you see a repeat.
+
+## Styles missing on a fresh clone
+
+The CSS is built into `dist/`. If `/assets/*` returns 404, run
+`bun run build` once (dev mode builds automatically on first run).
+
+## Port already in use
+
+```
+error: Failed to start server. Is port 4000 in use?
+```
+
+Set a different `PORT` in `.env` (or stop the other process).
+
+## JSON responses never arrive / navigation hangs
+
+If every SPA navigation stalls while the first SSR load works, check for a
+reverse proxy or middleware that transforms responses — the gzip
+middleware is scoped to `/assets/*` and SSR HTML only, and API/JSON
+responses are passed through untouched **on purpose**. Also confirm the
+browser request actually reaches the server (`x-request-id` in the
+response).
+
+## HEAD requests behave like GET
+
+Hono converts HEAD to GET automatically — `app.head()` handlers are never
+called. The tus routes rely on this; don't register HEAD handlers.
+
+## `bun test` fails with "Statement has finalized"
+
+You ran plain `bun test`. The suite is written as isolated files (env set
+in `beforeAll`, `db.close()` in `afterAll`) — always run
+`bun test --isolate` (or `bun run test`).
+
+## Switching template branches
+
+Each template branch has its own client framework and dependencies. After
+`git checkout template/vue-tailwind`, run `bun install` — the shared
+`node_modules` does not match.
+
+## Google OAuth returns 400
+
+`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` must be set **together**, and
+`APP_URL` must be the public URL with the redirect URI registered:
+`<APP_URL>/auth/google/callback`. In production the domain must match what
+the OAuth client allows.
+
+## Email never sends
+
+`MAIL_DRIVER=resend` fails fast at startup without `RESEND_API_KEY`; the
+`log` driver prints to the console instead of sending (and records into
+`sentMails`, assertable in tests).

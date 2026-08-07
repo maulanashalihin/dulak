@@ -1,0 +1,212 @@
+---
+const rows = [
+  { op: "Point read via HTTP", detail: "GET /users/:id · p99 2.6ms · median of 3", value: "52K", unit: "req/s" },
+  { op: "Transactional insert", detail: "db.transaction() · 0.75µs/row", value: "1.3M", unit: "ops/s" },
+  { op: "Autocommit insert", detail: "WAL + synchronous=NORMAL", value: "95K", unit: "ops/s" },
+  { op: "Point read (direct)", detail: "bun:sqlite prepared stmt", value: "526K", unit: "ops/s" },
+];
+
+const compare = [
+  { op: "Health (no DB)", dulak: "66K", laravel: "6K", x: "10.5×" },
+  { op: "Point read", dulak: "52K", laravel: "6K", x: "8.1×" },
+  { op: "List 20 rows", dulak: "32K", laravel: "5K", x: "6.8×" },
+  { op: "Delete", dulak: "28K", laravel: "6K", x: "4.9×" },
+];
+
+---
+<section class="dl-bench">
+  <h2 class="dl-section-title">Numbers from <span class="dl-gradient">real hardware</span></h2>
+  <p class="dl-section-sub">
+    bun:sqlite + Hono on Apple M4, measured — not estimated.
+    <a href="/database/performance/">Full benchmark →</a>
+  </p>
+  <div class="dl-bench-table-wrap">
+    <table class="dl-bench-table">
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th class="dl-bench-num">Throughput</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr>
+            <td class="dl-bench-op">
+              <span class="dl-bench-op-name">{r.op}</span>
+              <span class="dl-bench-op-detail">{r.detail}</span>
+            </td>
+            <td class="dl-bench-num">
+              <span class="dl-bench-value">{r.value}</span>
+              <span class="dl-bench-unit">{r.unit}</span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <div class="dl-bench-vs">
+    <p class="dl-bench-vs-label">vs Laravel 13 + FrankenPHP (8 workers, same SQLite WAL)</p>
+    <table class="dl-bench-table dl-bench-table-sm dl-bench-vs-table">
+      <thead>
+        <tr>
+          <th class="dl-bench-vs-endpoint">Endpoint</th>
+          <th class="dl-bench-num">Dulak <span class="dl-bench-th-unit">req/s</span></th>
+          <th class="dl-bench-num">Laravel <span class="dl-bench-th-unit">req/s</span></th>
+          <th class="dl-bench-num">Faster</th>
+        </tr>
+      </thead>
+      <tbody>
+        {compare.map((c) => (
+          <tr>
+            <td class="dl-bench-vs-endpoint">{c.op}</td>
+            <td class="dl-bench-num dl-bench-vs-dulak">{c.dulak}</td>
+            <td class="dl-bench-num dl-bench-vs-laravel">{c.laravel}</td>
+            <td class="dl-bench-num dl-bench-vs-x">{c.x}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<style>
+  .dl-bench { max-width: 760px; margin: 0 auto 5rem; padding: 0 1.5rem; }
+  .dl-section-title { font-size: 1.7rem; letter-spacing: -0.02em; text-align: center; margin-bottom: 0.5rem; }
+  .dl-section-sub {
+    text-align: center;
+    color: #8b95a5;
+    margin: 0.4rem 0 2.2rem;
+    font-size: 0.92rem;
+  }
+  .dl-section-sub a {
+    color: #34d399;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .dl-section-sub a:hover { text-decoration: underline; }
+  .dl-gradient {
+    background: linear-gradient(100deg, #34d399, #059669 55%, #0d9488);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: #8b95a5;
+  }
+
+  .dl-bench-table-wrap {
+    border: 1px solid #1f2937;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: #0f141a;
+  }
+  .dl-bench-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  .dl-bench-table thead th {
+    text-align: left;
+    padding: 0.7rem 1.2rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #9aa4b2;
+    background: #131922;
+    border-bottom: 1px solid #1f2937;
+  }
+  .dl-bench-table thead th.dl-bench-num {
+    text-align: right;
+  }
+  .dl-bench-table tbody tr {
+    border-bottom: 1px solid #161c26;
+    transition: background 0.15s ease;
+  }
+  .dl-bench-table tbody tr:last-child { border-bottom: none; }
+  .dl-bench-table tbody tr:hover { background: #131922; }
+  .dl-bench-table td {
+    padding: 0.85rem 1.2rem;
+    vertical-align: middle;
+  }
+  .dl-bench-num { text-align: right; white-space: nowrap; }
+
+  .dl-bench-op-name {
+    display: block;
+    font-weight: 600;
+    color: #d3dae4;
+  }
+  .dl-bench-op-detail {
+    display: block;
+    font-size: 0.78rem;
+    color: #6b7685;
+    font-family: ui-monospace, monospace;
+    margin-top: 0.15rem;
+  }
+
+  .dl-bench-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(180deg, #34d399, #059669);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .dl-bench-unit {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #6b7685;
+    margin-left: 0.3rem;
+  }
+  .dl-bench-vs {
+    max-width: 100%;
+    margin: 1.5rem auto 0;
+  }
+  .dl-bench-vs-label {
+    text-align: center;
+    font-size: 0.82rem;
+    color: #6b7685;
+    margin: 0 0 0.6rem;
+  }
+  .dl-bench-vs-table {
+    table-layout: fixed;
+    border: 1px solid #1f2937;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: #0f141a;
+  }
+  .dl-bench-vs-table th,
+  .dl-bench-vs-table td {
+    padding: 0.55rem 1rem;
+  }
+  .dl-bench-vs-endpoint {
+    width: 38%;
+    text-align: left;
+    font-weight: 600;
+    color: #d3dae4;
+    font-size: 0.85rem;
+  }
+  .dl-bench-th-unit {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: #6b7685;
+    display: block;
+    margin-top: 0.1rem;
+  }
+  .dl-bench-vs-dulak {
+    color: #34d399;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .dl-bench-vs-laravel {
+    color: #8b95a5;
+    font-size: 1.05rem;
+  }
+  .dl-bench-vs-x {
+    color: #34d399;
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
+  @media (max-width: 520px) {
+    .dl-bench-table td { padding: 0.7rem 0.8rem; }
+    .dl-bench-value { font-size: 1.15rem; }
+  }
+</style>
