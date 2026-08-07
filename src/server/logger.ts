@@ -25,7 +25,7 @@ let timer: ReturnType<typeof setInterval> | null = null;
 
 function flush(): void {
 	if (buffer.length === 0) return;
-	const lines = buffer.join("\n") + "\n";
+	const lines = `${buffer.join("\n")}\n`;
 	buffer = [];
 	writeSync(1, lines); // fd 1 = stdout (12-factor: logs go to stdout)
 }
@@ -39,7 +39,7 @@ function schedule(): void {
 process.on("exit", () => {
 	if (buffer.length > 0) {
 		// Synchronous drain on shutdown (the interval may be unref'd).
-		writeSync(1, buffer.join("\n") + "\n");
+		writeSync(1, `${buffer.join("\n")}\n`);
 		buffer = [];
 	}
 });

@@ -30,7 +30,6 @@ function submit() {
 					type="email"
 					name="email"
 					autocomplete="email"
-					autofocus
 					v-model="form.email"
 					@change="form.clearErrors('email')"
 				/>

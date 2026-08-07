@@ -9,3 +9,4 @@ data/uploads/
 *.png
 
 .llm-wiki/meta/
+site/.astro/

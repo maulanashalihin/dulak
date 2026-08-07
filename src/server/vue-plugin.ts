@@ -44,7 +44,7 @@ export function vuePlugin({ ssr = false }: { ssr?: boolean } = {}) {
 				let code = "";
 				if (descriptor.scriptSetup) {
 					const script = compileScript(descriptor, { id });
-					code += script.content + "\n";
+					code += `${script.content}\n`;
 					if (descriptor.template) {
 						const template = compileTemplate({
 							source: descriptor.template.content,
@@ -58,7 +58,7 @@ export function vuePlugin({ ssr = false }: { ssr?: boolean } = {}) {
 							throw new Error(
 								template.errors.map(String).join("\n"),
 							);
-						code += template.code + "\n";
+						code += `${template.code}\n`;
 						// Attach the compiled render to the component.
 						code = code.replace(
 							/export default (?=\/\*@__PURE__\*\/_defineComponent\()/,

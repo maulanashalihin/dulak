@@ -33,7 +33,6 @@ function submit() {
 					type="password"
 					name="password"
 					autocomplete="new-password"
-					autofocus
 					v-model="form.password"
 					@change="form.clearErrors('password')"
 				/>
