@@ -251,13 +251,6 @@ export class Inertia {
 		// external stylesheet loads, so the page paints dark immediately (no FOUC).
 		// Reads localStorage('theme'), falls back to prefers-color-scheme, defaults light.
 		const themeBoot = `<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var el=document.documentElement;el.setAttribute('data-theme',t);el.style.backgroundColor=t==='dark'?'#0f1117':'#f6f7fb';}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>`;
-		// Dev-only hot reload: connect an EventSource to /dev-reload. On the first
-		// open we just record that we've connected; when bun --watch restarts the
-		// connection drops and EventSource auto-reconnects — the second open fires
-		// a full location.reload() to pick up the freshly built, hashed assets.
-		const devReload = config.isProd
-			? ""
-			: `<script>(function(){var f=true;var e=new EventSource('/dev-reload');e.addEventListener('open',function(){if(!f){e.close();location.reload();}f=false;});})();</script>`;
 		const doc = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -273,7 +266,6 @@ ${cssTag}
 <body>
 ${body}
 <script type="module" src="/assets/${this.assets.js}"></script>
-${devReload}
 </body>
 </html>`;
 		return new Response(doc, {

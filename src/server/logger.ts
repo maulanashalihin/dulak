@@ -18,7 +18,7 @@ import type { AppEnv } from "./inertia-middleware";
 import { safeUrl } from "./url";
 
 const FLUSH_INTERVAL_MS = 50;
-const SILENT_PATHS: RegExp[] = [/^\/health$/, /^\/assets\//, /^\/dev-reload$/];
+const SILENT_PATHS: RegExp[] = [/^\/health$/, /^\/assets\//];
 
 let buffer: string[] = [];
 let timer: ReturnType<typeof setInterval> | null = null;
