@@ -102,6 +102,13 @@ src/
    (`vue-plugin.ts`) extracts compiled CSS and Bun.build bundles all
    `<style>` blocks into one output stylesheet.
 
+8. **UI work follows the design system — never invents a parallel one.**
+   Before creating or editing UI, read `.llm-wiki/wiki/concepts/ui-design-principles.md`
+   and `ui-anti-patterns.md`. Reuse tokens from `styles.css` and existing
+   components; don't reach for AI-default aesthetics (beige, ghost cards,
+   purple gradients, italic serif accents). New components add co-located
+   styles per rule 7.
+
 ## Route conventions
 
 - **File = URL namespace.** `/posts*` routes live in `routes/posts.routes.ts`
