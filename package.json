@@ -1,6 +1,6 @@
 {
   "name": "dulak",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "license": "MIT",
   "description": "Full-stack boilerplate: Hono + bun:sqlite + Inertia v3 (Svelte 5) with auth, roles, SSR, scoped CSS, migrations, tests and Docker.",
   "keywords": ["dulak", "hono", "bun", "inertia", "svelte", "sqlite", "boilerplate", "ssr"],
@@ -32,6 +32,6 @@
   "devDependencies": {
     "@types/bun": "^1.2.0",
     "@biomejs/biome": "^2.5.7",
-    "svelte-check": "^4.7.4",
+    "svelte-check": "^4.7.4"
   }
 }
