@@ -1,6 +1,6 @@
 {
   "name": "dulak",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "license": "MIT",
   "description": "Full-stack boilerplate: Hono + bun:sqlite + Inertia v3 (React 19) + Tailwind CSS v4 with auth, roles, SSR, migrations, tests and Docker.",
   "keywords": ["dulak", "hono", "bun", "inertia", "react", "tailwind", "sqlite", "boilerplate", "ssr"],
@@ -37,6 +37,6 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@biomejs/biome": "^2.5.7",
-    "typescript": "^5.8.0",
+    "typescript": "^5.8.0"
   }
 }
