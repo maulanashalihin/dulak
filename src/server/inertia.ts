@@ -115,7 +115,10 @@ export class Inertia {
 	 * Render a page: full HTML (SSR when enabled) for browser visits, JSON for
 	 * Inertia XHR. When config.ssr is false, ships an empty shell with the page
 	 * payload inlined as JSON so the client renders from scratch (no hydrate).
-	 * Consumes the one-shot flash after building the payload.
+	 * SSR is also skipped for authenticated routes (this.c.user set): those
+	 * pages are behind an auth wall (no SEO benefit) and the client hydrates
+	 * and replaces server HTML anyway, so SSR is pure waste — ship the empty
+	 * shell instead. Consumes the one-shot flash after building the payload.
 	 */
 	async render(
 		component: string,
@@ -132,7 +135,7 @@ export class Inertia {
 
 		let head: string[] = [];
 		let body: string;
-		if (config.ssr) {
+		if (config.ssr && !this.c.user) {
 			const rendered = await renderPage(page);
 			head = rendered.head;
 			body = rendered.body;
