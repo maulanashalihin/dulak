@@ -1,0 +1,228 @@
+---
+title: Linux VPS (no Docker)
+description: Run Dulak on a bare Linux VPS with systemd and a reverse proxy.
+---
+
+Deploy without Docker: Bun runs the TypeScript server directly, client
+assets are prebuilt, and a **systemd unit + reverse proxy** handle
+restarts, HTTPS, and traffic. If your domain is on Cloudflare, no reverse
+proxy software is needed on the VPS at all — Cloudflare is the proxy. This
+guide targets Ubuntu 22.04/24.04.
+
+## Architecture
+
+```
+Internet → Cloudflare edge (TLS) → [tunnel | origin rule → VPS:4000]
+                                     └→ bun run src/index.ts
+                                          └→ SQLite + uploads in /opt/dulak/data
+```
+
+## 1. Install Bun
+
+```bash
+curl -fsSL https://bun.sh/install | bash   # installs to ~/.bun
+source ~/.bashrc
+bun --version
+```
+
+## 2. Create the app user and directory
+
+Run the app as a dedicated user, not root:
+
+```bash
+sudo useradd --system --create-home --shell /usr/sbin/nologin dulak
+sudo mkdir -p /opt/dulak/data
+sudo chown -R dulak:dulak /opt/dulak
+```
+
+## 3. Get the code
+
+```bash
+cd /opt/dulak
+sudo -u dulak git clone https://github.com/maulanashalihin/dulak.git .
+```
+
+Or copy the app from your build machine — the server runs TS directly, so
+the whole repo (minus `.git`) works.
+
+## 4. Install dependencies and build client assets
+
+```bash
+sudo -u dulak bash -c 'cd /opt/dulak && bun install'
+sudo -u dulak bash -c 'cd /opt/dulak && bun run build'   # client assets → dist/
+```
+
+## 5. Environment
+
+Create `/opt/dulak/.env`:
+
+```env
+PORT=4000
+NODE_ENV=production
+APP_URL=https://your-domain.com
+DATABASE_PATH=/opt/dulak/data/app.sqlite
+MAIL_DRIVER=resend
+RESEND_API_KEY=...
+# plus Google OAuth, rate limits, upload limits — see Configuration
+```
+
+`UPLOAD_DIR` defaults to `./data/uploads` — keep it inside `/opt/dulak/data`
+so it survives deploys and is easy to back up.
+
+## 6. systemd unit
+
+`/etc/systemd/system/dulak.service`:
+
+```ini
+[Unit]
+Description=Dulak app
+After=network.target
+
+[Service]
+Type=simple
+User=dulak
+WorkingDirectory=/opt/dulak
+EnvironmentFile=/opt/dulak/.env
+ExecStart=/home/dulak/.bun/bin/bun run src/index.ts
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+The app handles SIGTERM gracefully (drains in-flight requests, closes the
+DB), so `systemctl restart` is safe mid-traffic.
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now dulak
+sudo systemctl status dulak
+curl http://127.0.0.1:4000/health   # {"status":"ok",...}
+```
+
+## 7. Reverse proxy
+
+### Option A — Cloudflare (recommended, nothing to install)
+
+Your domain is on Cloudflare, so the edge handles TLS and proxying; the VPS
+only runs Bun. Two ways:
+
+**A1. Proxied DNS + origin rule** (no extra software):
+
+1. DNS: A record `your-domain.com` → VPS IP, **proxied** (orange cloud).
+2. Dashboard → **Rules → Origin Rules** → create a rule for
+   `your-domain.com` that rewrites the **Host header** to
+   `your-domain.com` (so the app sees the real host for redirects).
+3. SSL/TLS mode: **Full** (edge→origin over HTTPS with a Cloudflare Origin
+   CA cert) or **Flexible** (edge→origin HTTP) — Flexible is fine when the
+   origin port is firewalled to Cloudflare IPs only (see §8).
+
+**A2. Cloudflare Tunnel** (zero open ports — nothing to install except
+`cloudflared`):
+
+```bash
+# on the VPS
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+chmod +x /usr/local/bin/cloudflared
+cloudflared tunnel login          # one-time browser auth
+cloudflared tunnel create dulak
+# run the tunnel as a service pointing at 127.0.0.1:4000
+cloudflared service install
+```
+
+Dashboard → **Zero Trust → Networks → Tunnels** → add a public hostname
+`your-domain.com` → service `http://127.0.0.1:4000`. No firewall rules
+needed — the tunnel connects outbound.
+
+> **`X-Forwarded-For` matters.** Both routes put Cloudflare in front, and
+> the rate limiter keys by `X-Forwarded-For`/`CF-Connecting-IP` first —
+> only run behind a proxy that sets it, or every client shares the "local"
+> bucket.
+
+### Option B — Caddy on the VPS (no Cloudflare)
+
+`/etc/caddy/Caddyfile`:
+
+```
+your-domain.com {
+ reverse_proxy 127.0.0.1:4000
+}
+```
+
+```bash
+sudo systemctl enable --now caddy
+```
+
+### Option C — Nginx + Certbot (no Cloudflare)
+
+`/etc/nginx/sites-available/dulak`:
+
+```nginx
+server {
+ listen 80;
+ server_name your-domain.com;
+ location / {
+  proxy_pass http://127.0.0.1:4000;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_http_version 1.1;
+ }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/dulak /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+## 8. Firewall
+
+### Cloudflare route (A1 — origin rule)
+
+Only Cloudflare IPs may reach the app port:
+
+```bash
+sudo ufw allow OpenSSH
+# https://www.cloudflare.com/ips/ — keep this list updated
+sudo ufw allow from 173.245.48.0/20 to any port 4000
+sudo ufw allow from 103.21.244.0/22 to any port 4000
+# ...add all Cloudflare IP ranges...
+sudo ufw enable
+```
+
+Or bind the app to `127.0.0.1` only (`HOST=127.0.0.1`) and use **A2
+(tunnel)** — no inbound ports at all.
+
+### No Cloudflare (options B/C)
+
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+```
+
+Port 4000 must NOT be exposed publicly — only 80/443 reach the app.
+
+## 9. Updates
+
+```bash
+cd /opt/dulak
+sudo -u dulak git pull
+sudo -u dulak bun install
+sudo -u dulak bun run build
+sudo systemctl restart dulak
+```
+
+## Operational notes
+
+- **Single instance only.** SQLite is single-writer and the rate limiter is
+  in-memory — this guide runs one process. Horizontal scaling is a
+  deliberate swap point (external session/upload stores, Redis limiter).
+- **Logs**: `journalctl -u dulak -f`.
+- **Backup**: `data/app.sqlite` + `data/uploads` (the uploads directory).
+- **Single binary alternative**: `bun build --compile` produces a standalone
+  executable with the same runtime — swap the `ExecStart` for the binary
+  and prebuild `dist/` on the build machine.

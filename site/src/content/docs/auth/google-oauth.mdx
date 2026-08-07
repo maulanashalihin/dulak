@@ -1,0 +1,31 @@
+---
+title: Google OAuth
+description: Register-or-login with Google, zero dependencies.
+---
+
+Google OAuth is a zero-dependency register-or-login flow built on plain
+`fetch` against Google's endpoints.
+
+## How it works
+
+1. `GET /auth/google` — generates a random state, sets a short-lived
+   `oauth_state` cookie (10 min, CSRF protection), and redirects to Google.
+2. `GET /auth/google/callback?code=...&state=...` — verifies the state
+   cookie matches, exchanges the code for an access token, fetches the
+   profile, and **finds or creates the local user** (links by email).
+3. The Google profile picture is **downloaded and stored locally** in the
+   uploads store — the CSP (`img-src 'self'`) blocks external images, so
+   avatars must live on our own origin.
+
+The flow is disabled automatically (login button hidden, `/auth/google`
+returns 400) when `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are not set.
+
+## Setup
+
+1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   → create an OAuth client (Web application).
+2. Authorized redirect URI:
+   `https://<your-domain>/auth/google/callback`
+   (`http://localhost:4000/auth/google/callback` for local dev).
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env` (both or
+   neither — config fails fast otherwise).

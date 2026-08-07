@@ -1,0 +1,83 @@
+---
+const faqs: { q: string; a: string }[] = [
+  {
+    q: "Is Dulak a framework?",
+    a: "No — it is a boilerplate. A framework gives you primitives and you wire them; Dulak ships the wiring already done (auth, uploads, migrations, SSR, tests, Docker) and then gets out of your way. You fork it and own the code.",
+  },
+  {
+    q: "How is Dulak different from Next.js, Nuxt, or SvelteKit?",
+    a: "Those are meta-frameworks that couple a server model to one client framework (React, Vue, or Svelte) and leave auth, uploads, and persistence to you. Dulak is a single Bun process with Hono + bun:sqlite + Inertia v3, auth and uploads already wired, raw SQL instead of an ORM, and React, Svelte, or Vue as a swappable template. Pick a meta-framework for RSC or edge deploy; pick Dulak for a wired, ownable, single-runtime stack.",
+  },
+  {
+    q: "Why Bun and not Node?",
+    a: "One runtime for everything: Bun.serve is the HTTP server, bun:sqlite is the database, Bun.build is the bundler, bun test is the test runner. No separate language, package manager, web server, and database to wire together before your first running app.",
+  },
+  {
+    q: "Do I have to use React?",
+    a: "No. Dulak ships templates for React 19, Svelte 5, and Vue 3 — each with vanilla CSS or Tailwind CSS v4. The server side (Hono, SQL, auth) is identical across all of them.",
+  },
+  {
+    q: "Why no ORM?",
+    a: "bun:sqlite with prepared statements is synchronous, explicit, and zero-dependency. You see the exact SQL that runs. When 60 lines of your own code are enough, an ORM is a liability you upgrade, audit, and debug.",
+  },
+  {
+    q: "Is it production-ready?",
+    a: "It is production-shaped: CSRF, rate limiting, security headers, versioned migrations, graceful shutdown, multi-stage Docker, and CI are wired from day one. The business features are yours to build.",
+  },
+];
+---
+
+<section class="dl-faq">
+  <h2 class="dl-section-title">FAQ</h2>
+  <p class="dl-section-sub">The short version. For the long version, read the <a href="/comparisons/">comparison article</a>.</p>
+  <div class="dl-faq-list">
+    {faqs.map((f) => (
+      <details class="dl-faq-item">
+        <summary>{f.q}</summary>
+        <p>{f.a}</p>
+      </details>
+    ))}
+  </div>
+</section>
+
+<style>
+  .dl-faq { max-width: 760px; margin: 0 auto 4.5rem; padding: 0 1.5rem; }
+  .dl-section-title { font-size: 1.7rem; letter-spacing: -0.02em; text-align: center; }
+  .dl-section-sub { text-align: center; color: #8b95a5; margin: 0.4rem 0 2.2rem; }
+  .dl-section-sub a { color: #34d399; text-decoration: none; }
+  .dl-section-sub a:hover { text-decoration: underline; }
+  .dl-faq-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .dl-faq-item {
+    border: 1px solid #1f2937;
+    border-radius: 0.6rem;
+    background: #0f141a;
+    transition: border-color 0.2s ease;
+  }
+  .dl-faq-item[open] { border-color: #059669; }
+  .dl-faq-item summary {
+    cursor: pointer;
+    padding: 0.9rem 1.1rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .dl-faq-item summary::-webkit-details-marker { display: none; }
+  .dl-faq-item summary::after {
+    content: "+";
+    color: #34d399;
+    font-size: 1.2rem;
+    font-weight: 400;
+    transition: transform 0.2s ease;
+  }
+  .dl-faq-item[open] summary::after { transform: rotate(45deg); }
+  .dl-faq-item p {
+    margin: 0;
+    padding: 0 1.1rem 1rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #9aa4b2;
+  }
+</style>

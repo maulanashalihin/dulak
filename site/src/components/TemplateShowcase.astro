@@ -1,0 +1,179 @@
+---
+import { Code } from "astro-expressive-code/components";
+const templates = [
+  {
+    id: "react",
+    lang: "tsx",
+    name: "default (React 19 + vanilla CSS)",
+    label: "React 19",
+    stack: "React 19 + vanilla CSS",
+    code: `import { Head, Link, useForm } from "@inertiajs/react";
+import AuthLayout from "../components/AuthLayout";
+import Field from "../components/Field";
+import "../components/AuthLayout.css";
+
+export default function Login() {
+  const form = useForm({ email: "", password: "" });
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    form.post("/login");
+  };
+
+  return (
+    <AuthLayout>
+      <Head title="Login" />
+      <h1 className="auth-sub">Welcome back</h1>
+      <form onSubmit={submit} noValidate>
+        <Field id="email" label="Email" error={form.errors.email}>
+          <input
+            id="email" type="email" autoComplete="email"
+            value={form.data.email}
+            onChange={(e) => form.setData("email", e.target.value)}
+          />
+        </Field>
+        <button className="btn btn-primary btn-block" type="submit"
+                disabled={form.processing}>
+          {form.processing ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+    </AuthLayout>
+  );
+}`,
+  },
+  {
+    id: "svelte",
+    lang: "svelte",
+    name: "svelte-vanilla (Svelte 5 + scoped <style>)",
+    label: "Svelte 5",
+    stack: "Svelte 5 + scoped <style> CSS",
+    code: `<script lang="ts">
+  import { Link, useForm } from '@inertiajs/svelte'
+  import AuthLayout from '../components/AuthLayout.svelte'
+  import Field from '../components/Field.svelte'
+
+  let { googleEnabled = false, notice = null } = $props()
+
+  const form = useForm({ email: '', password: '' })
+
+  function submit(e: SubmitEvent) {
+    e.preventDefault()
+    form.post('/login')
+  }
+</script>
+
+<AuthLayout>
+  <h1 class="auth-sub">Welcome back</h1>
+  <form onsubmit={submit} novalidate>
+    <Field id="email" label="Email" error={form.errors.email}>
+      <input id="email" type="email" bind:value={form.email}
+             onchange={() => form.clearErrors('email')} />
+    </Field>
+    <button class="btn btn-primary btn-block" type="submit"
+            disabled={form.processing}>
+      {form.processing ? 'Signing in…' : 'Sign in'}
+    </button>
+  </form>
+</AuthLayout>`,
+  },
+  {
+    id: "vue",
+    lang: "vue",
+    name: "vue-vanilla (Vue 3 + scoped <style>)",
+    label: "Vue 3",
+    stack: "Vue 3 + scoped <style> CSS",
+    code: `<script setup lang="ts">
+import { Head, Link, useForm } from "@inertiajs/vue3";
+import AuthLayout from "../components/AuthLayout.vue";
+import Field from "../components/Field.vue";
+
+defineProps<{ googleEnabled?: boolean; notice?: string | null }>();
+
+const form = useForm({ email: "", password: "" });
+
+function submit() {
+  form.post("/login");
+}
+</script>
+
+<template>
+  <Head><title>Login</title></Head>
+  <AuthLayout>
+    <h1 class="auth-sub">Welcome back</h1>
+    <form @submit.prevent="submit" novalidate>
+      <Field id="email" label="Email" :error="form.errors.email">
+        <input id="email" type="email" v-model="form.email"
+               @change="form.clearErrors('email')" />
+      </Field>
+      <button class="btn btn-primary btn-block" type="submit"
+              :disabled="form.processing">
+        {{ form.processing ? "Signing in…" : "Sign in" }}
+      </button>
+    </form>
+  </AuthLayout>
+</template>`,
+  },
+];
+---
+<section class="dl-templates">
+  <h2 class="dl-section-title">One server. <span class="dl-gradient">Three clients.</span></h2>
+  <p class="dl-section-sub">Pick a framework and styling — the same Login page, in your stack.</p>
+
+  <div class="dl-tabs">
+    <div class="dl-tab-buttons">
+      {templates.map((t, i) => (
+        <>
+          <input type="radio" name="dl-tab" id={`dl-tab-${t.id}`} class="dl-tab-input" checked={i === 0} />
+          <label class={`dl-tab-btn${i === 0 ? " active" : ""}`} for={`dl-tab-${t.id}`}>{t.label}</label>
+        </>
+      ))}
+    </div>
+    {templates.map((t, i) => (
+      <div class={`dl-tab-panel${i === 0 ? " show" : ""}`} id={`dl-panel-${t.id}`}>
+        <Code code={t.code} lang={t.lang} meta={`title="${t.name}"`} />
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  // Tab visibility: class-based (CSS sibling combinators show every panel
+  // after the checked input; :has() rules get dropped by Astro scoping).
+  const tabs = document.querySelectorAll(".dl-tabs .dl-tab-btn");
+  for (const btn of tabs) {
+    btn.addEventListener("click", () => {
+      const panelId = btn.getAttribute("for").replace("dl-tab-", "dl-panel-");
+      document.querySelectorAll(".dl-tab-panel").forEach((p) => p.classList.remove("show"));
+      document.getElementById(panelId)?.classList.add("show");
+      tabs.forEach((b) => b.classList.toggle("active", b === btn));
+    });
+  }
+</script>
+
+<style>
+  .dl-templates { max-width: 860px; margin: 0 auto 4.5rem; padding: 0 1.5rem; }
+  .dl-tabs { margin-top: 1.6rem; }
+  .dl-tab-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .dl-tab-input { display: none; }
+  .dl-tab-btn {
+    padding: 0.45rem 1.1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #1f2937;
+    color: #9aa4b2;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #0f141a;
+  }
+  .dl-tab-btn:hover { color: #d3dae4; }
+  .dl-tab-btn.active {
+    color: #34d399;
+    border-color: #059669;
+    background: rgba(5, 150, 105, 0.1);
+  }
+  .dl-tab-panel { display: none; margin-top: 0.4rem; }
+  .dl-tab-panel.show { display: block; }
+  .dl-tab-panel .expressive-code { margin: 0; }
+  .dl-tab-panel .expressive-code > figure { border-radius: 0.6rem; }
+
+</style>
