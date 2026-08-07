@@ -154,7 +154,7 @@ export class Inertia {
 	 */
 	private clientBody(page: Page): string {
 		const json = JSON.stringify(page).replace(/\//g, "\\/");
-		return `<script data-page="app" type="application/json">${json}<\/script><div id="app"></div>`;
+		return `<script data-page="app" type="application/json">${json}</script><div id="app"></div>`;
 	}
 
 	/** 422-style validation response, Inertia-aware. */

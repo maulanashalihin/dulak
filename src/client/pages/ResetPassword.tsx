@@ -39,7 +39,6 @@ export default function ResetPassword({
 						type="password"
 						name="password"
 						autoComplete="new-password"
-						autoFocus
 						className={inputClass}
 						value={data.password}
 						onChange={(e) => {

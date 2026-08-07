@@ -9,7 +9,6 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
 import { compress } from "./compress";
-import { config } from "./config";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { serveAsset } from "./assets";
 import { pingDb, toPublicUser } from "./db";

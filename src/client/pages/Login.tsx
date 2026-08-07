@@ -58,7 +58,6 @@ export default function Login({
 						type="email"
 						name="email"
 						autoComplete="email"
-						autoFocus
 						className={inputClass}
 						value={data.email}
 						onChange={(e) => {

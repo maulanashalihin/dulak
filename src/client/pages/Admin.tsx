@@ -16,7 +16,7 @@ function pageUrl(page: number): string {
 
 export default function Admin({ users }: { users: Paginated<User> }) {
 	const { props } = usePage();
-	if (!props.auth.user || props.auth.user.role !== "admin") return null;
+	if (props.auth.user?.role !== "admin") return null;
 
 	const { currentPage, lastPage } = users.meta;
 

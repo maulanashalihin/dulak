@@ -21,6 +21,7 @@
     "start": "NODE_ENV=production bun run src/index.ts",
     "db:seed": "bun run scripts/seed.ts",
     "typecheck": "tsc --noEmit",
+    "lint": "biome lint src tests scripts create-dulak",
     "test": "bun test --isolate"
   },
   "dependencies": {
@@ -35,7 +36,7 @@
     "@types/bun": "^1.2.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^5.8.0"
+    "@biomejs/biome": "^2.5.7",
+    "typescript": "^5.8.0",
   }
 }

@@ -52,7 +52,6 @@ export default function Register({
 						type="text"
 						name="name"
 						autoComplete="name"
-						autoFocus
 						className={inputClass}
 						value={data.name}
 						onChange={(e) => {

@@ -40,7 +40,6 @@ export default function ForgotPassword({ status }: { status?: string }) {
 						type="email"
 						name="email"
 						autoComplete="email"
-						autoFocus
 						className={inputClass}
 						value={data.email}
 						onChange={(e) => {

@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { execSync } from 'node:child_process'
 import { createInterface } from 'node:readline/promises'
-import { argv, cwd, exit, stdout, stdin } from 'node:process'
+import { argv, exit, stdout, stdin } from 'node:process'
 
 const REPO = 'maulanashalihin/dulak'
 
@@ -113,7 +113,7 @@ async function main() {
   }
 
   const noInstall = args.includes('--no-install')
-  const templateFlag = args.findIndex((a) => a === '--template')
+  const templateFlag = args.indexOf('--template')
   const templateName = templateFlag !== -1 ? args[templateFlag + 1] : null
 
   const positional = args.filter(

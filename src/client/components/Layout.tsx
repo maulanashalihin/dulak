@@ -302,7 +302,9 @@ export default function Layout({ children }: { children: ReactNode }) {
 		};
 	}, [menuOpen]);
 
-	// Close mobile sidebar on route change.
+	// Close mobile sidebar on route change. `url` is listed deliberately
+	// (the body doesn't read it — the effect is keyed on route change).
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional — run on every navigation
 	useEffect(() => {
 		setSidebarOpen(false);
 		setMenuOpen(false);
