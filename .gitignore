@@ -7,3 +7,4 @@ dist/
 data/uploads/
 .playwright-mcp/
 *.png
+.llm-wiki/meta/
