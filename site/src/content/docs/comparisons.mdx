@@ -20,7 +20,7 @@ server components, streaming RSC, and a large deployment ecosystem
 | Shape | Boilerplate you own | Framework you build on top of |
 | Runtime | Bun only | Node, or Vercel/Cloudflare edge runtimes |
 | Database | `bun:sqlite`, zero-ORM, in-process | Bring your own (Postgres, PlanetScale, …) + ORM |
-| Auth | Wired: argon2id, DB sessions, OAuth, reset | DIY or third-party (NextAuth, Clerk, …) |
+| Auth | Wired: argon2id, DB sessions, OAuth, reset | DIY or third-party (Auth.js, Clerk, …) |
 | SSR | In-process `renderToString`, no SSR server | Server components / streaming RSC |
 | Opinion on structure | One obvious way, codified | Framework conventions + your choices |
 
@@ -183,6 +183,7 @@ choice when:
 | Svelte end to end | SvelteKit |
 | Mature PHP MVC + ORM ecosystem | Laravel |
 | Lightweight PHP MVC, minimal deps | CodeIgniter |
+| Ruby full-stack, ActiveRecord, Hotwire | Rails |
 | Minimal router, build it yourself | Express |
 
 Dulak's bet: for a large class of apps, a boring, pinned, single-runtime
