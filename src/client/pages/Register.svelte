@@ -33,7 +33,6 @@
         type="text"
         name="name"
         autocomplete="name"
-        autofocus
         bind:value={form.name}
         onchange={() => form.clearErrors('name')}
       />

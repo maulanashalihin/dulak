@@ -11,3 +11,4 @@ data/uploads/
 .tailwind.css
 
 .llm-wiki/meta/
+site/.astro/

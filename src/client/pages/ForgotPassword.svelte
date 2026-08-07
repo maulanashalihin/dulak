@@ -32,7 +32,6 @@
         type="email"
         name="email"
         autocomplete="email"
-        autofocus
         bind:value={form.email}
         onchange={() => form.clearErrors('email')}
       />

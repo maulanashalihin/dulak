@@ -31,7 +31,6 @@
         type="password"
         name="password"
         autocomplete="new-password"
-        autofocus
         bind:value={form.password}
         onchange={() => form.clearErrors('password')}
       />

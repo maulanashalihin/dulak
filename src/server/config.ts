@@ -73,7 +73,7 @@ export const config = {
 		clientSecret: googleClientSecret || null,
 	},
 	rateLimit: {
-		authMax: Number(pick(process.env.RATE_LIMIT_AUTH_MAX, "10")),
+		authMax: Number(pick(process.env.RATE_LIMIT_AUTH_MAX, "30")),
 		authWindow: Number(pick(process.env.RATE_LIMIT_AUTH_WINDOW, "60")),
 	},
 };
