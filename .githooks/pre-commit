@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Pre-commit guard: reject LLM Wiki pages with missing/undefined slugs.
+# The wiki_retro/wiki_ensure_page tools silently fall back to slug "undefined"
+# when a required slug field is omitted, producing sources/undefined.md and
+# frontmatter `slug: undefined`. This hook blocks such files from entering the
+# repo so the mistake is caught at commit time, not discovered later.
+set -euo pipefail
+
+bad=0
+
+# 1. Any wiki file literally named undefined.md
+while IFS= read -r f; do
+  echo "pre-commit: rejecting wiki file with undefined name: $f" >&2
+  bad=1
+done < <(git diff --cached --name-only --diff-filter=A -- '.llm-wiki/**/undefined.md')
+
+# 2. Any staged wiki .md whose frontmatter has `slug: undefined` or empty slug
+while IFS= read -r f; do
+  # Only inspect files with YAML frontmatter
+  if head -1 "$f" 2>/dev/null | grep -q '^---$'; then
+    slug_line=$(sed -n '/^---$/,/^---$/p' "$f" | grep -E '^slug:' | head -1)
+    slug_val=$(echo "$slug_line" | sed -E 's/^slug:[[:space:]]*//; s/^"//; s/"$//')
+    if [ -z "$slug_val" ] || [ "$slug_val" = "undefined" ]; then
+      echo "pre-commit: rejecting wiki page with missing/undefined slug: $f (slug=\"$slug_val\")" >&2
+      bad=1
+    fi
+  fi
+done < <(git diff --cached --name-only --diff-filter=AM -- '.llm-wiki/**/*.md')
+
+if [ "$bad" -ne 0 ]; then
+  echo "" >&2
+  echo "pre-commit: blocked commit — wiki page(s) with undefined slug." >&2
+  echo "Fix: re-create the page via wiki_retro/wiki_ensure_page WITH a valid" >&2
+  echo "kebab-case 'slug' field, or edit the frontmatter 'slug:' to a real value" >&2
+  echo "and rename the file to match. Then re-stage." >&2
+  exit 1
+fi
+
+exit 0
