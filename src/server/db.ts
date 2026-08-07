@@ -47,7 +47,7 @@ export const toPublicUser = (row: UserRow): PublicUser => ({
 	createdAt: row.createdAt,
 });
 
-mkdirSync(dirname(config.dbPath), { recursive: true });
+if (config.dbPath !== ":memory:") mkdirSync(dirname(config.dbPath), { recursive: true });
 
 export const db = new Database(config.dbPath, { create: true });
 db.exec("PRAGMA journal_mode = WAL");
