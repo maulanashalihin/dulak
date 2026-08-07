@@ -249,6 +249,16 @@ describe("inertia protocol", () => {
 		expect(res.headers.get("x-request-id")).toBeTruthy();
 	});
 
+	it("skips SSR for authenticated routes (client-only render)", async () => {
+		const cookie = await registerUser("nossr@example.com");
+		const res = await call("/dashboard", { headers: { cookie } });
+		expect(res.status).toBe(200);
+		const html = await res.text();
+		// No server-rendered HTML — client mounts from scratch via JSON payload.
+		expect(html).not.toContain("data-server-rendered");
+		expect(html).toContain('data-page="app"');
+	});
+
 	it("rejects cross-origin unsafe requests", async () => {
 		const cookie = await registerUser("csrf@example.com");
 		const res = await call("/logout", {
