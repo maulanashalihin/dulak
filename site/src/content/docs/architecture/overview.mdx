@@ -1,0 +1,48 @@
+---
+title: Architecture overview
+description: How the pieces fit together.
+---
+
+```
+src/
+├── index.ts                # entry: build assets (dev), Bun.serve, graceful shutdown
+├── server/
+│   ├── app.ts              # composition: middleware order, onError, notFound, routes
+│   ├── config.ts           # validated env config (fails fast at startup)
+│   ├── db.ts               # bun:sqlite: connection + ALL prepared statements
+│   ├── migrations.ts       # SQL migration runner
+│   ├── auth.ts             # argon2id, sessions, flash, cookies, guards
+│   ├── inertia.ts          # Inertia v3 server adapter (framework-light)
+│   ├── inertia-middleware.ts # per-request session resolve → c.var (AppEnv)
+│   ├── validation.ts       # TypeBox JSON validation → ValidationFailed (422)
+│   ├── mailer.ts           # mail drivers: log / resend / mailtrap
+│   ├── rate-limit.ts       # in-memory fixed-window rate limiter
+│   ├── logger.ts           # batched request logging + x-request-id
+│   ├── compress.ts         # gzip compression (assets + SSR HTML only)
+│   ├── security.ts         # CSRF origin check (headers via hono/secure-headers)
+│   ├── assets.ts           # Bun.build pipeline + manifest + static serving
+│   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
+│   ├── tus-storage.ts      # tus upload bytes on disk
+│   └── routes/             # one file per URL namespace
+├── client/                 # React + Inertia (pages/, components/, styles.css)
+├── shared/                 # types.ts, inertia.d.ts (client + server shared)
+├── migrations/             # versioned SQL schema files (0001, 0002, …)
+└── tests/                  # bun:test E2E suite (in-memory DB)
+```
+
+## Key decisions
+
+- **Sessions are DB-backed, not JWT** — logout revokes server-side instantly.
+  A 256-bit random token lives in an httpOnly cookie; the DB stores only its
+  SHA-256 hash.
+- **Inertia v3 with in-process SSR** — no separate SSR server. Browser visits
+  get full HTML via `renderToString`; X-Inertia requests get JSON payloads.
+- **Versioned SQL migrations** run at startup, each in a transaction,
+  recorded in `schema_migrations` (never re-applied).
+- **TypeBox schemas** at the route level map validation failures to Inertia
+  422 page payloads with friendly per-field messages.
+
+The layout is deliberately flat — `src/server/` has no feature subfolders,
+and shared logic lives in single modules (`db.ts`, `auth.ts`, …). See
+[Conventions](/architecture/conventions/) for the rules that keep it that
+way.
