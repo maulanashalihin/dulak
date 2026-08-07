@@ -9,3 +9,5 @@ data/uploads/
 *.png
 
 src/client/.tailwind.css
+
+.llm-wiki/meta/
