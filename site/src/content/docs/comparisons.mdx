@@ -15,7 +15,8 @@ That distinction shapes every comparison below.
 
 Next.js is the most popular **React meta-framework** — file-based routing,
 server components, streaming RSC, and a large deployment ecosystem
-(Vercel, edge runtimes).
+(Vercel, edge runtimes). What it does not ship: auth, uploads, a
+database, or tests. That is your week one.
 
 | | Dulak | Next.js |
 | --- | --- | --- |
@@ -37,7 +38,8 @@ instead of day seven.
 
 Nuxt is the most popular **Vue meta-framework** — file-based routing,
 server routes, `useFetch` data loading, and Nitro as a universal server
-engine deployable to Node, Vercel, Cloudflare, and more.
+engine deployable to Node, Vercel, Cloudflare, and more. Auth and
+uploads? Bring your own.
 
 | | Dulak | Nuxt |
 | --- | --- | --- |
@@ -59,7 +61,8 @@ auth, migrations, and uploads survive the swap.
 ## Dulak vs. SvelteKit
 
 SvelteKit is the official **Svelte meta-framework** — file-based routing,
-server `load` functions, and adapters for multiple runtimes.
+server `load` functions, and adapters for multiple runtimes. Same story
+as the others: auth, uploads, and a database are left as an exercise.
 
 | | Dulak | SvelteKit |
 | --- | --- | --- |
@@ -191,9 +194,9 @@ deployed faster than assembling a framework stack yourself.
 | Need | Reach for |
 | --- | --- |
 | Wired full-stack on Bun, own the code | **Dulak** |
-| React server components, edge deploy | Next.js |
-| Vue end to end, Nitro deploy targets | Nuxt |
-| Svelte end to end | SvelteKit |
+| RSC, edge deploy, wire everything yourself | Next.js |
+| Vue end to end, wire everything yourself | Nuxt |
+| Svelte end to end, wire everything yourself | SvelteKit |
 | PHP MVC + ORM, four toolchains | Laravel |
 | Lightweight PHP MVC, LAMP in 2026 | CodeIgniter |
 | Ruby full-stack, four toolchains | Rails |
