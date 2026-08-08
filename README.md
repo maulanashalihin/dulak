@@ -223,7 +223,7 @@ below so new code stays structurally consistent.
 src/
 ├── index.ts                # entry: build assets (dev), Bun.serve, graceful shutdown
 ├── server/
-│   ├── app.ts              # composition: logging, CSRF, secureHeaders, onError, routes
+│   ├── app.ts              # composition: logging, CSRF, secureHeaders, rate limit, onError, routes
 │   ├── config.ts           # validated env config (fails fast)
 │   ├── db.ts               # bun:sqlite: connection, prepared statements
 │   ├── migrations.ts       # SQL migration runner
@@ -264,10 +264,10 @@ src/
 ## How the pieces fit
 
 - **Request lifecycle**: `requestLogger` (correlation id) → `checkOrigin`
-  (CSRF) → `secureHeaders` → inertia session resolve → guards + handler →
-  Inertia render (SSR HTML for browsers, JSON for `X-Inertia` XHR) →
-  `onError` (422 validation with friendly field messages, 500) / `notFound`
-  (404 Inertia page).
+  (CSRF) → `secureHeaders` → inertia session resolve → global rate limit →
+  guards + handler → Inertia render (SSR HTML for browsers, JSON for
+  `X-Inertia` XHR) → `onError` (422 validation with friendly field
+  messages, 500) / `notFound` (404 Inertia page).
 - **Auth**: argon2id via `Bun.password`; 256-bit random session tokens in
   SQLite; cookies httpOnly/`SameSite=Lax`/Secure-in-prod. Logout deletes the
   session row server-side. `passwordHash` never leaves the server.
