@@ -7,7 +7,7 @@ tags:
   - architecture
   - sqlite
   - philosophy
-excerpt: "SQLite with WAL mode serves 52K reads/s on a single process. Adding Redis would be a dependency that solves a problem Dulak doesn't have."
+excerpt: "SQLite with WAL mode serves 526K reads/s and 95K writes/s direct — 52K reads/s even through the full HTTP stack. Adding Redis would be a dependency that solves a problem Dulak doesn't have."
 ---
 
 Every time someone evaluates Dulak, the same question comes up: "Where's the cache layer?"
@@ -16,7 +16,7 @@ The answer is: you're looking at it. It's the database.
 
 ## SQLite is already fast enough
 
-bun:sqlite with WAL mode serves **52,000 reads per second** and **95,000 writes per second** on a single Bun process. That's not a synthetic micro-benchmark — it's the full Dulak app with auth, sessions, and request routing overhead included.
+bun:sqlite with WAL mode serves **526,000 reads per second** and **95,000 writes per second** direct — the raw engine numbers, measured on a MacBook Pro (M4). Through the full HTTP stack — auth, sessions, and request routing included — that's still **52,000 reads per second** and 19,600 creates per second. The database is not the bottleneck at any layer.
 
 For comparison, a typical Redis deployment over the network adds 0.5–1ms of latency per round trip. SQLite reads from a local file with WAL cache — no network hop, no serialization, no connection pool. The database *is* the cache.
 
