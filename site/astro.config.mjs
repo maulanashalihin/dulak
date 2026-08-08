@@ -13,6 +13,7 @@ export default defineConfig({
 			plugins: [
 				starlightBlog({
 					title: "Notes",
+					postCount: 20,
 					authors: {
 						maulana: {
 							name: "Maulana Shalihin",
