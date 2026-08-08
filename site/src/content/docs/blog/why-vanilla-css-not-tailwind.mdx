@@ -140,12 +140,12 @@ Dulak's Tailwind templates use Tailwind v4 via `@tailwindcss/cli` — no PostCSS
 
 Dulak's philosophy is "zero-dependency where cheap" and "no abstraction tax." Vanilla CSS is zero-dependency. The build step is zero-config. The CSS you write is the CSS that ships. Co-located CSS gives you the same locality benefit Tailwind sells — styles live next to the component — without the utility-class translation layer.
 
-The decision was locked on August 3, 2026, and the reasoning was simple: the boilerplate's UI is small and already built. Tailwind's speed advantage (composing utilities inline) pays off in projects you fork *into*, not in the boilerplate you fork *from*. Shipping vanilla CSS by default means one less opinion to undo if you disagree with it. Adding Tailwind later is a measured upgrade — two dependencies, a 0.2s build increase, 1–2 hours of stylesheet migration. Removing Tailwind after building your whole app in utility classes is a rewrite.
+The decision was locked on August 3, 2026, and the reasoning was simple: the boilerplate's UI is small and already built. Tailwind's speed advantage (composing utilities inline) pays off in projects you fork *into*, not in the boilerplate you fork *from*. Shipping vanilla CSS by default means one less opinion to undo if you disagree with it — and if you want Tailwind, you don't migrate: you scaffold the Tailwind template from day one. `--template react-tailwind` is the same auth, SSR, and test suite with Tailwind already wired. There is no migration path because there's nothing to migrate — the choice is made at `bun create`, not after.
 
-The default should be the thing that's easiest to change your mind about. Vanilla CSS wins that test.
+The default should be the thing that's easiest to change your mind about — and with the template flag, changing your mind means scaffolding again, not rewriting stylesheets. Vanilla CSS wins that test.
 
 ## The short version
 
 **Vanilla CSS by default. Tailwind when you want it.**
 
-The default is zero-dependency, zero-build-step, readable by anyone who knows CSS. The upgrade path to Tailwind is two dependencies and an hour of migration. The downgrade path from Tailwind is a rewrite. Pick the default that's cheapest to change — and if you prefer Tailwind, `bun create dulak@latest my-app --template react-tailwind` is right there. See the [installation guide](/getting-started/installation/) for all available templates.
+The default is zero-dependency, zero-build-step, readable by anyone who knows CSS. If you prefer Tailwind, you don't migrate — you pick `bun create dulak@latest my-app --template react-tailwind` from day one and get the same app with Tailwind already wired. The choice is made at scaffold time, not after. Pick the default that's cheapest to change — and with the template flag, both are one command away. See the [installation guide](/getting-started/installation/) for all available templates.
