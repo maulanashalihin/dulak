@@ -1,0 +1,149 @@
+---
+title: "Why Bun, not Node"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - bun
+  - philosophy
+  - architecture
+excerpt: "Node needs five separate toolchains to ship a web app. Bun is one binary. Dulak picks the one that doesn't tax you from day one."
+---
+
+Every Node.js project starts the same way: a `package.json`, then a dependency list that grows like a fungus. HTTP server, package manager, test runner, bundler, database driver — five separate tools, five separate config files, five things to keep in sync. By the time your app boots, you've spent an afternoon reading setup docs.
+
+Dulak runs on Bun. One binary. One runtime. Zero config files for the toolchain. Here's why that matters.
+
+## The Node toolchain tax
+
+A production Node.js web app needs all of these:
+
+| Concern | Node tool | Config file |
+| --- | --- | --- |
+| Package manager | npm / pnpm / yarn | `package.json`, `pnpm-workspace.yaml`, `yarn.lock` |
+| HTTP server | Express / Fastify / native `http` | `tsconfig.json` (if TS), framework config |
+| Test runner | Jest / Vitest / Mocha | `jest.config.js`, `vitest.config.ts` |
+| Bundler | Webpack / Vite / esbuild | `webpack.config.js`, `vite.config.ts` |
+| Database driver | `pg` / `mysql2` / `better-sqlite3` | connection pool config, env vars |
+
+That's five tools. Five things to install. Five things to upgrade. Five things that can break independently. Five release cycles to track. Five opportunities for a breaking change to land on a Tuesday morning and ruin your sprint.
+
+Each one also brings its own dependency tree. `jest` alone pulls in 40+ packages. `webpack` has 60+ plugins you'll need to configure. Your `node_modules` directory is a small village of code you didn't write, can't audit, and don't control.
+
+This isn't a knock on any individual tool. Express is fine. Jest is fine. Vite is fine. The problem is the *aggregation* — five separate ecosystems, each with its own maintainers, release cadence, and opinions about how things should work. The more moving parts, the more ways they disagree.
+
+## Bun is one binary
+
+Bun ships everything in a single executable:
+
+| Concern | Bun built-in | Config file |
+| --- | --- | --- |
+| Package manager | `bun install` | `bun.lock` (auto-generated) |
+| HTTP server | `Bun.serve()` | none |
+| Test runner | `bun test` | none |
+| Bundler | `Bun.build()` | none |
+| Database | `bun:sqlite` | none |
+
+One install. One runtime. Zero config files for the toolchain itself. Dulak's entire server entry point is this:
+
+```ts
+const server = Bun.serve({
+  port,
+  fetch: createApp(assets).fetch,
+});
+```
+
+That's it. No Express app factory, no middleware registration ceremony, no `app.listen()`. `Bun.serve` takes a port and a fetch handler. Hono provides the handler. The server is running.
+
+The database is equally simple:
+
+```ts
+import { Database } from "bun:sqlite";
+const db = new Database("app.sqlite");
+```
+
+No `npm install better-sqlite3`. No native compilation step. No `node-gyp`. `bun:sqlite` is compiled into the Bun binary — it's a native binding to SQLite, not a JavaScript wrapper around a C library you have to build yourself.
+
+The test runner needs no config either:
+
+```ts
+import { describe, expect, it } from "bun:test";
+```
+
+`bun test` discovers test files, runs them, reports results. No `jest.config.js`. No `vitest.config.ts`. No transform pipeline. Dulak's 63-test E2E suite runs with `bun test --isolate` — one flag, one command, done.
+
+The bundler is the same story. Dulak builds client assets with `Bun.build`:
+
+```ts
+const result = await Bun.build({
+  entrypoints: ["src/client/app.tsx"],
+  outdir: "dist/assets",
+  target: "browser",
+});
+```
+
+No `webpack.config.js`. No `vite.config.ts`. No plugin chain. One function call, content-hashed output, done.
+
+## Performance: the numbers
+
+Bun isn't just simpler — it's faster. Dulak's [full-stack benchmarks](/database/performance/) measure the complete HTTP path: Hono routing, `bun:sqlite` queries, JSON serialization, 50 concurrent workers.
+
+| Endpoint | req/s | p50 latency |
+| --- | ---: | ---: |
+| Health check (no DB) | 65,807 | 0.76ms |
+| Point read (`GET /users/:id`) | 51,934 | 0.82ms |
+| Delete (`DELETE /users/:id`) | 27,744 | 1.41ms |
+
+The health check — pure HTTP, no database — hits **66K req/s**. The database point read hits **52K req/s**. The database adds only 0.2ms to a 0.76ms HTTP base. The framework is so lean that the database query is a visible fraction of total request time, not buried under framework overhead.
+
+For comparison, Laravel 13.24 on FrankenPHP (8 workers — the fastest production PHP server for Laravel) hits 6,237 req/s on the same health check. That's **10.5× slower** than Bun on the no-database endpoint. On the database point read, Laravel hits 6,391 req/s — **8.1× slower**. The gap isn't the database; it's the runtime and framework overhead.
+
+Bun's HTTP server is built on `uSockets` — a C library that handles TCP, TLS, and HTTP parsing at near-kernel speed. Node's `http` module is JavaScript all the way down. The difference shows up in every request.
+
+`bun:sqlite` has no driver overhead either. Node's `better-sqlite3` is a native addon, but it still crosses a V8 ↔ native boundary per call. `bun:sqlite` is compiled into Bun's binary — the SQLite C library and Bun's JavaScript engine share the same process, same memory, same event loop. Zero serialization, zero copy, zero IPC.
+
+## TypeScript: no compilation step
+
+Node's relationship with TypeScript in 2026 is... improving. Node 22.6+ ships `--experimental-strip-types`, which strips type annotations at runtime. It works, but it's experimental, it doesn't do type checking, and you're still passing a flag.
+
+Before that, you needed `ts-node`, or `tsx`, or a build step with `tsc`, or a bundler that transpiles. Each option adds a dependency and a configuration decision. `tsconfig.json` alone is a 40-line file with 30 options, and if you get one wrong, your imports silently break.
+
+Bun runs TypeScript natively. No flag. No `ts-node`. No compilation step. No `tsx`. You write `.ts` files, you run `bun src/index.ts`, it works. Type checking is a separate concern — `tsc --noEmit` in CI — but the runtime doesn't care about your types. It just runs the code.
+
+Dulak's `package.json` has `"typecheck": "tsc --noEmit"` as a separate script. Type errors are caught in CI, not at runtime. The runtime executes JavaScript; the types are a development-time contract. This is the correct separation of concerns — and Bun makes it the default, not something you configure.
+
+## The toolchain tax, quantified
+
+Let's count the things you *don't* maintain when you pick Bun over Node for a Dulak-style app:
+
+- **No `jest.config.js`** — `bun test` has sensible defaults
+- **No `vite.config.ts`** or **`webpack.config.js`** — `Bun.build` is a function call
+- **No `better-sqlite3` native build** — `bun:sqlite` is in the binary
+- **No `ts-node` / `tsx`** — Bun runs TypeScript directly
+- **No `nodemon`** — `bun --watch` is built in
+- **No `cross-env`** — Bun handles env vars consistently across platforms
+
+That's six dependencies and six config files you never create. Six things that never break. Six upgrade cycles you never track. Six entries in your `package.json` that don't exist.
+
+Dulak's `package.json` has **four runtime dependencies**: `hono`, `@inertiajs/react`, `react`, `react-dom`. Plus `@sinclair/typebox` for validation. That's it. No HTTP framework config, no test runner config, no bundler config, no database driver. The toolchain *is* the runtime.
+
+## When Node still makes sense
+
+This isn't a religious argument. Node has legitimate advantages:
+
+- **Existing infrastructure** — if your company has Node deploys, monitoring, and on-call runbooks wired up, switching runtimes has a real cost. Don't rewrite for the sake of it.
+- **Specific npm packages** — most npm packages work with Bun (Bun implements the Node API), but some don't. If your app depends on a package that uses Node-specific internals Bun doesn't support, Node is the safer choice.
+- **Edge runtime requirements** — Cloudflare Workers, Vercel Edge, and Deno Deploy use V8-based or custom runtimes. If you're deploying to the edge, Node compatibility matters more than Bun's toolchain consolidation.
+- **Team expertise** — if your team knows Node deeply and has no Bun experience, the learning curve is real. It's small (Bun's API is simpler), but it's nonzero.
+
+Dulak is a *starting point*. If you're starting fresh, Bun eliminates a class of problems you'd otherwise spend time solving. If you're integrating into an existing Node ecosystem, the toolchain tax is already paid — and switching may not be worth it.
+
+## The short version
+
+**Node is five toolchains pretending to be one. Bun is one binary that actually is one.**
+
+The Node ecosystem's answer to "why do I need five tools?" is "because each one is best-in-class." Maybe. But best-in-class tools that don't know about each other still produce a config file per tool, a dependency tree per tool, and a breaking change per tool per quarter.
+
+Bun's answer is: the runtime should be the toolchain. HTTP server, database, test runner, bundler, package manager, TypeScript — all one binary, all one install, all one upgrade. Dulak serves [52K reads/s and 95K writes/s](/database/performance/) on a single process with four runtime dependencies. That's what "no abstraction tax" looks like in practice.
+
+Pick Node if you have to. Pick Bun if you can.

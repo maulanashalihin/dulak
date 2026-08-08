@@ -1,0 +1,209 @@
+---
+title: "Why Inertia, not a SPA"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - inertia
+  - architecture
+  - philosophy
+excerpt: "Inertia gives you SPA feel without SPA architecture. No client-side router, no API layer, no duplicate validation. The server drives the UI; the client is a template engine."
+---
+
+Every time someone evaluates Dulak, the same question comes up: "Where's the client-side router? Where's the API layer? Where's Redux?"
+
+The answer is: you don't need them. And you probably never did.
+
+## What a SPA actually costs
+
+A Single Page Application is not "a fast website." It's an architecture, and that architecture has a price. Here's what you build when you commit to a SPA:
+
+1. **A client-side router** — React Router, TanStack Router, Vue Router. You define routes on the client *and* on the server. Two routing systems, two sources of truth, two things that can disagree.
+2. **An API layer** — REST endpoints or GraphQL resolvers. The server stops rendering HTML and becomes a JSON factory. You design the API, version it, document it, and consume it.
+3. **Client-side state management** — Redux, Zustand, Pinia. The client fetches data from the API, stores it, caches it, invalidates it, and synchronizes it. This is an entire application running in the browser.
+4. **Client-side validation** — you validate on the client for UX, then validate again on the server because you can't trust the client. Two validation systems, two sets of rules, two things that drift.
+5. **A server that's just an API** — no rendering, no templating, no HTML. Just JSON in, JSON out.
+
+That's two codebases. Client routing *and* server routing. Client validation *and* server validation. Client state *and* server state. You're maintaining two applications that talk to each other over a wire protocol you invented.
+
+## Inertia is not a SPA
+
+Inertia gives you the thing you actually want from a SPA — no full page reloads — without the architecture you don't. Here's how Dulak uses it:
+
+The server decides what page to show. The server decides what data to pass. The client receives a page payload and renders it. That's it.
+
+```ts
+// pages.routes.ts — the server decides everything
+app.get("/dashboard", requireAuth, (c) =>
+  c.var.inertia.render("Dashboard", { stats: dashboardStats() }),
+);
+```
+
+One line. The server checks auth, queries the database, builds the props, and tells Inertia to render the `Dashboard` component with those props. No API endpoint to design. No fetch call to write. No state to manage. The route handler *is* the controller and the data layer.
+
+When the user navigates, Inertia makes an XHR request with the `X-Inertia` header. The server responds with a JSON page payload instead of full HTML. Inertia swaps the component on the client. No page reload, no flicker, no white screen. The user experience is indistinguishable from a SPA.
+
+When the user does a hard refresh or lands from an external link, the server renders full HTML with SSR and the client hydrates. Same route, same handler, same code path — the adapter handles the difference.
+
+## No client-side router
+
+Dulak's client entry point is 27 lines:
+
+```tsx
+// app.tsx
+createInertiaApp({
+  id: "app",
+  resolve,
+  setup({ el, App, props }) {
+    const element = <App {...props} />;
+    if (el.hasAttribute("data-server-rendered")) {
+      hydrateRoot(el, element);
+    } else {
+      createRoot(el).render(element);
+    }
+  },
+  title: (title) => title ? `${title} — Dulak` : "Dulak",
+});
+```
+
+There is no router here. No route definitions, no route guards, no lazy-loaded route chunks, no `<Outlet>` components. The page registry is a plain object mapping component names to modules — that's it:
+
+```ts
+export const pages: Record<string, PageModule> = {
+  "./pages/Dashboard.tsx": { default: Dashboard },
+  "./pages/Login.tsx": { default: Login },
+  // ...
+};
+```
+
+Routing lives on the server, where it belongs. The server already knows the URL, the session, the user's role, and the database state. Why duplicate that logic on the client? In Dulak, a route guard is a server-side middleware:
+
+```ts
+app.get("/admin", requireRole("admin"), (c) =>
+  c.var.inertia.render("Admin", { users }),
+);
+```
+
+If you're not an admin, you never get the page. No client-side redirect, no flash of unauthorized content, no route guard to keep in sync with the server. The server is the source of truth.
+
+## No API layer
+
+In a SPA, the server exposes endpoints and the client consumes them. You design the contract, serialize the data, handle pagination, deal with loading states and error states.
+
+In Dulak, the server passes props directly to the page component. The `Dashboard` component receives `stats` as a prop — the same way a server-rendered template receives variables. No `useEffect`, no `fetch`, no `useState` for loading:
+
+```tsx
+export default function Dashboard({ stats }: { stats: DashboardStats }) {
+  // stats is just here. No fetching, no loading state.
+  return <div>{stats.userCount} users</div>
+}
+```
+
+For form submissions, Inertia's `useForm` helper handles the POST and the response. The server validates, processes, and redirects. The client doesn't need to know the API shape — there is no API:
+
+```tsx
+const { data, setData, post, processing, errors } = useForm({
+  email: '',
+  password: '',
+});
+
+const submit = (e: FormEvent) => {
+  e.preventDefault();
+  post('/login');  // that's a route, not an API endpoint
+};
+```
+
+`post('/login')` hits the same Hono route that serves the login page. No API contract to maintain.
+
+## Validation in one place
+
+In a SPA, you validate on the client (for instant feedback) and on the server (because you can't trust the client). Two schemas, two rule sets, two things that drift out of sync.
+
+Dulak validates once — on the server, with TypeBox:
+
+```ts
+const registerBody = t.Object(
+  {
+    name: t.String({ minLength: 2, maxLength: 80 }),
+    email: t.String({ format: "email" }),
+    password: t.String({ minLength: 8, maxLength: 72 }),
+  },
+  { additionalProperties: false },
+);
+```
+
+When validation fails, the server returns a 422 with field errors in the Inertia page payload. The client displays them via `errors` from `useForm`:
+
+```tsx
+<Field id="email" label="Email" error={errors.email}>
+```
+
+One schema. One validation pass. One set of error messages. The client doesn't validate — it just displays what the server says. If you change a rule (password minimum from 8 to 12), you change it in one file. Not two.
+
+## SSR is in-process, not a separate server
+
+Most SSR setups run a separate Node process for server-side rendering. You deploy your API server, your SSR server, and your static assets. Three things to manage, three things that can disagree on versions.
+
+Dulak renders React on the server *in the same Bun process* that handles HTTP:
+
+```tsx
+// ssr.tsx — runs inside the Hono process
+export async function renderPage(page: Page) {
+  return createInertiaApp({
+    page,
+    render: renderToString,
+    resolve: (name) => pages[`./pages/${name}.tsx`]?.default ?? notFoundPage!,
+    setup: ({ App, props }) => <App {...props} />,
+    title: (title) => title ? `${title} — Dulak` : "Dulak",
+  });
+}
+```
+
+The `render()` method in the Inertia adapter decides what to do based on the request:
+
+```ts
+async render(component, props, options) {
+  const page = this.page(component, props);
+  if (this.isXhr) {
+    // Inertia client request → JSON payload
+    return this.json(page, options.status ?? 200);
+  }
+  if (config.ssr && !this.c.user) {
+    // Browser visit, public route → full SSR HTML
+    const rendered = await renderPage(page);
+    return this.html(rendered.head, rendered.body, options.status ?? 200);
+  }
+  // Authenticated route → empty shell + JSON, client renders from scratch
+  return this.html([], this.clientBody(page), options.status ?? 200);
+}
+```
+
+No separate SSR server. No hydration mismatch debugging across processes. One process, one deployment, one thing to manage. And Dulak skips SSR for authenticated routes — no SEO benefit behind a login wall, and the client hydrates and replaces server HTML anyway. Public pages get full SSR for crawlers; authenticated pages ship an empty shell. Less server CPU, same UX.
+
+## The mental model: server-driven UI
+
+Here's the shift in thinking: **Inertia is server-driven UI.** The server is the application. The client is a template engine.
+
+In a SPA, the client is the application. It fetches data, manages state, handles routing, and renders. The server is a data API.
+
+In Dulak, the server is the application. It handles routing, auth, validation, database queries, and decides what page to render with what data. The client receives a component name and props, and renders them. That's the client's entire job.
+
+This is why Dulak doesn't need Redux, Zustand, React Router, or an API layer. Those tools solve problems that Inertia's architecture doesn't create.
+
+## When a SPA actually makes sense
+
+This isn't a one-sided argument. SPAs are the right choice for certain apps:
+
+- **Rich interactive apps** — Figma, Google Maps, video editors. These apps have complex client-side state (canvas, drag-and-drop, real-time collaboration) that doesn't map to page transitions. The client *is* the application.
+- **Edge-deployed apps** — if you're running on Cloudflare Workers or Vercel Edge, you might not have a long-lived server process. A SPA with an API backend fits that model.
+- **Offline-first apps** — if your app needs to work without a network connection, you need client-side state, client-side storage, and client-side sync logic. Inertia doesn't help here.
+
+Dulak is for server-rendered web apps — dashboards, admin panels, SaaS products, content sites. Apps where the server is the source of truth and pages are rendered from database state. If you're building Figma, you're in the wrong place.
+
+## The short version
+
+**Inertia until you need a canvas.**
+
+The SPA architecture exists to solve specific problems: rich client-side interaction, edge deployment, offline support. If you don't have those problems, you're paying the SPA tax — two routers, two validators, an API layer, and a state management library — for a navigation feel you get for free with Inertia.
+
+Dulak ships one router (server), one validator (server, TypeBox), one state source (server, props), and SSR in the same process. The client renders what the server tells it to render. See the [request lifecycle](/architecture/request-lifecycle/) for the full flow.

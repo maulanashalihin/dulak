@@ -1,0 +1,149 @@
+---
+title: "Why vanilla CSS is the default, not Tailwind"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - css
+  - philosophy
+  - design
+excerpt: "Tailwind is powerful, but it adds a build step and a mental model. Vanilla CSS in 2026 has native nesting, custom properties, grid, and flexbox. The problems Tailwind solved are mostly gone — so Dulak ships vanilla CSS by default."
+---
+
+Let's get this out of the way first: **Dulak offers Tailwind templates.** You can run `bun create dulak@latest my-app --template react-tailwind` and get React 19 + Tailwind CSS v4 with the same auth, SSR, and test suite. Same for Svelte and Vue. This is not a post about why Tailwind is bad. It's a post about why vanilla CSS is the *default* — and why that default is a deliberate choice, not a lazy one.
+
+## Tailwind adds a build dependency
+
+Tailwind is a utility-class framework that generates CSS at build time. It's powerful — you compose styles inline without touching a separate file, and the compiler purges unused classes so the output stays small. But "generates CSS at build time" means you need a build step.
+
+For Dulak's Tailwind templates, that means adding two dependencies (`tailwindcss` + `@tailwindcss/cli`), a `tailwind.css` input file, a `dev:css` watch script, and a pre-build step in your asset pipeline. The build time goes from 0.2s to 0.4s. The dev server restart adds ~350ms. None of these are catastrophic — but they're all costs you pay from day one for a feature you may not need.
+
+Vanilla CSS has none of this. No PostCSS config, no purge config, no content scanning, no CLI step. The CSS you write is the CSS that ships. `Bun.build` bundles all imported `.css` files into one stylesheet via the import graph — same as it bundles your `.tsx` files. Zero extra tooling.
+
+## Co-located CSS, not a global soup
+
+The strongest argument against vanilla CSS is the old experience: one giant `styles.css` file, 2000 lines, nobody knows what's still used, specificity wars, `!important` everywhere. That was the CSS of 2012. Dulak doesn't do that.
+
+Dulak's pattern is **co-located CSS**. Each component imports its own `.css` file. `styles.css` holds only global base — design tokens, reset, and shared UI primitives. Everything else lives next to the component that uses it:
+
+```
+src/client/
+  styles.css           # tokens, reset, .btn, .badge, .panel, .table, .avatar
+  components/
+    Brand.css          # .brand, .brand-mark
+    Field.css          # .field, .field-hint, .field-error
+    Layout.css
+    AuthLayout.css
+  pages/
+    Dashboard.css      # .stats, .stat-card, .stat-value
+    Admin.css
+    Profile.css
+```
+
+Here's what `Dashboard.css` actually looks like:
+
+```css
+/* Dashboard: stat cards. */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+```
+
+That's it. No utility classes, no `@apply`, no config. You read it, you understand it, you move on. The design tokens (`--surface`, `--border`, `--radius`) come from `styles.css`, where they're defined once for light and dark themes:
+
+```css
+:root,
+[data-theme="light"] {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --border: #e4e7ef;
+  --primary: #059669;
+  --radius: 12px;
+}
+
+[data-theme="dark"] {
+  --bg: #0f1117;
+  --surface: #171a23;
+  --border: #2d3444;
+  --primary: #10b981;
+}
+```
+
+Dark mode is a `[data-theme]` attribute on `<html>`. No framework, no plugin, no `dark:` prefix. The tokens cascade. Every component that uses `var(--surface)` gets the right value automatically.
+
+## The "CSS is hard" myth
+
+CSS was hard in 2015. Browser inconsistencies were real — flexbox had vendor prefixes, grid didn't exist, `calc()` was flaky, and IE9 was still a thing you had to support. Frameworks like Bootstrap and Tailwind emerged to paper over those inconsistencies. They gave you a consistent API on top of an inconsistent platform.
+
+It's 2026. The platform caught up:
+
+- **CSS Grid** — `grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))` gives you a responsive card layout in one line. No `grid-cols-4` breakpoint juggling.
+- **Custom properties** — `var(--primary)` is a design token. Change it in one place, it updates everywhere. No `@apply` or theme config needed.
+- **Native nesting** — CSS now supports `& .child` nesting natively in all modern browsers. No Sass required.
+- **`:focus-visible`** — accessible focus styles without a plugin.
+- **`color-mix()`** — blend colors at runtime without a preprocessor.
+
+The problems Tailwind solved — browser inconsistencies, lack of a grid system, no design tokens — are mostly gone. What's left is the utility-class API itself, which is a *preference*, not a *solution*.
+
+## Readability cuts both ways
+
+Tailwind's pitch is that you don't context-switch between HTML and CSS. Everything is in one place. That's true — and for small components, it's genuinely nice.
+
+Here's the same stat card in Tailwind:
+
+```tsx
+<div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 my-6">
+  <div className="bg-white dark:bg-surface border border-gray-200 rounded-xl p-5">
+    <span className="text-xl font-bold">42</span>
+  </div>
+</div>
+```
+
+And here it is in Dulak's vanilla CSS:
+
+```tsx
+<div className="stats">
+  <div className="stat-card">
+    <span className="stat-value">42</span>
+  </div>
+</div>
+```
+
+The Tailwind version is longer, the class names are denser, and the responsive grid syntax is `grid-cols-[repeat(auto-fit,minmax(180px,1fr))]` — which is the CSS syntax wrapped in brackets. You're writing CSS anyway, just through an abstraction layer.
+
+The vanilla version has a `.stats` class that maps to a 4-line CSS rule in `Dashboard.css`. Anyone who knows CSS can read it. Anyone who knows Tailwind has to learn the utility API first — `gap-4` means `gap: 1rem`, `rounded-xl` means `border-radius: 0.75rem`, `my-6` means `margin: 1.5rem 0`. It's a translation layer between you and the CSS you're already writing.
+
+## When Tailwind makes sense
+
+This is where the nuance matters. Dulak ships Tailwind templates because Tailwind has real advantages in specific situations:
+
+- **Large teams** — a utility-class system enforces consistency. You can't accidentally invent a new shade of blue when the palette is fixed. For 10+ developers, that constraint is worth the abstraction tax.
+- **Rapid prototyping** — when you're iterating on a design and don't want to name things yet, utility classes are faster. `p-4 text-center font-bold` is quicker than writing a `.card-title` class and a CSS file.
+- **Designers who think in utilities** — some teams have internalized the Tailwind mental model and are genuinely faster with it. That's a valid preference.
+
+Dulak's Tailwind templates use Tailwind v4 via `@tailwindcss/cli` — no PostCSS required. The existing CSS variables bridge cleanly to Tailwind's theme tokens, and dark mode auto-switches via `[data-theme]`. The same auth, roles, SSR, and test suite work across both vanilla and Tailwind templates. It's a preference, not a religion.
+
+## The philosophy angle
+
+Dulak's philosophy is "zero-dependency where cheap" and "no abstraction tax." Vanilla CSS is zero-dependency. The build step is zero-config. The CSS you write is the CSS that ships. Co-located CSS gives you the same locality benefit Tailwind sells — styles live next to the component — without the utility-class translation layer.
+
+The decision was locked on August 3, 2026, and the reasoning was simple: the boilerplate's UI is small and already built. Tailwind's speed advantage (composing utilities inline) pays off in projects you fork *into*, not in the boilerplate you fork *from*. Shipping vanilla CSS by default means one less opinion to undo if you disagree with it. Adding Tailwind later is a measured upgrade — two dependencies, a 0.2s build increase, 1–2 hours of stylesheet migration. Removing Tailwind after building your whole app in utility classes is a rewrite.
+
+The default should be the thing that's easiest to change your mind about. Vanilla CSS wins that test.
+
+## The short version
+
+**Vanilla CSS by default. Tailwind when you want it.**
+
+The default is zero-dependency, zero-build-step, readable by anyone who knows CSS. The upgrade path to Tailwind is two dependencies and an hour of migration. The downgrade path from Tailwind is a rewrite. Pick the default that's cheapest to change — and if you prefer Tailwind, `bun create dulak@latest my-app --template react-tailwind` is right there.

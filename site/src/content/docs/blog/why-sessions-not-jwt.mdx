@@ -1,0 +1,151 @@
+---
+title: "Why Dulak uses sessions, not JWT"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - auth
+  - security
+  - philosophy
+excerpt: "JWT is sold as stateless auth. In practice you need a revocation list — which is server state. Dulak uses DB-backed sessions: one row in SQLite, delete to revoke."
+---
+
+Every auth discussion on the internet goes the same way. Someone says "just use JWT." Someone else says "no, sessions." Both sides write 3,000-word blog posts. Nobody ships.
+
+Dulak uses server-side sessions. Not because it's trendy — because JWT doesn't solve a problem Dulak has, and it creates several that sessions don't have.
+
+## JWT cannot be revoked
+
+This is the fundamental problem. A JWT is a self-contained token: the server signs it, hands it to the client, and the client sends it back on every request. The server verifies the signature and trusts the claims. There is no server-side record of the token.
+
+So what happens when a user clicks "log out"? The server... can't do anything. The token is still valid until it expires. You can delete it from the client's localStorage, but if someone copied it — and tokens are famously easy to steal from localStorage — they still have a valid session.
+
+The standard JWT answer to this is a **revocation list**: a server-side set of revoked token IDs that you check on every request. Congratulations, you just invented sessions — except worse, because now you have JWT *and* a database lookup *and* a revocation list to manage.
+
+Dulak's session revocation is one line of SQL:
+
+```ts
+export function deleteSessionByToken(token: string): void {
+  deleteSession.run(hashToken(token));
+}
+```
+
+That's a `DELETE FROM sessions WHERE token_hash = ?`. The row is gone. The next request with that cookie finds nothing and gets redirected to `/login`. Instant, unconditional, no allowlist or blocklist to maintain.
+
+## Refresh token rotation is a Rube Goldberg machine
+
+To work around the revocation problem, JWT-based systems invented refresh tokens. The access token is short-lived (15 minutes), and a separate refresh token is used to get new access tokens. This way, a stolen access token dies quickly.
+
+But now you need:
+
+- **Token rotation**: every refresh produces a new refresh token, invalidating the old one.
+- **Reuse detection**: if the old refresh token is used again, it means someone stole it — so you revoke the entire token family.
+- **Token families**: a chain of refresh tokens linked by a shared ID, so you can nuke them all on reuse detection.
+- **A server-side store** to track which refresh tokens are valid.
+
+You read that last bullet correctly. The "stateless" solution requires server-side state to work securely. The very thing JWT was supposed to eliminate.
+
+Dulak's session "rotation" is: delete the old session row, insert a new one. This happens on login and registration as a session-fixation defense. Password changes go further — `deleteOtherSessionsByToken` wipes every session for the user except the current one:
+
+```ts
+export function deleteOtherSessionsByToken(
+  token: string,
+  userId: number,
+): void {
+  deleteOtherSessions.run(userId, hashToken(token));
+}
+```
+
+One SQL statement. Every other device is signed out. No token families, no reuse detection, no refresh token flow to debug at 2am.
+
+## JWT payload bloat
+
+A JWT has three parts: header, payload, signature — all base64-encoded and sent on every request. The payload contains whatever claims you put in it: user ID, roles, email, maybe permissions.
+
+A minimal JWT payload might be 200 bytes. Add roles, permissions, and metadata and you're at 500+ bytes. Every. Single. Request. For a page that makes 5 API calls, that's 2.5KB of token data flying across the wire — parsed, base64-decoded, and signature-verified on every call.
+
+Dulak's session cookie carries a 64-character hex string: a 256-bit random token. That's 64 bytes. The server looks up the session row, gets the `user_id`, and fetches the user. The user data lives server-side — it doesn't travel with the request.
+
+And since Dulak uses SQLite with WAL mode, that lookup is a primary-key scan on an indexed table. The benchmark: **52,000 reads per second** on a single Bun process. The session lookup is not your bottleneck.
+
+## The secret rotation headache
+
+JWT requires a signing secret. If that secret leaks, every token ever issued with it is forgeable. So you need to:
+
+- Store the secret securely (environment variable, secrets manager).
+- Rotate it periodically (best practice, they say).
+- Support multiple secrets during rotation (old tokens verified with old key, new tokens signed with new key).
+- Decide what algorithm to use (HS256? RS256? what if someone downgrades to `none`?).
+
+Session tokens are 256 bits of `crypto.randomBytes`. There is no secret. There is no algorithm. There is no rotation. You generate random bytes, hash them with SHA-256, store the hash. If you want to invalidate all sessions, you truncate the `sessions` table. No key management, no algorithm migration, no "alg: none" attack vector.
+
+Dulak's token generation is three lines:
+
+```ts
+export function createSession(userId: number): SessionInfo {
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  insertSession.run(hashToken(token), userId, expiresAt.toISOString());
+  return { token, expiresAt };
+}
+```
+
+No signing key. No algorithm. No rotation ceremony. Random bytes in, hash out, row inserted.
+
+## The "stateless" myth
+
+JWT is marketed as "no server state." This is the selling point. No session table, no database lookup, no server-side storage. Just sign and verify.
+
+Here's what actually happens in production:
+
+1. You need revocation (log out, password change, compromised token) → you add a revocation list. **Server state.**
+2. You need to check if a user is banned or their role changed → you can't trust the JWT payload anymore, so you do a database lookup. **Server state.**
+3. You need refresh token rotation → you track valid refresh tokens server-side. **Server state.**
+
+You end up with JWT *plus* a database lookup *plus* a revocation list. You have all the complexity of sessions and all the complexity of JWT. The "stateless" promise evaporated the moment you had a real product with real security requirements.
+
+Dulak skips the JWT layer entirely. Every request does one session lookup and one user lookup — both primary-key queries on SQLite, both sub-millisecond. That's the same cost as the JWT revocation check, except the architecture is simpler and revocation actually works.
+
+## How Dulak's sessions actually work
+
+The full picture, from `src/server/auth.ts`:
+
+- **Token**: 256-bit random bytes (`randomBytes(32)`), stored as a 64-char hex string in the cookie.
+- **At rest**: only the SHA-256 hash of the token is stored in the `sessions` table. A database leak cannot expose valid tokens — the raw token never touches disk.
+- **Cookie**: `httpOnly` (no JavaScript access), `SameSite=Lax` (CSRF baseline), `Secure` in production, 30-day expiry.
+- **Lookup**: `resolveUser(token)` hashes the cookie token, finds the session row, lazily deletes expired sessions, and returns the user.
+- **Revocation**: `DELETE FROM sessions WHERE token_hash = ?`. One row, one statement, done.
+- **Rotation**: new session on login/register (session-fixation defense). Password change wipes other devices.
+- **Flash messages**: one-shot messages stored on the session row (`sessions.flash`), consumed on render. No separate flash store.
+
+The schema is four columns:
+
+```sql
+CREATE TABLE sessions (
+  token_hash TEXT PRIMARY KEY,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  flash      TEXT    NOT NULL DEFAULT '{}',
+  expires_at TEXT    NOT NULL,
+  created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+```
+
+That's it. No token families, no refresh token table, no revocation list, no signing key rotation schedule.
+
+## When JWT actually makes sense
+
+JWT isn't evil. It has legitimate use cases:
+
+- **Federated identity / SSO**: when one service issues tokens that another service consumes, and the two services don't share a database. JWT's signed claims make sense here.
+- **Short-lived authorization between microservices**: a service-to-service token that lives for 30 seconds and doesn't need revocation.
+- **OAuth/OIDC**: Dulak uses Google OAuth, and OAuth uses JWT-style tokens internally. That's fine — it's a different problem domain.
+
+None of these are "user authentication in a single-process app with a database." That's Dulak's problem, and sessions solve it with less code, less complexity, and revocation that actually works.
+
+## The short version
+
+**Sessions are one row in SQLite. Delete the row, the session is gone.**
+
+JWT gives you a signed token you can't revoke, a payload that bloats every request, a secret you have to rotate, and a "stateless" architecture that needs server state the moment you ship a real product. Sessions give you a cookie, a database lookup, and a DELETE statement.
+
+Read the full session and guard implementation in the [sessions & guards docs](/auth/sessions-guards/).
