@@ -92,6 +92,28 @@ Because starting with Postgres means starting with infrastructure. Dulak's philo
 
 Starting with Postgres "just in case" is the same logic as adding a cache service "just in case" — it's solving a problem you don't have yet, at the cost of complexity you pay for from day one.
 
+## Common SQLite myths
+
+### "SQLite is only for testing and prototypes"
+
+SQLite is the [most deployed database in the world](https://www.sqlite.org/mostdeployed.html) — it runs in every Android device, every iOS device, every web browser (via WebSQL/WASM), every macOS installation, and countless production apps. It's not a toy database; it's a battle-tested engine that handles exabyte-scale workloads at Apple, Google, and Mozilla. The "prototype only" reputation comes from people who tried it with default settings and never tuned the PRAGMAs.
+
+### "SQLite can't handle concurrent access"
+
+WAL mode allows **unlimited concurrent readers** alongside one writer. Readers never block, and the writer never blocks readers. The only constraint is one writer at a time — and `busy_timeout` handles contention by waiting up to 5 seconds (configurable) before returning `SQLITE_BUSY`. For a web app where most requests are reads, this is a non-issue. Dulak serves 52K concurrent reads/s with zero lock contention.
+
+### "SQLite loses data on power failure"
+
+With `synchronous = FULL`, SQLite is as durable as any database — every commit is fsync'd to disk before acknowledging. Dulak uses `synchronous = NORMAL` by default, which trades the *last few WAL transactions* for 27× write throughput. The database **never corrupts** — you might lose the last few milliseconds of writes on a power loss, but the file is always consistent. For financial records, switch to `FULL`. For a web app, `NORMAL` is the right tradeoff.
+
+### "SQLite doesn't scale"
+
+"Scale" means different things. SQLite scales to **terabytes** of data and **billions of rows** in a single file — the format handles it fine. What it doesn't scale to is **multiple servers writing simultaneously**. If "scale" means "more servers," you need Postgres. If "scale" means "more data on one server," SQLite handles it.
+
+### "You'll need to migrate to Postgres eventually"
+
+Most apps never reach the point where SQLite is the bottleneck. The apps that do outgrow SQLite are the ones with specific needs: multi-server architecture, high-concurrency writes, or advanced replication. If you build a successful app that hits those limits, that's a good problem to have — and the migration is a scheduled project, not an emergency. Starting with Postgres "just in case" means paying infrastructure tax from day one for a migration that probably never happens.
+
 ## The short version
 
 **SQLite for the first 99% of apps. Postgres when you outgrow it — and you'll know when.**
