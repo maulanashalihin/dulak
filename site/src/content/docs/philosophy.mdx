@@ -30,7 +30,7 @@ correct, optimized raw SQL on demand. The friction ORMs solved is gone —
 what remains is the abstraction tax: a dependency to upgrade, a query
 plan to debug, a layer between you and the database.
 
-## One runtime, zero setup
+## One runtime, wired end to end
 
 Dulak is not a PHP/Laravel-style stack — no separate language runtime,
 package manager, web server, and database to install and wire together
@@ -39,7 +39,8 @@ before your first `php artisan serve`. The whole stack is Bun:
 is the bundler, `bun test` is the test runner, `bun install` is the
 package manager. Setup is exactly three steps — install Bun, scaffold
 with `bun create dulak`, run `bun run dev` — and you have a running app
-with auth, migrations, SSR, and tests.
+with auth, migrations, SSR, and tests. In dev, if port 4000 is busy, it
+auto-increments to the next free port — no manual `PORT` juggling.
 
 ## One obvious way to do things
 
@@ -58,11 +59,12 @@ guessing.
 
 ## Production-grade guardrails, not a production app
 
-The infrastructure a deployed app needs — CSRF, rate limiting, security
-headers, versioned migrations, graceful shutdown, Docker, CI — is wired
-and tested from day one, not scaffolded. What is missing is your
-business logic, and that is the point: you start from a skeleton that
-already works, not one you have to harden.
+The infrastructure a deployed app needs — CSRF, two-layer rate limiting
+(global DDoS baseline + auth brute-force), security headers, versioned
+migrations, graceful shutdown, Docker, CI — is wired and tested from day
+one, not scaffolded. What is missing is your business logic, and that is
+the point: you start from a skeleton that already works, not one you
+have to harden.
 
 ## Boring versions, pinned, not chased
 
