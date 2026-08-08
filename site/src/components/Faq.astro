@@ -18,7 +18,7 @@ const faqs: { q: string; a: string }[] = [
   },
   {
     q: "Why no ORM?",
-    a: "bun:sqlite with prepared statements is synchronous, explicit, and zero-dependency. You see the exact SQL that runs. When 60 lines of your own code are enough, an ORM is a liability you upgrade, audit, and debug.",
+    a: "ORMs were built to help humans avoid writing SQL. In 2026, AI generates correct, optimized raw SQL on demand — the human-friction problem ORMs solved is gone. What remains is the cost: an ORM is a dependency you upgrade, audit, and debug, and it adds a layer between you and the database that hides the actual query plan. bun:sqlite with prepared statements is synchronous, explicit, and zero-dependency. You see the exact SQL that runs, and the AI writing your next feature writes it at peak performance — no abstraction tax.",
   },
   {
     q: "Is it production-ready?",
