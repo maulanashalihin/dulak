@@ -6,15 +6,15 @@ description: Why Dulak is deliberately boring.
 **Dulak** is the Banjar word for *bored* — and the name is the manifesto:
 code that is "boring" is the most valuable code there is. Boring here does
 not mean dull — it means **predictable**. No surprises, no clever tricks
-that require the next maintainer to reverse-engineer intent. Whoever comes
-later — human or AI agent — should be able to understand the code, change
-it, and not be afraid of breaking it.
+that require the next maintainer to reverse-engineer intent. Whoever
+comes next — human or AI agent — should be able to understand the code,
+change it, and not be afraid of breaking it.
 
 ## Deliberately boring
 
-Every choice trades "clever" for "obviously right". When two ways of doing
-the same thing exist, only one is kept — the simpler one. For example,
-route handlers are written inline in their route file instead of being
+Every choice trades "clever" for "obviously right". When two approaches
+exist, only the simpler one is kept. For example, route handlers are
+written inline in their route file instead of being
 split into abstract controllers. Boring? Yes. Followable at a glance?
 Far more.
 
@@ -57,7 +57,7 @@ URL lives in exactly one file, with its GET render and POST actions
 together. Paste a broken URL and you land in exactly one place — no
 guessing.
 
-## Production-grade guardrails, not a production app
+## Production-grade guardrails from day one
 
 The infrastructure a deployed app needs — CSRF, two-layer rate limiting
 (global DDoS baseline + auth brute-force), security headers, versioned
