@@ -45,7 +45,7 @@ db.exec("PRAGMA busy_timeout = 5000");
 db.exec("PRAGMA foreign_keys = ON");
 ```
 
-With these settings, Dulak serves **52,000 reads per second** and **95,000 writes per second** on a single Bun process — full HTTP stack, not just the database layer. For comparison, the no-database health check hits 66K req/s. The database adds only 0.2ms to a 0.76ms HTTP base.
+With these settings, Dulak serves **52,000 reads per second through the full HTTP stack** (point read, `GET /users/:id`) and **19,600 creates per second** (`POST /users`, also via HTTP). Drop the HTTP layer and raw `bun:sqlite` reaches **526,000 reads/s** and **95,000 writes/s** — the engine ceiling, not what your users experience. For comparison, the no-database health check hits 66K req/s. The database adds only 0.2ms to a 0.76ms HTTP base.
 
 Most apps never reach 1,000 req/s. SQLite handles 52× that on a laptop. The "SQLite is slow" reputation comes from default settings (`rollback journal` + `FULL` synchronous mode) that run at 3.5K writes/s — 27× slower than WAL + `NORMAL`.
 
@@ -59,6 +59,13 @@ This is the part that surprises people: on a single server, SQLite is **always**
 4. **No IPC context switch** — Postgres/MySQL run as separate server processes. Every query crosses a process boundary. SQLite runs in-process, on the same event loop as your HTTP server.
 
 Postgres and MySQL only win when you need things SQLite fundamentally cannot provide: multi-server horizontal scaling, concurrent parallel writers, or a more sophisticated query optimizer for very large datasets. On a single server with a single app process, the in-process database will always beat the network-attached one.
+
+We measured it on the same MacBook Pro (M4) — same schema, same 50K
+operations, direct access (no HTTP): SQLite does **84.8K autocommit
+inserts/s and 561K point reads/s**; Postgres 14.17 does **12K inserts/s
+and 29.8K reads/s** — 7× and 19× slower. Even with `synchronous_commit
+= off` (Postgres' version of the `NORMAL` tradeoff), writes stay 3×
+behind. See the [full numbers](/database/performance/#sqlite-vs-postgres-on-the-same-machine).
 
 ## Backup is copying a file
 
@@ -123,4 +130,4 @@ Most apps never reach the point where SQLite is the bottleneck. The apps that do
 
 **SQLite until no single server can handle your traffic — and that's hundreds of thousands of requests per second, not hundreds.**
 
-The numbers: [52K reads/s, 95K writes/s](/database/performance/) on a laptop. The backup: copy a file. The swap: architectural, not performance — and scheduled, not emergency. The cost: zero infrastructure until you need it.
+The numbers: [52K reads/s via HTTP, 19.6K creates/s via HTTP, 95K writes/s direct](/database/performance/) on a laptop. The backup: copy a file. The swap: architectural, not performance — and scheduled, not emergency. The cost: zero infrastructure until you need it.

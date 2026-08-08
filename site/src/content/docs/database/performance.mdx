@@ -74,6 +74,24 @@ For context, the TCP kernel ceiling on this machine is ~180K req/s — the
 point-read endpoint reaches 29% of that. Numbers are median of 3 solo
 runs (no other server running during each test).
 
+### Direct vs HTTP — don't mix the two
+
+The two tables measure different things. "Direct" is raw `bun:sqlite`
+prepared statements — the engine ceiling, no HTTP in the path. "Via
+HTTP" is the full stack (routing, middleware, JSON serialization) —
+what your users actually experience. Comparing a direct number to an
+HTTP number is not apples-to-apples:
+
+| Operation | Direct (no HTTP) | Via HTTP | HTTP overhead |
+| --- | ---: | ---: | ---: |
+| Point read | 526K ops/s | 51,934 req/s | 10× |
+| Insert (autocommit) | 94,813 ops/s | 19,614 req/s (POST) | 4.8× |
+
+The blog's "52K reads/s" is the **via HTTP** number; "95K writes/s" is
+the **direct** number — they are not the same measurement. If you quote
+one, quote the matching one: 52K reads/s and 19.6K creates/s via HTTP,
+or 526K reads/s and 95K writes/s direct.
+
 ## Dulak vs Laravel
 
 Same machine, same SQLite (WAL + `NORMAL` + `busy_timeout = 5000`), same
@@ -136,6 +154,37 @@ per-commit fsync fires once at the end instead of per row:
 That is **14× faster** — 1.3M inserts/s. Always batch bulk writes in a
 transaction; the `db.transaction()` helper is built for this.
 
+## SQLite vs Postgres on the same machine
+
+Postgres is a full database server — and it pays for that with latency
+that SQLite doesn't have. Measured on the **same MacBook Pro (M4)**, same
+schema, same operation mix (50K autocommit inserts, 50K inserts in one
+transaction, 50K point reads, SELECT all), direct access — no HTTP on
+either side:
+
+| Operation | SQLite (WAL+NORMAL) | Postgres 14.17 (default) | Postgres (sync_commit=off) | SQLite faster |
+| --- | ---: | ---: | ---: | ---: |
+| Insert autocommit | 84,844 ops/s | 12,055 ops/s | 26,980 ops/s | **7.0×** |
+| Insert in 1 tx | 1,225,875 ops/s | 31,176 ops/s | 30,744 ops/s | **39×** |
+| Point read (PK) | 561,532 ops/s | 29,754 ops/s | 29,882 ops/s | **18.9×** |
+| SELECT all (50K rows) | 8.2ms | 22ms | 22ms | **2.7×** |
+
+Postgres was tuned as far as reasonable: the `sync_commit=off` column
+drops fsync per commit (the Postgres equivalent of SQLite's `NORMAL`
+tradeoff) — reads don't move, and even writes stay 3–39× behind SQLite.
+
+The Postgres number also includes a TCP round trip + wire protocol per
+query even on localhost. pgbench (the Postgres-native benchmark, server
+side, C client) confirms the same ceiling: **6,530 tps** single
+connection, **9,470 tps** at 50 concurrent connections, ~47K tps with
+`sync_commit=off` — still below SQLite's direct numbers, and that's
+before any HTTP layer on top.
+
+Same conclusion as the [blog post](/blog/why-sqlite-not-postgres/): on a
+single server, the in-process database wins on raw latency because there
+is no process boundary to cross. Postgres earns its place when you need
+multiple servers — not when you need raw speed.
+
 ## The tradeoff
 
 | Mode | Power-loss behavior | Writes/s |
@@ -163,6 +212,12 @@ Methodology:
 - **Direct matrix:** 50K single-row inserts + 50K point reads per config,
   fresh DB file per config, `busy_timeout = 5000` fixed, only
   `journal_mode` / `synchronous` varied.
+- **SQLite vs Postgres:** identical schema and operation mix run on the
+  same machine within minutes of each other. SQLite via `bun:sqlite`
+  (in-process); Postgres 14.17 (Homebrew) via `pg` driver over localhost
+  TCP, default `postgresql.conf` (fsync on, `synchronous_commit = on`),
+  plus one run with `synchronous_commit = off`. `pgbench` numbers are the
+  server-side baseline (C client, no HTTP, no driver serialization).
 - **Full-stack:** Hono + `bun:sqlite`, concurrent load (50 workers), JSON
   responses, 5K–10K requests per endpoint. Same concurrency used for the
   Laravel comparison.
