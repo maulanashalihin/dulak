@@ -78,6 +78,73 @@ plain `bun test`, `src/server/` is flat except `routes/`.
 If the agent can't answer this, it didn't read the file. Tell it to read
 it before proceeding. This is your first checkpoint — don't skip it.
 
+## Plan before you prompt
+
+Before asking the agent to write code, create a `PLAN.md` in the project
+root. This is your blueprint — it tells the agent what to build, in what
+order, and what "done" looks like for each step. Without a plan, the
+agent improvises, and improvisation leads to scope creep and wrong
+architecture.
+
+Tell the agent:
+
+> Read AGENTS.md and create a PLAN.md for a bookmark manager feature.
+> The plan should list each step: migration, db.ts statements, route
+> file, page component, registry, types, test. For each step, note the
+> file path and what it does. Don't write any code yet — just the plan.
+
+The agent reads `AGENTS.md`, maps the conventions to your feature, and
+produces a plan like:
+
+```markdown
+# Bookmark Manager
+
+## Steps
+
+1. **Migration** — `migrations/0005_bookmarks.sql`
+   Create `bookmarks` table (id, user_id, url, title, created_at).
+
+2. **SQL** — `src/server/db.ts`
+   Add `listBookmarks` (SELECT by user_id) and `insertBookmark`
+   (INSERT + RETURNING id) prepared statements.
+
+3. **Route** — `src/server/routes/bookmarks.routes.ts`
+   GET `/bookmarks` (requireAuth, render list) + POST `/bookmarks`
+   (requireAuth, validate TypeBox, insert, redirect).
+
+4. **Mount** — `src/server/app.ts`
+   Add `app.route("/", bookmarksRoutes())`.
+
+5. **Page** — `src/client/pages/Bookmarks.tsx`
+   Form (URL + title) + list of bookmarks. Import `Bookmarks.css`.
+
+6. **Registry** — `src/client/pages.ts`
+   Register `./pages/Bookmarks`.
+
+7. **Type** — `src/shared/types.ts`
+   Add `Bookmark` interface.
+
+8. **Test** — `tests/app.test.ts`
+   Register user → GET `/bookmarks` → expect 200 + component "Bookmarks".
+```
+
+Review the plan before proceeding. Check:
+
+- **File paths match conventions** — routes in `routes/`, SQL in
+  `db.ts`, no feature subfolders.
+- **Step order makes sense** — migration before SQL, route before page,
+  page before registry.
+- **Nothing is missing** — types, test, mount step all present.
+- **Nothing is extra** — no `service.ts`, no `repository.ts`, no
+  feature subfolder.
+
+If the plan is wrong, fix it before the agent writes a single line of
+code. Correcting a plan takes seconds. Correcting six wrong files takes
+minutes. The plan is your cheapest checkpoint.
+
+Once the plan looks right, work through it step by step with the agent
+using the workflow loop below.
+
 ## The workflow loop
 
 Every task follows the same loop:
