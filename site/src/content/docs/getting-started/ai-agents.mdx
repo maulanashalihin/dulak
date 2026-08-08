@@ -17,9 +17,23 @@ secondary to the loop.
 **Personally recommended: [omp.sh](https://omp.sh).** It reads
 `AGENTS.md` automatically, runs in your terminal, and can drive a real
 browser to verify UI changes — the part most agents skip. The workflow
-below is written for omp.sh but applies to Claude Code, Cursor, opencode,
-Windsurf, or any agent that can read files and run shell commands.
+below works with omp.sh, Claude Code, Cursor, opencode, Windsurf, or any
+agent that can read files and run shell commands.
 </aside>
+
+## The workflow at a glance
+
+```
+1. Scaffold        bun create dulak@latest my-app
+2. Confirm         agent has read AGENTS.md
+3. Plan            write PLAN.md — the story, not the spec
+4. Review          is the plan clear? does it describe what you want?
+5. Loop            prompt → agent implements → verify → fix → commit
+6. Ship            typecheck + tests + browser console all green
+```
+
+Each step is one section below. The loop (step 5) is where you'll spend
+most of your time — the rest is setup.
 
 ## Why Dulak works well with agents
 
@@ -67,9 +81,9 @@ it before proceeding. This is your first checkpoint — don't skip it.
 
 Before asking the agent to write code, write a `PLAN.md` in the project
 root. This is not a technical spec — it's the **story of what you want
-to build**. Describe the app in plain language: what it does, who uses
-it, what the pages look like. The agent will figure out the technical
-details from `AGENTS.md` on its own.
+to build**. Describe the app in plain language: what it does and who
+uses it. The agent will figure out the pages, the database schema, and
+the technical details from `AGENTS.md` on its own.
 
 Write it like you're explaining the app to a friend:
 
@@ -128,12 +142,13 @@ guessing.
 ### Review the plan
 
 Read it back. Does it describe an app you'd want to use? Is the behavior
-clear? Are the pages and their interactions obvious? If you can't
-understand the plan without reading code, it's too technical — rewrite
-it in plain language.
+clear? Would a non-technical friend understand what you're building? If
+you can't understand the plan without reading code, it's too technical —
+rewrite it in plain language.
 
 Once the plan reads like a story, hand it to the agent and start the
-workflow loop below.
+workflow loop below. The plan is the source of truth — when the agent
+asks for clarification, point back to it.
 
 ## The workflow loop
 
@@ -149,23 +164,27 @@ steer and verify, not to wait.
 
 ### Step 1: Give the prompt
 
-Be specific about the URL, not the architecture. The URL tells the agent
-the file name and the convention does the rest.
+Work through the plan one step at a time, not all at once. For each
+step, give a short prompt that references the plan and states what
+"done" looks like:
 
 **Good prompt:**
 
-> Add a `/bookmarks` feature where authenticated users can save and list
-> bookmarks (URL + title). Include migration, route, page, and test.
+> Start with step 1 of PLAN.md: build the bookmark manager. Read the
+> plan, then implement the first slice — saving and listing bookmarks
+> for an authenticated user. Follow AGENTS.md conventions. Show me the
+> files you created.
 
 **Bad prompt:**
 
-> Add a CRUD resource for bookmarks with a service layer and repository
-> pattern.
+> Build the whole bookmark manager now. Also add tags, sharing, and a
+> dark mode. Use a repository pattern.
 
-The bad prompt injects architecture that doesn't exist in Dulak — the
-agent will create `src/server/bookmarks/service.ts`, `repository.ts`,
-and a feature subfolder, all of which violate `AGENTS.md`. The good
-prompt gives the URL; the conventions handle the rest.
+The bad prompt does three things wrong: it asks for everything at once,
+it injects scope that isn't in the plan (tags, sharing, dark mode), and
+it names architecture that doesn't exist in Dulak. The good prompt
+anchors on the plan, scopes to one slice, and defers structure to
+`AGENTS.md`.
 
 ### Step 2: Watch what the agent does
 
@@ -211,6 +230,7 @@ pass. If the agent didn't write a test, ask it to add one following the
 pattern in `tests/app.test.ts`.
 
 **Browser third** — this is where a browser-capable agent shines. Tell
+the agent:
 
 > Open `http://localhost:4000/bookmarks` in the browser, log in, and
 > check the console for errors.
@@ -241,11 +261,17 @@ guessing, which leads to more wrong code.
 
 Once everything passes — typecheck, tests, browser — commit:
 
-> Commit the bookmarks feature with a descriptive message.
+> Commit this slice with a descriptive message.
 
 The agent stages the files and writes a commit. Review the message
-before pushing. The agent should mention what was added, not just
+before pushing. It should mention what was added, not just
 "feature: bookmarks".
+
+Commit after **every verified slice**, not at the end of the whole
+plan. Each commit is a checkpoint: if a later step goes sideways, you
+can roll back to the last good state and retry instead of unwinding
+half a feature by hand. A plan with eight steps should produce roughly
+eight commits.
 
 ## Prompting patterns
 
@@ -364,6 +390,46 @@ AGENTS.md documents this under Hono integration notes."
 **Correction**: "Page-specific styles go in a sibling `.css` file
 imported by the component. `styles.css` is global base only. AGENTS.md
 rule 7."
+
+## When the agent gets stuck
+
+Sometimes the agent stalls — it says it can't do something, or it
+produces nothing. Usually it's missing context, not missing ability.
+Unstick it by pointing at concrete reference material:
+
+> Look at how `auth.routes.ts` handles a POST with validation, and
+> mirror that pattern for the bookmarks form.
+
+> The request lifecycle doc explains how middleware is ordered — read
+> it before touching the middleware.
+
+Every convention in Dulak has a working example in the codebase
+(`auth.routes.ts`, `uploads.routes.ts`, `db.ts`) or in the docs
+([Adding a feature](/extending/adding-a-feature/),
+[Conventions](/architecture/conventions/)). The agent just needs to know
+which one to read. "Read the reference and mirror it" unblocks most
+stalls in one message.
+
+If the agent is still stuck after a reference, it's usually a tooling
+issue — it can't reach the dev server, can't run tests, or the browser
+tab is stale. Ask it what it tried and what failed. The error message
+is the next clue.
+
+## The plan evolves — update it
+
+The plan is a living document, not a contract. As you build, you'll
+discover requirements that the original story missed — a field you
+forgot, a behavior that needs defining, a page that's more complex than
+expected.
+
+When that happens, update `PLAN.md` first, then tell the agent:
+
+> I updated PLAN.md — the bookmarks list now also shows the domain next
+> to each title. Continue from where you left off.
+
+Updating the plan before the agent continues keeps the story accurate
+and prevents the agent from drifting back to its original (now wrong)
+assumptions. The plan stays the source of truth for the whole build.
 
 ## The mental model
 
