@@ -28,9 +28,9 @@ files and run shell commands.
 ```
 1. Scaffold        bun create dulak@latest my-app
 2. Plan            write PLAN.md — the story of your needs
-3. Design          all pages with dummy data, iterate until you love it
-4. Wire            backend + database once the design is final
-5. Loop            prompt → agent implements → you review → commit
+3. Design          all pages with dummy data — you review, until you love it
+4. Wire            backend + database — strict unit tests prove it works
+5. Loop            prompt → agent implements → tests pass → commit
 6. Ship            agent verifies everything is green
 ```
 
@@ -121,59 +121,32 @@ this is the cheapest time to change things. There's no schema, no
 migration, no route logic to rework when you move a button or rename a
 field. Don't wire the backend until every page feels right to you.
 
+Design is the only thing that needs your judgment — it's subjective.
+There's no right or wrong layout, only one you like. So this phase is
+the only one where you review manually.
+
 **Only then** wire the pages to the backend:
 
 > The design is done. Now replace the dummy data with real data — add
 > the database schema, migrations, and routes so the pages read and
 > write for real.
 
+The wiring phase needs **no manual review** — unlike design, backend
+logic is objectively right or wrong, and that's exactly what automated
+verification is for. The agent writes strict unit tests for the wiring
+(schema, routes, validation, data flow) and runs them until they pass:
+
+> Make the unit tests strict — cover the schema, every route, and
+> validation. The wiring isn't done until the tests pass.
+
 Same pages, same design — the agent just swaps the dummy data for real
-queries. You get a working app whose design you already approved,
-instead of discovering layout problems after the backend is built.
+queries, and the tests prove it works. You get a working app whose
+design you already approved, without reviewing backend logic yourself.
+Manual review for the subjective part (design), automated tests for the
+objective part (wiring).
 
-## The workflow loop
-
-```
-prompt → agent implements → you review → commit
-```
-
-### Step 1: Prompt
-
-Give the agent the plan and let it work. Work through it one slice at a
-time — not the whole app in one prompt:
-
-> Read PLAN.md and build the bookmark manager. Start with saving and
-> listing bookmarks, then show me what you did.
-
-The agent reads the plan, follows `AGENTS.md`, writes the code, the
-tests, and the migrations. Don't tell it how — it knows.
-
-### Step 2: Review
-
-The agent verifies its own work — typecheck, tests, browser console —
-and reports back. Your job is to read the report and judge the result:
-
-- Does the app do what the plan describes?
-- Does it look like the design?
-- Does the agent's report show everything passing?
-
-Open the app and look. If something's off, tell the agent — in any
-words. The agent reasons about what you mean and finds the cause:
-
-> The form doesn't save. After submitting, the bookmark doesn't appear
-> in the list.
-
-There's no wrong way to describe a problem. Say it as you'd say it to a
-friend; the agent handles the debugging.
-
-### Step 3: Commit
-
-Once the slice works, have the agent commit it:
-
-> Commit this slice.
-
-Commit after each verified slice — it's a checkpoint you can roll back
-to. A plan with several slices produces several commits.
+Have the agent commit after each verified step — a checkpoint you can
+roll back to. A plan with several steps produces several commits.
 
 ## The plan evolves
 
