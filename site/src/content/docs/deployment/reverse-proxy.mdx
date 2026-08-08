@@ -135,19 +135,42 @@ sudo certbot --nginx -d your-domain.com
 
 ### Cloudflare route (A1 — origin rule)
 
-Only Cloudflare IPs may reach the app port. Fetch the current list from
-the API instead of hardcoding ranges:
+Only Cloudflare IPs may reach the app port — this prevents anyone from
+bypassing the edge and hitting your origin directly. The command below
+fetches the current IP list **once** from Cloudflare's API and creates
+persistent UFW rules. It does not run per-request; the rules survive
+reboots. But Cloudflare's ranges do change, so set up a weekly refresh
+(see below).
+
+**One-time setup:**
 
 ```bash
 sudo ufw allow OpenSSH
-# Fetch live Cloudflare IP ranges (IPv4 + IPv6)
+# Fetch live Cloudflare IP ranges (IPv4) and create UFW rules
 curl -s https://api.cloudflare.com/client/v4/ips | jq -r '.result.ipv4_cidrs[]' | \
   xargs -I{} sudo ufw allow from {} to any port 4000
 sudo ufw enable
 ```
 
-Or bind the app to `127.0.0.1` only (`HOST=127.0.0.1`) and use **A2
-(tunnel)** — no inbound ports at all.
+**Weekly refresh** — Cloudflare adds new IP ranges occasionally. Create
+`/etc/cron.weekly/refresh-cloudflare-ufw`:
+
+```bash
+#!/bin/bash
+# Remove old Cloudflare rules for port 4000, re-add from live API
+ufw status numbered | grep '4000' | awk -F'[][]' '{print $2}' | sort -rn | \
+  xargs -I{} ufw delete {}
+curl -s https://api.cloudflare.com/client/v4/ips | jq -r '.result.ipv4_cidrs[]' | \
+  xargs -I{} ufw allow from {} to any port 4000
+```
+
+```bash
+sudo chmod +x /etc/cron.weekly/refresh-cloudflare-ufw
+```
+
+**Simpler alternative:** bind the app to `127.0.0.1` only
+(`HOST=127.0.0.1`) and use **A2 (tunnel)** — no inbound ports at all,
+no firewall rules to maintain.
 
 ### No Cloudflare (options B/C)
 
