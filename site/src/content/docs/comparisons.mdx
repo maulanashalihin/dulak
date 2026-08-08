@@ -93,16 +93,19 @@ server, and a database driver in 2026.
 | Database | `bun:sqlite`, raw SQL, no ORM | Eloquent ORM + migrations |
 | Auth | Wired, argon2id, DB sessions | Breeze / Jetstream (scaffolded, then you maintain) |
 | Philosophy | Boring, zero-dep where cheap | Convention over configuration, many dependencies |
+| SSR | In-process, same Bun process | Needs a separate Node process for Inertia SSR |
 | Performance | 52K reads/s, 95K writes/s (M4) | 6K reads/s, 6K writes/s (FrankenPHP, 8 workers) |
 
 The core difference is **one runtime vs. four**. Dulak's whole stack is
-Bun; Laravel glues together a language, a package manager, a web server,
-and a database. On the same hardware, Dulak is **8× faster** on reads
-and **5× faster** on writes — not because of magic, but because there is
-no ORM, no model hydration, and no kernel bootstrap per request (see the
+Bun; Laravel glues together PHP, Composer, a web server, and a database
+driver — plus a separate Node process if you want Inertia SSR. On the
+same hardware, Dulak is **8× faster** on reads and **5× faster** on
+writes — not because of magic, but because there is no ORM, no model
+hydration, and no kernel bootstrap per request (see the
 [benchmark page](/database/performance/)). **Pick Dulak** for TypeScript
 everywhere, one runtime, raw SQL, and a lighter dependency surface.
-Reach for Laravel if four toolchains sounds like a feature, not a tax.
+Reach for Laravel if four toolchains and a Node sidecar for SSR sounds
+like a feature, not a tax.
 
 ## Dulak vs. CodeIgniter
 
