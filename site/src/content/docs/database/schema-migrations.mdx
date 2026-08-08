@@ -45,7 +45,7 @@ SQLite `ALTER TABLE ADD COLUMN` with `NOT NULL` requires a `DEFAULT`.
   block the writer.
 - **`synchronous = NORMAL`** — skips the per-commit fsync; measured ~27×
   faster writes than the SQLite default `FULL` (see
-  [SQLite performance](/docs/database/performance)). Tradeoff: the last
+  [SQLite performance](/database/performance/)). Tradeoff: the last
   WAL transactions may be lost on power failure, never corruption.
 - **`busy_timeout = 5000`** — concurrent writes (e.g. two tus PATCHes)
   wait up to 5s instead of failing with `SQLITE_BUSY`.
