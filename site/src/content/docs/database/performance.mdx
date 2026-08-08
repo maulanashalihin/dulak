@@ -154,13 +154,13 @@ per-commit fsync fires once at the end instead of per row:
 That is **14× faster** — 1.3M inserts/s. Always batch bulk writes in a
 transaction; the `db.transaction()` helper is built for this.
 
-## SQLite vs Postgres on the same machine
+## SQLite vs Postgres & MariaDB on the same machine
 
-Postgres is a full database server — and it pays for that with latency
-that SQLite doesn't have. Measured on the **same MacBook Pro (M4)**, same
-schema, same operation mix (50K autocommit inserts, 50K inserts in one
-transaction, 50K point reads, SELECT all), direct access — no HTTP on
-either side:
+Postgres and MariaDB are full database servers — and they pay for that
+with latency that SQLite doesn't have. Measured on the **same MacBook
+Pro (M4)**, same schema, same operation mix (50K autocommit inserts, 50K
+inserts in one transaction, 50K point reads, SELECT all), direct access
+— no HTTP on either side:
 
 | Operation | SQLite (WAL+NORMAL) | Postgres 14.17 (default) | MariaDB 12.0.2 | SQLite faster |
 | --- | ---: | ---: | ---: | ---: |
