@@ -15,6 +15,106 @@ docker compose up -d --build
   of failing).
 - The container listens on port 4000 (`EXPOSE 4000`).
 
+## Environment variables
+
+Dulak reads env from `.env` at startup — same file as bare-metal. Docker
+Compose injects it into the container via `env_file: .env` in
+`docker-compose.yml`:
+
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - "4000:4000"
+    env_file: .env          # ← your .env on the host
+    environment:
+      NODE_ENV: production
+      APP_URL: ${APP_URL:-http://localhost:4000}
+    volumes:
+      - ./data:/app/data    # persistent SQLite database
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+```
+
+### Step by step
+
+1. **Copy the example file** in the project root (on the host, not inside
+   the container):
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Edit `.env`** — set the values for your deployment. The minimum you
+   need to change:
+
+   ```env
+   PORT=4000
+   NODE_ENV=production
+   APP_URL=https://your-domain.com
+   DATABASE_PATH=/app/data/app.sqlite
+   MAIL_DRIVER=resend
+   RESEND_API_KEY=...
+   ```
+
+   `DATABASE_PATH` must point inside the `./data` volume (`/app/data/...`)
+   so the SQLite file survives container restarts. See
+   [Configuration](/deployment/configuration/) for the full env table.
+
+3. **`.env` is never baked into the image.** `.dockerignore` excludes it —
+   the `.env` file stays on the host and is injected at runtime via
+   `env_file`. This means you can rebuild the image without leaking
+   secrets, and different environments (staging, production) just use
+   different `.env` files on the host.
+
+4. **`NODE_ENV` and `APP_URL` are set in `docker-compose.yml`** under
+   `environment:`, not `.env`. Compose's `environment:` block overrides
+   `env_file` values, so these two are always correct for the container
+   even if your `.env` has different values for local dev. If you need
+   to override `APP_URL`, set it in `.env` or pass it at build time:
+
+   ```bash
+   APP_URL=https://your-domain.com docker compose up -d --build
+   ```
+
+5. **Build and start:**
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   The first build takes ~30s (installs deps, builds client assets). Subsequent
+   builds are faster thanks to Docker layer caching.
+
+6. **Check it's running:**
+
+   ```bash
+   docker compose ps          # should show "healthy"
+   docker compose logs -f     # tail logs
+   curl http://localhost:4000/health
+   ```
+
+### Changing env later
+
+Edit `.env` on the host, then restart the container (no rebuild needed —
+the image doesn't change, only the runtime env):
+
+```bash
+docker compose restart
+```
+
+If you changed `APP_URL` in `docker-compose.yml` itself, or changed the
+compose file structure, use `up` instead:
+
+```bash
+docker compose up -d
+```
+
 Alternatives: `bun build --compile` for a single binary, or plain
 `bun run start` behind your process supervisor — it handles SIGTERM
 gracefully (drains in-flight requests, closes the DB).
