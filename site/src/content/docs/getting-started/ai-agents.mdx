@@ -1,0 +1,398 @@
+---
+title: Building with AI agents
+description: Scaffold, extend, and ship a Dulak app end to end using an AI coding agent.
+---
+
+Dulak was designed for AI agents before it was designed for humans. The
+conventions exist so that an agent can navigate the codebase by URL, find
+the right file, and produce code that fits without guessing. This page
+walks through a full project — scaffold, add a feature, test, deploy —
+with an AI agent doing the work.
+
+The instructions are agent-agnostic. They work with Claude Code, Cursor,
+GitHub Copilot, Windsurf, or any agent that can read files and run shell
+commands. The key is `AGENTS.md` — the file at the repo root that tells
+the agent how the project is structured.
+
+## Prerequisites
+
+- **Bun >= 1.3** installed ([Installation](/getting-started/installation/))
+- An AI coding agent that can read files, edit code, and run shell commands
+- A terminal in an empty directory where you want the project to live
+
+## 1. Scaffold the project
+
+Tell your agent:
+
+> Scaffold a new Dulak project called `my-app` using the default React
+> template. Then run the dev server and confirm it starts.
+
+The agent should run:
+
+```bash
+bun create dulak@latest my-app
+cd my-app
+bun run dev   # http://localhost:4000
+```
+
+If the agent asks which template, pick `default` (React 19 + vanilla CSS)
+or specify it upfront: `bun create dulak@latest my-app --template default`.
+
+### What the agent sees
+
+When the agent opens the project, the first file it should read is
+`AGENTS.md` at the repo root. This is the map:
+
+- **Layout** — where every type of file lives (`src/server/routes/`,
+  `src/server/db.ts`, `src/client/pages/`, `src/shared/`)
+- **Hard rules** — routes are one file per URL, all SQL in `db.ts`, env
+  only in `config.ts`, TypeBox for validation
+- **Hono integration notes** — gotchas that agents get wrong (middleware
+  must call `next()`, `c.header()` is dropped on custom `Response`, etc.)
+- **Testing** — `bun test --isolate`, never plain `bun test`
+
+If your agent doesn't read `AGENTS.md` automatically, tell it to:
+
+> Read AGENTS.md at the repo root before making any changes.
+
+## 2. Understand the architecture
+
+Before adding code, have the agent read the request lifecycle so it
+understands how a request flows:
+
+> Read the request lifecycle docs and summarize the middleware chain.
+
+The agent should find
+[Request lifecycle](/architecture/request-lifecycle/) and report:
+
+```
+requestLogger → checkOrigin → compress → secureHeaders
+→ inertiaMiddleware → globalRateLimit → routes → onError / notFound
+```
+
+This matters because the agent needs to know where guards run
+(`requireAuth`, `guestOnly`), where validation happens (route level,
+TypeBox), and how Inertia renders (SSR for public routes, empty shell for
+authenticated routes).
+
+## 3. Add a feature: bookmark pages
+
+Now the real work. Tell the agent:
+
+> Add a `/bookmarks` feature where authenticated users can save and list
+> bookmarks (URL + title). Follow the conventions in AGENTS.md. Include a
+> migration, the route file, the page component, and a test.
+
+A good agent will follow the pattern from
+[Adding a feature](/extending/adding-a-feature/) — which mirrors
+`AGENTS.md`. Here's what it should produce:
+
+### 3.1 Migration
+
+```sql
+-- migrations/0005_bookmarks.sql
+CREATE TABLE bookmarks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  url TEXT NOT NULL,
+  title TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+```
+
+The agent should know: **never edit an applied migration**. New schema =
+new numbered file.
+
+### 3.2 SQL in db.ts
+
+```ts
+export interface BookmarkRow {
+  id: number;
+  url: string;
+  title: string;
+  createdAt: string;
+}
+
+export const listBookmarks = db.query<BookmarkRow, [number]>(
+  `SELECT id, url, title, created_at AS createdAt
+   FROM bookmarks WHERE user_id = ? ORDER BY id DESC`,
+);
+
+export const insertBookmark = db.query<
+  { id: number },
+  [number, string, string]
+>(
+  `INSERT INTO bookmarks (user_id, url, title) VALUES (?, ?, ?) RETURNING id`,
+);
+```
+
+All SQL in `db.ts`. No ORM, no scattered queries.
+
+### 3.3 Route file
+
+```ts
+// src/server/routes/bookmarks.routes.ts
+import { Hono } from "hono";
+import { requireAuth } from "../auth";
+import { Type } from "@sinclair/typebox";
+import { validateJson } from "../validation";
+import { listBookmarks, insertBookmark } from "../db";
+import type { AppEnv } from "../inertia-middleware";
+
+const bookmarkBody = Type.Object({
+  url: Type.String({ minLength: 1 }),
+  title: Type.String({ minLength: 1 }),
+});
+
+export const bookmarksRoutes = () => {
+  const app = new Hono<AppEnv>();
+
+  app.get("/bookmarks", requireAuth, (c) =>
+    c.var.inertia.render("Bookmarks", {
+      bookmarks: listBookmarks.all(c.var.user!.id),
+    }),
+  );
+
+  app.post("/bookmarks", requireAuth, validateJson(bookmarkBody), async (c) => {
+    const { url, title } = c.req.valid("json");
+    insertBookmark.get(c.var.user!.id, url, title);
+    return c.redirect("/bookmarks");
+  });
+
+  return app;
+};
+```
+
+One file = one URL namespace. GET renders, POST acts. Guard with
+`requireAuth`. Validate with TypeBox.
+
+### 3.4 Mount in app.ts
+
+```ts
+// src/server/app.ts — one line next to the other routes
+app.route("/", bookmarksRoutes());
+```
+
+### 3.5 Page component
+
+```tsx
+// src/client/pages/Bookmarks.tsx
+import { Head, usePage } from "@inertiajs/react";
+import type { Bookmark } from "../../shared/types";
+import Layout from "../components/Layout";
+
+export default function Bookmarks() {
+  const { bookmarks } = usePage().props as { bookmarks: Bookmark[] };
+  return (
+    <Layout>
+      <Head title="Bookmarks" />
+      <h1>Bookmarks</h1>
+      <form method="POST" action="/bookmarks">
+        <input name="url" placeholder="URL" required />
+        <input name="title" placeholder="Title" required />
+        <button type="submit">Save</button>
+      </form>
+      <ul>
+        {bookmarks.map((b) => (
+          <li key={b.id}>
+            <a href={b.url}>{b.title}</a>
+          </li>
+        ))}
+      </ul>
+    </Layout>
+  );
+}
+```
+
+Register in `src/client/pages.ts`:
+
+```ts
+import Bookmarks from "./pages/Bookmarks";
+// ...
+"./pages/Bookmarks": { default: Bookmarks },
+```
+
+Add the shared type in `src/shared/types.ts`:
+
+```ts
+export interface Bookmark {
+  id: number;
+  url: string;
+  title: string;
+  createdAt: string;
+}
+```
+
+### 3.6 Test
+
+```ts
+// tests/app.test.ts — follow the existing pattern
+it("serves /bookmarks to authenticated users", async () => {
+  const cookie = await registerUser("bookmarks@example.com");
+  const res = await call("/bookmarks", { headers: { ...xhr, cookie } });
+  expect(res.status).toBe(200);
+  expect((await page(res)).component).toBe("Bookmarks");
+});
+```
+
+## 4. Verify
+
+Tell the agent:
+
+> Run typecheck and the test suite. Fix any issues.
+
+```bash
+bun run typecheck
+bun run test        # = bun test --isolate
+```
+
+The `--isolate` flag is critical — each test file sets its own env and
+closes the DB in `afterAll`. Without it, one file's teardown finalizes
+the next file's prepared statements. If the agent runs plain `bun test`,
+the tests will fail with confusing errors. `AGENTS.md` documents this,
+but agents sometimes forget — remind them.
+
+## 5. Style the page
+
+Dulak uses co-located vanilla CSS (or Tailwind, depending on the
+template). The agent should add styles in a sibling `.css` file imported
+by the component — not in `styles.css` (which is global base only).
+
+Tell the agent:
+
+> Style the bookmarks page. Follow the design system — read the existing
+> page styles and reuse tokens from styles.css. Don't add a CSS framework.
+
+The agent should:
+
+1. Read `src/client/styles.css` for design tokens (`:root` variables,
+   `.btn`, `.panel`, `.table` primitives)
+2. Create `src/client/pages/Bookmarks.css` with page-specific styles
+3. Import it in `Bookmarks.tsx`: `import "./Bookmarks.css";`
+
+If the agent reaches for a CSS framework or adds page-specific rules to
+`styles.css`, that's a violation of the conventions. Point it back to
+`AGENTS.md` rule 7.
+
+## 6. Deploy with Docker
+
+Tell the agent:
+
+> Add a Dockerfile for production. Follow the existing multi-stage pattern.
+
+Dulak ships with a multi-stage `Dockerfile`. The agent should read it and
+adapt if needed, not invent a new one. The pattern:
+
+```dockerfile
+# Stage 1: install deps
+FROM oven/bun:1.3 AS deps
+WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+
+# Stage 2: build
+FROM oven/bun:1.3 AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN bun run build
+
+# Stage 3: production
+FROM oven/bun:1.3-slim
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/src ./src
+COPY --from=build /app/migrations ./migrations
+COPY --from=build /app/package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
+EXPOSE 4000
+CMD ["bun", "run", "start"]
+```
+
+Build and run:
+
+```bash
+docker build -t my-app .
+docker run -p 4000:4000 --env-file .env my-app
+```
+
+## Common agent mistakes (and how to prevent them)
+
+### Running plain `bun test`
+
+**Symptom**: tests fail with "prepared statement finalized" or cached
+config leaks across files.
+
+**Fix**: always `bun test --isolate`. `AGENTS.md` says this, but agents
+sometimes strip the flag. If tests fail mysteriously, check this first.
+
+### Creating feature subfolders
+
+**Symptom**: `src/server/bookmarks/` with `routes.ts`, `db.ts`,
+`service.ts` inside.
+
+**Fix**: `src/server/` is flat except `routes/`. SQL goes in the single
+`db.ts`. Route handlers stay inline in the route file. No feature
+subfolders — `AGENTS.md` rule 2.
+
+### Scattering SQL queries
+
+**Symptom**: `db.query()` calls inside route files or a separate
+`bookmarks-db.ts`.
+
+**Fix**: all prepared statements live in `src/server/db.ts`, created at
+module load. `AGENTS.md` rule 3.
+
+### Reading `process.env` in route files
+
+**Symptom**: `const port = process.env.PORT` in a handler.
+
+**Fix**: env is read once in `config.ts`, validated, fails fast. Pass
+config values through the app context or import the `config` object.
+`AGENTS.md` rule 4.
+
+### Forgetting `next()` in middleware
+
+**Symptom**: "Context is not finalized" error.
+
+**Fix**: middleware/guards MUST call `await next()` to continue the
+chain. Returning `undefined` without `next()` errors. `AGENTS.md`
+documents this under Hono integration notes.
+
+### Adding page-specific CSS to `styles.css`
+
+**Symptom**: `styles.css` grows with `.bookmarks-form`, `.bookmarks-list`
+rules.
+
+**Fix**: `styles.css` is global base only (tokens, reset, shared
+primitives like `.btn`, `.panel`). Page-specific styles go in a sibling
+`.css` file imported by the component. `AGENTS.md` rule 7.
+
+## Tips for working with agents
+
+- **Point to `AGENTS.md` first.** Every convention is there. If the agent
+  produces code that doesn't fit, it probably didn't read it.
+- **Ask for the file, not the pattern.** "Add a `/bookmarks` route" is
+  better than "add a CRUD resource" — the URL tells the agent the file
+  name (`bookmarks.routes.ts`) and the convention does the rest.
+- **Verify after each step.** Don't let the agent write 5 files then run
+  tests. Write the route + migration, run typecheck. Add the page, run
+  typecheck. Small loops catch mistakes early.
+- **Read the console.** A green build + green tests does NOT mean the
+  page works. Client-side errors (failed imports, hydration mismatches,
+  bad Inertia props) are silent until you open the browser console. Have
+  the agent check `console` output in the browser.
+- **Use `bun run typecheck` as a quick gate.** It's faster than the full
+  test suite and catches most structural mistakes (wrong imports, type
+  errors, missing registry entries).
+
+## What's next
+
+- [Adding a feature](/extending/adding-a-feature/) — the same loop as
+  above, condensed into a reference.
+- [Conventions](/architecture/conventions/) — the rules, without the
+  tutorial framing.
+- [Request lifecycle](/architecture/request-lifecycle/) — how middleware,
+  guards, and Inertia fit together.
+- [Testing](/testing/) — the test suite structure and why `--isolate`
+  matters.
