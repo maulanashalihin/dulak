@@ -15,6 +15,7 @@ import {
 import { createApp } from "./server/app";
 import { config } from "./server/config";
 import { db } from "./server/db";
+import net from "node:net";
 
 const isProd = process.env.NODE_ENV === "production";
 if (!isProd || !manifestExists()) {
@@ -22,7 +23,48 @@ if (!isProd || !manifestExists()) {
 }
 
 const assets = loadManifest();
-const port = config.port;
+
+/**
+ * Dev-only: find the first free port starting from `start`, probing up to
+ * `max` increments. In production the configured port is used as-is — a busy
+ * port fails loudly instead of silently shifting (which would break reverse
+ * proxies, health checks, and OAuth redirect URIs that point at a fixed port).
+ */
+async function findAvailablePort(start: number, max = 100): Promise<number> {
+	const { promise, resolve, reject } =
+		Promise.withResolvers<number>();
+	let port = start;
+	const probe = () => {
+		const tester = net.createServer();
+		tester.once("error", (err: NodeJS.ErrnoException) => {
+			if (err.code !== "EADDRINUSE") return reject(err);
+			if (++port > start + max)
+				return reject(
+					new Error(`No available port in ${start}–${start + max}`),
+				);
+			probe();
+		});
+		tester.once("listening", () => tester.close(() => resolve(port)));
+		tester.listen(port);
+	};
+	probe();
+	return promise;
+}
+
+let port = config.port;
+if (!isProd) {
+	port = await findAvailablePort(config.port);
+	if (port !== config.port) {
+		console.log(
+			`Port ${config.port} in use — switching to ${port} (set PORT to skip)`,
+		);
+		config.port = port;
+		// Only derive appUrl from the actual port when the user did not set
+		// APP_URL explicitly — an explicit APP_URL wins (OAuth redirect URIs
+		// must match Google Console regardless of the dev port).
+		if (!process.env.APP_URL) config.appUrl = `http://localhost:${port}`;
+	}
+}
 
 // Dev-only: watch src/client/** for component edits and rebuild assets live.
 // `bun --watch` only sees src/index.ts's import graph, which excludes the
