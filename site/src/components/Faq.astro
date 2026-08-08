@@ -24,6 +24,10 @@ const faqs: { q: string; a: string }[] = [
     q: "Is it production-ready?",
     a: "Yes — every guardrail a deployed app needs is wired and tested, not scaffolded: argon2id passwords, DB-backed sessions (not JWT), CSRF origin checks, two-layer rate limiting (global DDoS baseline + auth brute-force), security headers (CSP, nosniff, frame denial), versioned migrations in transactions, gzip compression, graceful shutdown (SIGTERM), multi-stage Docker, and a 63-test E2E suite that boots the full app against an in-memory DB. The server side is not a demo — it is the same code path that runs in production. What is missing is your business logic, and that is the point: you start from a skeleton that already works, not one you have to harden.",
   },
+  {
+    q: "Will this still work in 5–10 years?",
+    a: "Yes, and here is why: Dulak is a boilerplate you fork and own, not a framework that can be deprecated out from under you. The stack is chosen for longevity — Bun, Hono, SQLite, and Inertia are stable, pinned versions with no pending rewrites. SQLite is the most deployed database in the world and has maintained backward compatibility for decades. When a dependency does release a new major, it is a deliberate migration you schedule and test — not an emergency. And because there is no ORM, no SDK, no proprietary abstraction layer, the code you own is just TypeScript, SQL, and HTTP — readable and maintainable by any developer or AI agent, now and in 2036.",
+  },
 ];
 ---
 
