@@ -74,11 +74,12 @@ it, and not be afraid of breaking it.
   its GET render and POST actions together. Paste a broken URL and you
   land in exactly one place — no guessing.
 
-- **Production-shaped, not production.** The guardrails a deployed app
-  needs are wired from day one: CSRF, rate limiting, security headers,
-  versioned migrations, graceful shutdown, Docker, CI. But the business
-  features are not — that part is yours. You start from a skeleton that is
-  *shaped* like a production app, not from zero.
+- **Production-grade guardrails, not a production app.** The
+  infrastructure a deployed app needs — CSRF, rate limiting, security
+  headers, versioned migrations, graceful shutdown, Docker, CI — is wired
+  and tested from day one, not scaffolded. What is missing is your
+  business logic, and that is the point: you start from a skeleton that
+  already works, not one you have to harden.
 
 - **Boring versions, pinned, not chased.** A starter gets forked and
   maintained for years — its dependencies decide how much forced
