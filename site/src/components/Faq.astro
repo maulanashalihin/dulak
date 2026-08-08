@@ -6,7 +6,7 @@ const faqs: { q: string; a: string }[] = [
     },
     {
         q: "How is Dulak different from Laravel?",
-        a: "One runtime vs four. Dulak is Bun end to end — HTTP server, database, bundler, test runner, package manager. Laravel is still gluing together PHP, Composer, a web server, and a database driver in 2026. Dulak serves 52K reads/s and 95K writes/s on a single process; Laravel on FrankenPHP (8 workers) hits 6K — 8× slower on reads, 5× on writes. No ORM means no abstraction tax. Pick Dulak for TypeScript everywhere and one runtime; pick Laravel if you enjoy configuring four toolchains.",
+        a: "One runtime vs four. Dulak is Bun end to end — HTTP server, database, bundler, test runner, package manager. Laravel is still gluing together PHP, Composer, a web server, and a database driver in 2026. Dulak serves 52K reads/s and 95K writes/s on a single process; Laravel on FrankenPHP (8 workers) hits 6K — 8× slower on reads, 5× on writes. No ORM means no abstraction tax. Pick Dulak for TypeScript everywhere and one runtime; pick Laravel if you'd rather configure a web server than write business logic.",
     },
     {
         q: "Why Bun and not Node?",
