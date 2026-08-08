@@ -39,24 +39,9 @@ time spent correcting the agent.
 
 ## Setup
 
-### 1. Install omp.sh
+### 1. Scaffold the project
 
-Follow the instructions at [omp.sh](https://omp.sh). Once installed,
-launch it in your project directory:
-
-```bash
-cd my-app
-omp
-```
-
-omp.sh starts a session, reads `AGENTS.md` from the repo root, and gives
-you a chat interface in the terminal. The agent can read files, edit
-code, run shell commands, and — critically — drive a real browser tab to
-verify UI changes.
-
-### 2. Scaffold the project
-
-If you haven't scaffolded yet, tell the agent:
+If you haven't scaffolded yet, tell your agent:
 
 > Scaffold a new Dulak project called `my-app` with the default React
 > template, then start the dev server.
@@ -65,7 +50,7 @@ The agent runs `bun create dulak@latest my-app`, enters the directory,
 and starts `bun run dev`. You now have a running app at
 `http://localhost:4000` and an agent that's read `AGENTS.md`.
 
-### 3. Confirm the agent read AGENTS.md
+### 2. Confirm the agent read AGENTS.md
 
 Ask:
 
@@ -220,7 +205,7 @@ This runs `bun test --isolate`. If the agent wrote a test, it should
 pass. If the agent didn't write a test, ask it to add one following the
 pattern in `tests/app.test.ts`.
 
-**Browser third** — this is where omp.sh shines. Tell the agent:
+**Browser third** — this is where a browser-capable agent shines. Tell
 
 > Open `http://localhost:4000/bookmarks` in the browser, log in, and
 > check the console for errors.
