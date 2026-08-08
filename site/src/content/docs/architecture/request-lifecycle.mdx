@@ -7,7 +7,7 @@ Every request flows through a middleware chain registered in `app.ts`, in
 this order:
 
 ```
-requestLogger → checkOrigin → secureHeaders → compress → inertiaMiddleware
+requestLogger → checkOrigin → compress → secureHeaders → inertiaMiddleware
 → globalRateLimit → routes → onError / notFound
 ```
 
@@ -17,13 +17,13 @@ requestLogger → checkOrigin → secureHeaders → compress → inertiaMiddlewa
 2. **`checkOrigin`** — CSRF defense: unsafe methods (POST/PUT/PATCH/DELETE)
    with an `Origin` header whose host mismatches get 403. Non-browser
    clients that omit `Origin` are allowed.
-3. **`secureHeaders`** — hardening headers (CSP, nosniff, frame denial,
+3. **`compress`** — gzip for `/assets/*` and SSR HTML only. JSON/API
+   responses pass through untouched (they are small and must never be
+   transformed).
+4. **`secureHeaders`** — hardening headers (CSP, nosniff, frame denial,
    referrer policy, permissions policy, HSTS). For `/uploads` responses the
    CSP `script-src` becomes `'none'` (attacker-controlled bytes can never
    execute scripts).
-4. **`compress`** — gzip for `/assets/*` and SSR HTML only. JSON/API
-   responses pass through untouched (they are small and must never be
-   transformed).
 5. **`inertiaMiddleware`** — resolves the session from the cookie and sets
    typed context variables: `user`, `flash`, `sessionToken`, `inertia`
    (`AppEnv.Variables`). Runs for every request, including unmatched ones,
