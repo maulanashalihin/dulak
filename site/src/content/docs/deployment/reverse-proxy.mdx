@@ -1,0 +1,135 @@
+---
+title: Reverse proxy
+description: Put TLS and routing in front of Dulak — Cloudflare, Caddy, or Nginx. Works for both Docker and bare-metal.
+---
+
+Dulak listens on a single port (default `4000`). It does not terminate
+TLS — that is the proxy's job. Whether you run Docker or bare-metal, the
+proxy sits in front and forwards to `127.0.0.1:4000`.
+
+```
+Internet → [Cloudflare edge | Caddy | Nginx] → 127.0.0.1:4000
+                                                    └→ Dulak (Bun)
+```
+
+Pick one option. All three work with both [Docker](/deployment/docker/)
+and [bare-metal VPS](/deployment/vps/) deployments.
+
+## Option A — Cloudflare (recommended, nothing to install)
+
+Your domain is on Cloudflare, so the edge handles TLS and proxying; the
+server only runs Bun. **Pick one** — either A1 or A2, not both:
+
+### A1. Proxied DNS + origin rule (no extra software)
+
+1. DNS: A record `your-domain.com` → server IP, **proxied** (orange cloud).
+2. Dashboard → **Rules → Origin Rules** → create a rule for
+   `your-domain.com` that rewrites the **Host header** to
+   `your-domain.com` (so the app sees the real host for redirects).
+3. SSL/TLS mode: **Full** (edge→origin over HTTPS with a Cloudflare Origin
+   CA cert) or **Flexible** (edge→origin HTTP) — Flexible is fine when the
+   origin port is firewalled to Cloudflare IPs only.
+
+### A2. Cloudflare Tunnel (zero open ports)
+
+Nothing to install except `cloudflared`:
+
+```bash
+# on the server
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+chmod +x /usr/local/bin/cloudflared
+cloudflared tunnel login          # one-time browser auth
+cloudflared tunnel create dulak
+# run the tunnel as a service pointing at 127.0.0.1:4000
+cloudflared service install
+```
+
+Dashboard → **Zero Trust → Networks → Tunnels** → add a public hostname
+`your-domain.com` → service `http://127.0.0.1:4000`. No firewall rules
+needed — the tunnel connects outbound.
+
+> **`X-Forwarded-For` matters.** Both routes put Cloudflare in front, and
+> the rate limiter keys by `X-Forwarded-For`/`CF-Connecting-IP` first —
+> only run behind a proxy that sets it, or every client shares the "local"
+> bucket.
+
+## Option B — Caddy (no Cloudflare)
+
+Caddy handles TLS automatically via Let's Encrypt.
+
+`/etc/caddy/Caddyfile`:
+
+```
+your-domain.com {
+ reverse_proxy 127.0.0.1:4000
+}
+```
+
+```bash
+sudo systemctl enable --now caddy
+```
+
+## Option C — Nginx + Certbot (no Cloudflare)
+
+`/etc/nginx/sites-available/dulak`:
+
+```nginx
+server {
+ listen 80;
+ server_name your-domain.com;
+ location / {
+  proxy_pass http://127.0.0.1:4000;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_http_version 1.1;
+ }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/dulak /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+## Firewall
+
+### Cloudflare route (A1 — origin rule)
+
+Only Cloudflare IPs may reach the app port. Fetch the current list from
+the API instead of hardcoding ranges:
+
+```bash
+sudo ufw allow OpenSSH
+# Fetch live Cloudflare IP ranges (IPv4 + IPv6)
+curl -s https://api.cloudflare.com/client/v4/ips | jq -r '.result.ipv4_cidrs[]' | \
+  xargs -I{} sudo ufw allow from {} to any port 4000
+sudo ufw enable
+```
+
+Or bind the app to `127.0.0.1` only (`HOST=127.0.0.1`) and use **A2
+(tunnel)** — no inbound ports at all.
+
+### No Cloudflare (options B/C)
+
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+```
+
+Port 4000 must NOT be exposed publicly — only 80/443 reach the app.
+
+### Docker
+
+If running Docker, map the port to localhost only so the proxy can reach
+it but the outside world cannot:
+
+```yaml
+# docker-compose.yml
+ports:
+  - "127.0.0.1:4000:4000"
+```
+
+Then apply the firewall rules above as if it were bare-metal.

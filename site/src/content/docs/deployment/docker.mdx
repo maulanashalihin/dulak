@@ -18,3 +18,19 @@ docker compose up -d --build
 Alternatives: `bun build --compile` for a single binary, or plain
 `bun run start` behind your process supervisor — it handles SIGTERM
 gracefully (drains in-flight requests, closes the DB).
+
+## Reverse proxy
+
+The container listens on port 4000. Put a reverse proxy (Cloudflare,
+Caddy, or Nginx) in front for TLS and routing — same setup as bare-metal:
+
+→ **[Reverse proxy guide](/deployment/reverse-proxy/)**
+
+For Docker, map the port to localhost only so the proxy can reach it
+but the outside world cannot:
+
+```yaml
+# docker-compose.yml
+ports:
+  - "127.0.0.1:4000:4000"
+```

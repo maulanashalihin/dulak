@@ -65,6 +65,7 @@ export default defineConfig({
 						{ label: "Configuration", slug: "deployment/configuration" },
 						{ label: "Docker", slug: "deployment/docker" },
 						{ label: "Linux VPS (no Docker)", slug: "deployment/vps" },
+						{ label: "Reverse proxy", slug: "deployment/reverse-proxy" },
 					],
 				},
 				{
