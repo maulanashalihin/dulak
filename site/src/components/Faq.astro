@@ -21,6 +21,10 @@ const faqs: { q: string; a: string }[] = [
         a: "ORMs were built to help humans avoid writing SQL. In 2026, AI generates correct, optimized raw SQL on demand — the human-friction problem ORMs solved is gone. What remains is the cost: an ORM is a dependency you upgrade, audit, and debug, and it adds a layer between you and the database that hides the actual query plan. bun:sqlite with prepared statements is synchronous, explicit, and zero-dependency. You see the exact SQL that runs, and the AI writing your next feature writes it at peak performance — no abstraction tax.",
     },
     {
+        q: "Why SQLite?",
+        a: "Because for most apps it is more than enough — and the numbers prove it. Dulak serves 52K point reads per second and 95K writes per second on a single Apple M4 process, with WAL + synchronous=NORMAL. SQLite is zero-config (no server to install, no connection pool, no credentials), zero-dependency (built into Bun), and file-based (back up by copying a file). It is the most deployed database in the world and has maintained backward compatibility for decades. When you outgrow a single process — Postgres-level concurrency, multi-region replication — that is a deliberate, well-documented swap point, not an emergency. See the benchmark page for the full numbers.",
+    },
+    {
         q: "Is it production-ready?",
         a: "Yes — every guardrail a deployed app needs is wired and tested, not scaffolded: argon2id passwords, DB-backed sessions (not JWT), CSRF origin checks, two-layer rate limiting (global DDoS baseline + auth brute-force), security headers (CSP, nosniff, frame denial), versioned migrations in transactions, gzip compression, graceful shutdown (SIGTERM), multi-stage Docker, and a 63-test E2E suite that boots the full app against an in-memory DB. The server side is not a demo — it is the same code path that runs in production. What is missing is your business logic, and that is the point: you start from a skeleton that already works, not one you have to harden.",
     },
