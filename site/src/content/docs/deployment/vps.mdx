@@ -116,7 +116,7 @@ only runs Bun. Two ways:
    `your-domain.com` (so the app sees the real host for redirects).
 3. SSL/TLS mode: **Full** (edge→origin over HTTPS with a Cloudflare Origin
    CA cert) or **Flexible** (edge→origin HTTP) — Flexible is fine when the
-   origin port is firewalled to Cloudflare IPs only (see §8).
+   origin port is firewalled to Cloudflare IPs only.
 
 **A2. Cloudflare Tunnel** (zero open ports — nothing to install except
 `cloudflared`):
