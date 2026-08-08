@@ -181,14 +181,14 @@ sudo certbot --nginx -d your-domain.com
 
 ### Cloudflare route (A1 — origin rule)
 
-Only Cloudflare IPs may reach the app port:
+Only Cloudflare IPs may reach the app port. Fetch the current list from
+the API instead of hardcoding ranges:
 
 ```bash
 sudo ufw allow OpenSSH
-# https://www.cloudflare.com/ips/ — keep this list updated
-sudo ufw allow from 173.245.48.0/20 to any port 4000
-sudo ufw allow from 103.21.244.0/22 to any port 4000
-# ...add all Cloudflare IP ranges...
+# Fetch live Cloudflare IP ranges (IPv4 + IPv6)
+curl -s https://api.cloudflare.com/client/v4/ips | jq -r '.result.ipv4_cidrs[]' | \
+  xargs -I{} sudo ufw allow from {} to any port 4000
 sudo ufw enable
 ```
 
