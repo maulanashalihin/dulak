@@ -20,6 +20,7 @@ beforeAll(async () => {
 	process.env.UPLOAD_DIR = uploadDir;
 	process.env.NODE_ENV = "test";
 	process.env.RATE_LIMIT_AUTH_MAX = "1000";
+	process.env.RATE_LIMIT_GLOBAL_MAX = "10000";
 	process.env.TUS_MAX_SIZE = "0"; // unlimited
 	process.env.GOOGLE_CLIENT_ID = "test-client-id";
 	process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
