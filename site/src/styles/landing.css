@@ -83,61 +83,6 @@ a {
 	margin: 0.4rem 0 0;
 }
 
-/* --- CTA --- */
-
-.dl-cta {
-	text-align: center;
-	padding: 3.5rem 1.5rem 3rem;
-	border-top: 1px solid #1f2937;
-}
-.dl-cta h2 {
-	font-size: 1.6rem;
-	letter-spacing: -0.02em;
-	margin: 0 0 1.2rem;
-}
-.dl-cta-cmd {
-	display: inline-block;
-	font-family: "SF Mono", "Fira Code", monospace;
-	font-size: 0.95rem;
-	color: #34d399;
-	background: #0f141a;
-	border: 1px solid #1f2937;
-	border-radius: 0.5rem;
-	padding: 0.6rem 1.2rem;
-	margin-bottom: 1.5rem;
-}
-.dl-cta-actions {
-	display: flex;
-	gap: 0.75rem;
-	justify-content: center;
-}
-.dl-cta-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.4rem;
-	padding: 0.7rem 1.6rem;
-	border-radius: 0.55rem;
-	font-weight: 600;
-	font-size: 0.92rem;
-	text-decoration: none;
-	transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.dl-cta-btn:hover { transform: translateY(-1px); }
-.dl-cta-btn:not(.dl-cta-btn-ghost) {
-	background: #047857;
-	color: #fff;
-	box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35);
-}
-.dl-cta-btn:not(.dl-cta-btn-ghost):hover {
-	box-shadow: 0 12px 32px rgba(5, 150, 105, 0.5);
-}
-.dl-cta-btn-ghost {
-	border: 1px solid #263041;
-	color: #d3dae4;
-	background: rgba(15, 17, 23, 0.6);
-}
-.dl-cta-btn-ghost:hover { background: rgba(30, 41, 59, 0.8); }
-
 
 .dl-footer {
 	display: flex;
