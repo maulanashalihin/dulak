@@ -71,19 +71,17 @@ to build**. Describe the app in plain language: what it does, who uses
 it, what the pages look like. The agent will figure out the technical
 details from `AGENTS.md` on its own.
 
-### What goes in the plan
-
 Write it like you're explaining the app to a friend:
 
 - **What is it?** — "A bookmark manager where users save links and
   organize them with tags."
 - **Who uses it?** — "Authenticated users. No public pages except login
   and register."
-- **What are the pages?** — "A bookmarks list page, a form to add a new
-  bookmark, and a tag filter on the list."
-- **What does each page do?** — "The list shows bookmarks sorted by
-  newest. The form has URL and title fields. Tags are clickable and
-  filter the list."
+- **What does it do?** — "Users can save a link with a title and tags,
+  view all saved links sorted by newest, and filter by tag."
+
+Don't list pages, routes, or database tables — the agent will figure
+those out from the feature description and `AGENTS.md`.
 
 ### Attach design mockups
 
@@ -95,14 +93,6 @@ plan:
 # Bookmark Manager
 
 A simple app where authenticated users save and organize links.
-
-## Pages
-
-- `/bookmarks` — list of saved bookmarks, sorted by newest. Each row
-  shows the title (links to the URL), the domain, and tags. A form at
-  the top to add a new bookmark (URL + title).
-- `/bookmarks/tags/:tag` — filtered list, same layout, only bookmarks
-  with the matching tag.
 
 ## Design
 
@@ -125,6 +115,8 @@ guessing.
 
 ### What NOT to put in the plan
 
+- **Pages and routes** — the agent decides what pages to create and how
+  to structure the URLs from the feature description.
 - **File paths** — the agent knows where files go from `AGENTS.md`.
 - **SQL schemas** — the agent designs the table from the feature
   description.
