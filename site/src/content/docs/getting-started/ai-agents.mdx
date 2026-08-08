@@ -65,70 +65,83 @@ it before proceeding. This is your first checkpoint — don't skip it.
 
 ## Plan before you prompt
 
-Before asking the agent to write code, create a `PLAN.md` in the project
-root. This is your blueprint — it tells the agent what to build, in what
-order, and what "done" looks like for each step. Without a plan, the
-agent improvises, and improvisation leads to scope creep and wrong
-architecture.
+Before asking the agent to write code, write a `PLAN.md` in the project
+root. This is not a technical spec — it's the **story of what you want
+to build**. Describe the app in plain language: what it does, who uses
+it, what the pages look like. The agent will figure out the technical
+details from `AGENTS.md` on its own.
 
-Tell the agent:
+### What goes in the plan
 
-> Read AGENTS.md and create a PLAN.md for a bookmark manager feature.
-> The plan should list each step: migration, db.ts statements, route
-> file, page component, registry, types, test. For each step, note the
-> file path and what it does. Don't write any code yet — just the plan.
+Write it like you're explaining the app to a friend:
 
-The agent reads `AGENTS.md`, maps the conventions to your feature, and
-produces a plan like:
+- **What is it?** — "A bookmark manager where users save links and
+  organize them with tags."
+- **Who uses it?** — "Authenticated users. No public pages except login
+  and register."
+- **What are the pages?** — "A bookmarks list page, a form to add a new
+  bookmark, and a tag filter on the list."
+- **What does each page do?** — "The list shows bookmarks sorted by
+  newest. The form has URL and title fields. Tags are clickable and
+  filter the list."
+
+### Attach design mockups
+
+If you have a visual design — a mockup from ChatGPT, a Figma export, a
+hand-drawn sketch — put it in the project and reference it from the
+plan:
 
 ```markdown
 # Bookmark Manager
 
-## Steps
+A simple app where authenticated users save and organize links.
 
-1. **Migration** — `migrations/0005_bookmarks.sql`
-   Create `bookmarks` table (id, user_id, url, title, created_at).
+## Pages
 
-2. **SQL** — `src/server/db.ts`
-   Add `listBookmarks` (SELECT by user_id) and `insertBookmark`
-   (INSERT + RETURNING id) prepared statements.
+- `/bookmarks` — list of saved bookmarks, sorted by newest. Each row
+  shows the title (links to the URL), the domain, and tags. A form at
+  the top to add a new bookmark (URL + title).
+- `/bookmarks/tags/:tag` — filtered list, same layout, only bookmarks
+  with the matching tag.
 
-3. **Route** — `src/server/routes/bookmarks.routes.ts`
-   GET `/bookmarks` (requireAuth, render list) + POST `/bookmarks`
-   (requireAuth, validate TypeBox, insert, redirect).
+## Design
 
-4. **Mount** — `src/server/app.ts`
-   Add `app.route("/", bookmarksRoutes())`.
+See `design/bookmarks-mockup.png` for the layout. Dark theme, cards for
+each bookmark, emerald accent on the add button. Tags are pill-shaped.
 
-5. **Page** — `src/client/pages/Bookmarks.tsx`
-   Form (URL + title) + list of bookmarks. Import `Bookmarks.css`.
+## Behavior
 
-6. **Registry** — `src/client/pages.ts`
-   Register `./pages/Bookmarks`.
-
-7. **Type** — `src/shared/types.ts`
-   Add `Bookmark` interface.
-
-8. **Test** — `tests/app.test.ts`
-   Register user → GET `/bookmarks` → expect 200 + component "Bookmarks".
+- Adding a bookmark: user pastes a URL, types a title, picks tags. On
+  submit, the bookmark appears at the top of the list.
+- Filtering by tag: clicking a tag narrows the list to bookmarks with
+  that tag. Clicking "All" resets the filter.
+- No public pages. Everything behind login.
 ```
 
-Review the plan before proceeding. Check:
+The mockup gives the agent visual context — layout, color, spacing —
+that words alone can't convey. The agent reads the image, understands
+the design direction, and produces CSS that matches instead of
+guessing.
 
-- **File paths match conventions** — routes in `routes/`, SQL in
-  `db.ts`, no feature subfolders.
-- **Step order makes sense** — migration before SQL, route before page,
-  page before registry.
-- **Nothing is missing** — types, test, mount step all present.
-- **Nothing is extra** — no `service.ts`, no `repository.ts`, no
-  feature subfolder.
+### What NOT to put in the plan
 
-If the plan is wrong, fix it before the agent writes a single line of
-code. Correcting a plan takes seconds. Correcting six wrong files takes
-minutes. The plan is your cheapest checkpoint.
+- **File paths** — the agent knows where files go from `AGENTS.md`.
+- **SQL schemas** — the agent designs the table from the feature
+  description.
+- **Code snippets** — the agent writes the code; you write the story.
+- **Architecture decisions** — "use a repository pattern" or "create a
+  service layer" will lead the agent down the wrong path. Describe the
+  *behavior*, not the *structure*.
 
-Once the plan looks right, work through it step by step with the agent
-using the workflow loop below.
+### Review the plan
+
+Read it back. Does it describe an app you'd want to use? Is the behavior
+clear? Are the pages and their interactions obvious? If you can't
+understand the plan without reading code, it's too technical — rewrite
+it in plain language.
+
+Once the plan reads like a story, hand it to the agent and start the
+workflow loop below.
 
 ## The workflow loop
 
