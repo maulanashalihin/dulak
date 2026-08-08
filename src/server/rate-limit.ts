@@ -1,8 +1,8 @@
 /**
  * Minimal in-memory fixed-window rate limiter — zero dependencies.
- * Registered on the auth routes; Hono middleware MUST call `next()` to
- * continue the chain (unlike Elysia beforeHandle, where returning undefined
- * continued).
+ * Two layers: a global limiter in app.ts (DDoS baseline, excludes /health
+ * and /assets/*) and a stricter one on auth routes (brute-force protection).
+ * Hono middleware MUST call `next()` to continue the chain.
  *
  * Notes:
  *  - Per-process memory; fine for a single instance. For horizontal scaling
