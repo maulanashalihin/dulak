@@ -28,8 +28,10 @@ files and run shell commands.
 ```
 1. Scaffold        bun create dulak@latest my-app
 2. Plan            write PLAN.md — the story of your needs
-3. Loop            prompt → agent implements → you review → commit
-4. Ship            agent verifies everything is green
+3. Design          all pages with dummy data, iterate until you love it
+4. Wire            backend + database once the design is final
+5. Loop            prompt → agent implements → you review → commit
+6. Ship            agent verifies everything is green
 ```
 
 ## Plan: write the story of your needs
@@ -97,6 +99,37 @@ Read it back. Does it describe what you need? Would a non-technical
 friend understand it? If it reads like code, it's too technical —
 rewrite it in plain language. Once it reads like a story, hand it to the
 agent.
+
+## Design first, wire the backend later
+
+Before touching the database, have the agent build **all the pages with
+dummy data**. Every page, every state — filled with fake content that
+looks real. Tell the agent:
+
+> Build all the pages from PLAN.md with dummy data — no backend, no
+> database. Use realistic sample content so I can judge the design.
+> Show me every page.
+
+Then judge the design on real pages instead of sketches:
+
+- Do the pages look like the mockup?
+- Do the empty, loading, and filled states all exist?
+- Is the flow between pages natural?
+
+Iterate until **you are personally satisfied with every single page** —
+this is the cheapest time to change things. There's no schema, no
+migration, no route logic to rework when you move a button or rename a
+field. Don't wire the backend until every page feels right to you.
+
+**Only then** wire the pages to the backend:
+
+> The design is done. Now replace the dummy data with real data — add
+> the database schema, migrations, and routes so the pages read and
+> write for real.
+
+Same pages, same design — the agent just swaps the dummy data for real
+queries. You get a working app whose design you already approved,
+instead of discovering layout problems after the backend is built.
 
 ## The workflow loop
 
