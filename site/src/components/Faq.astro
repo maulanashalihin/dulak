@@ -22,7 +22,7 @@ const faqs: { q: string; a: string }[] = [
   },
   {
     q: "Is it production-ready?",
-    a: "It is production-shaped: CSRF, rate limiting, security headers, versioned migrations, graceful shutdown, multi-stage Docker, and CI are wired from day one. The business features are yours to build.",
+    a: "Yes — every guardrail a deployed app needs is wired and tested, not scaffolded: argon2id passwords, DB-backed sessions (not JWT), CSRF origin checks, two-layer rate limiting (global DDoS baseline + auth brute-force), security headers (CSP, nosniff, frame denial), versioned migrations in transactions, gzip compression, graceful shutdown (SIGTERM), multi-stage Docker, and a 63-test E2E suite that boots the full app against an in-memory DB. The server side is not a demo — it is the same code path that runs in production. What is missing is your business logic, and that is the point: you start from a skeleton that already works, not one you have to harden.",
   },
 ];
 ---
