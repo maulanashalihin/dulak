@@ -1,0 +1,91 @@
+---
+title: "Why you should leave Next.js"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - comparisons
+  - philosophy
+  - performance
+excerpt: "Next.js is the default choice for React apps — and the most complex one. Node runtime, RSC boundaries, a framework that re-renders on both sides, and a deploy target that nudges you toward a proprietary cloud. In 2026, AI writes the code — so which stack leaves you the least to wire?"
+---
+
+Next.js is the default React framework. It has excellent docs, a massive ecosystem, and Vercel's marketing machine behind it. If you type "React starter" into any search engine, Next.js is the answer. This is not a hit piece — it's a case for why your *next* React app should not be built on it.
+
+## The runtime tax
+
+Next.js doesn't run on one thing. It runs on several:
+
+1. **Node.js** — the runtime, version-managed separately from your code
+2. **A package manager** — npm, yarn, or pnpm, each with its own lockfile format and resolution behavior
+3. **A build pipeline** — webpack or Turbopack, with config files layered on top (`next.config.js`, `tsconfig.json`, PostCSS config, ESLint config, Tailwind config)
+4. **A deployment target** — Vercel's serverless platform, or a self-hosted Node server you configure yourself
+
+Each of these has its own version, its own config, its own upgrade cycle. Next.js itself releases a new version every few months; each one can change the router, the build output, or the config format. When you upgrade, you're not upgrading one thing — you're upgrading the intersection of Node, the bundler, and the framework.
+
+Dulak runs on **one runtime**: Bun. Bun is the HTTP server, the database engine (bun:sqlite), the bundler, the test runner, and the package manager. One install, one version, one upgrade. There is no second toolchain to configure.
+
+## The React Server Components tax
+
+Next.js's App Router is built on React Server Components. RSC is a genuinely clever idea — render components on the server, stream the result, hydrate on the client. But it comes with a mental-model tax that has no equivalent in a plain React app:
+
+- **`'use client'` boundaries.** Every component that touches state, effects, or browser APIs needs the directive. Every library that isn't RSC-aware needs a wrapper. You spend real time deciding *which side* of the boundary each component lives on — and re-deciding when you move a component and the tree breaks.
+- **Two render passes.** The server renders the component tree, then the client hydrates it. Two executions of the same components, two chances for a mismatch, one invisible bug that only shows up in production.
+- **Serialization limits.** Props crossing the server/client boundary must be serializable — no functions, no class instances, no `Date` in some cases. Data fetching looks local (`await db.query()` in a component) but isn't, which confuses both humans and AI.
+
+Dulak's Inertia rendering has none of this. The server renders HTML with `react-dom/server`; the client calls `hydrateRoot` and attaches event listeners. One render pass, one component tree, no `'use client'`, no boundary to reason about. Props are the page payload — serializable by definition.
+
+## The framework overhead tax
+
+Next.js is a large framework. Before your component renders, the request travels through the Next.js router, the RSC runtime, the data cache, the client reference registry, and the streaming layer. That machinery has a measurable cost per request.
+
+Dulak's HTTP layer is Hono — a zero-overhead router on top of Bun's native server. The [benchmark numbers](/database/performance/) show what framework overhead looks like when it's small: the no-DB health check does 66K req/s, and a SQLite point read adds just 0.2ms. The framework is not the bottleneck — because there isn't much framework.
+
+The Next.js equivalent: a framework that re-renders your components on two runtimes, with a build pipeline, a cache layer, and a middleware runtime — before your code even runs. Every request pays for all of it.
+
+## The deployment tax
+
+Next.js deployment means choosing between two paths, both expensive:
+
+- **Vercel (the default).** The frictionless path is the proprietary one. Your app runs on Vercel's serverless functions, with Vercel's caching, Vercel's edge network, and Vercel's pricing. Moving off later means rewriting the deployment — the "works on Vercel" configuration doesn't transfer.
+- **Self-hosted.** You configure a Node server, run `next start`, set up a process manager, a reverse proxy, environment variables, and the build pipeline. Static pages, ISR, and serverless functions each need their own serving strategy. This is a real project, not a command.
+
+A production Dulak deployment is one command:
+
+```bash
+bun run start
+```
+
+Or with Docker:
+
+```bash
+docker compose up -d
+```
+
+One process, one binary, no platform to migrate off later. The app runs anywhere Bun runs — a VPS, a Docker host, a Raspberry Pi. There is no "deploy target" to escape.
+
+## The 2026 angle
+
+Here's the argument that matters most: **framework complexity is now pure cost.** In 2016, a framework like Next.js earned its complexity by making SSR accessible — you didn't have to wire Webpack, Babel, and a server by hand. The abstraction was paying for itself.
+
+In 2026, AI writes the code. Wiring the bundler, configuring the router, and translating intent into `'use client'` boundaries are tasks an AI does — but it does them *around* the framework, not because of it. The complexity doesn't disappear; it becomes something the AI has to navigate in every session. Every Next.js-specific concept — RSC boundaries, serialization limits, cache semantics, middleware runtimes — is context the AI must load, reason about, and avoid tripping over.
+
+The question is no longer "what does this framework do for me?" It's "how much does this framework make the AI maintain, and is that complexity earning its keep?" For Next.js, the answer is a lot of maintenance and a thin earning.
+
+## When to stay with Next.js
+
+This is not a "rewrite everything" argument. If you have:
+
+- **An existing Next.js app with years of code** — don't rewrite. The switching cost is real, and Next.js is a fine framework for maintaining what you have.
+- **A team deep in the Next.js ecosystem** — if your team ships fast in the App Router, the productivity cost of switching may not be worth it.
+- **A need for the framework's opinionated conventions** — file-based routing, `next/image` optimization, built-in fonts. These are genuinely useful. If your app leans on them, Next.js is not a bad choice.
+
+This is about what to start *new* projects in. When you're choosing a stack for a greenfield app in 2026, the question is not "which framework has the most features?" — AI can wire any of them. The question is "which stack leaves me the least to configure, the fewest boundaries to reason about, and the fastest path from zero to business logic?"
+
+That's Dulak: Hono + Inertia on Bun. One runtime, one render pass, one process, no `'use client'`.
+
+## The short version
+
+**Next.js for existing apps. Dulak for new ones.**
+
+The runtimes: 2+ (Node + build pipeline) vs 1. The render passes: 2 (RSC) vs 1. The component boundaries: `'use client'` everywhere vs none. The deploy target: Vercel or self-hosted Node vs one binary. The complexity the AI must navigate: the entire framework vs one event loop.
