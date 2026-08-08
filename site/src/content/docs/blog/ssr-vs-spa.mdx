@@ -14,6 +14,28 @@ SSR sends rendered HTML. SPA sends an empty div and a JavaScript bundle. That's 
 
 The [Inertia post](/blog/why-inertia-not-spa/) covered the architecture: one router, one validator, no API layer. This post is about the rendering strategy — what the browser receives on the first byte, and why it matters.
 
+## What is SPA?
+
+**SPA** (Single Page Application) is a rendering strategy where the server sends a bare HTML shell — typically just `<div id="app"></div>` and a `<script>` tag — and the browser downloads a JavaScript bundle, executes it, and renders the entire UI on the client.
+
+The "single page" part means the browser loads one HTML document, then JavaScript takes over: routing, data fetching, rendering, and state management all happen in the browser. Navigating between pages doesn't trigger a full page reload — JavaScript swaps content in and out of the DOM.
+
+Examples: React apps built with Vite (no SSR), Vue apps with Vue Router, Angular apps. The server is a static file host or a JSON API — it never produces HTML with content in it.
+
+## What is SSR?
+
+**SSR** (Server-Side Rendering) is a rendering strategy where the server produces full HTML — with content, headings, text, meta tags — on every request. The browser receives a complete document and can paint it immediately, before any JavaScript loads.
+
+This is how the web worked before SPAs: PHP, Rails, Django, Express with a template engine — the server reads from the database, renders HTML, sends it. The browser displays it. JavaScript, if any, adds interactivity on top of the already-visible page.
+
+Modern SSR (Next.js, Nuxt, SvelteKit, Dulak) adds a hydration step: after the HTML is visible, JavaScript loads in the background and "attaches" interactivity to the existing DOM — event listeners, state, client-side routing. The user sees content first, interactivity arrives second.
+
+## The difference in one sentence
+
+SPA: the browser receives an empty shell, JavaScript renders everything. SSR: the server renders everything, the browser receives a complete page.
+
+The rest of this post explains why that difference matters — for speed, for SEO, for mobile users, and for code complexity.
+
 ## The blank screen problem
 
 Here's what a SPA sends on first load:
