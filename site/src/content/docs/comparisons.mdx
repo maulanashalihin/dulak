@@ -79,7 +79,8 @@ auth and uploads wired instead of DIY.
 
 Laravel is the most popular **PHP MVC framework** — Eloquent ORM,
 migrations, jobs, queues, Blade templates, and a massive package
-ecosystem.
+ecosystem. It is also still gluing together PHP, Composer, a web
+server, and a database driver in 2026.
 
 | | Dulak | Laravel |
 | --- | --- | --- |
@@ -96,17 +97,17 @@ Bun; Laravel glues together a language, a package manager, a web server,
 and a database. On the same hardware, Dulak is **8× faster** on reads
 and **5× faster** on writes — not because of magic, but because there is
 no ORM, no model hydration, and no kernel bootstrap per request (see the
-[benchmark page](/database/performance/)). **Reach for Laravel** if you
-need jobs, queues, and the PHP package ecosystem. **Pick Dulak** if you
-want TypeScript everywhere, one runtime, raw SQL, and a lighter
-dependency surface.
+[benchmark page](/database/performance/)). **Pick Dulak** for TypeScript
+everywhere, one runtime, raw SQL, and a lighter dependency surface.
+Reach for Laravel if you enjoy configuring four toolchains.
 
 ## Dulak vs. CodeIgniter
 
 CodeIgniter is a lightweight **PHP MVC framework** — small footprint,
 minimal dependencies, and a reputation for speed and simplicity. It
 ships routing, controllers, models, and a query builder, but fewer
-batteries than Laravel.
+batteries than Laravel. A LAMP-style stack in 2026, but a respectable
+one.
 
 | | Dulak | CodeIgniter |
 | --- | --- | --- |
@@ -129,7 +130,8 @@ everywhere, one runtime, and the full stack wired from day one.
 
 Rails is the canonical **Ruby full-stack framework** — ActiveRecord, MVC
 convention, Hotwire/Turbo, and the original "convention over
-configuration" philosophy.
+configuration" philosophy. Also four toolchains chained together:
+Ruby, Bundler, a web server, and a database driver.
 
 | | Dulak | Rails |
 | --- | --- | --- |
@@ -153,7 +155,7 @@ Bun runtime, and zero abstraction between you and the database.
 Express is the most widely-used **Node HTTP framework** — a minimal
 router that ships with nothing but routing. Pairing it with a template
 engine (EJS, Pug) gives you server-rendered HTML, but everything else is
-yours to wire.
+yours to wire. A router and a prayer.
 
 | | Dulak | Express |
 | --- | --- | --- |
@@ -192,10 +194,10 @@ deployed faster than assembling a framework stack yourself.
 | React server components, edge deploy | Next.js |
 | Vue end to end, Nitro deploy targets | Nuxt |
 | Svelte end to end | SvelteKit |
-| Mature PHP MVC + ORM ecosystem | Laravel |
-| Lightweight PHP MVC, minimal deps | CodeIgniter |
-| Ruby full-stack, ActiveRecord, Hotwire | Rails |
-| Minimal router, build it yourself | Express |
+| PHP MVC + ORM, four toolchains | Laravel |
+| Lightweight PHP MVC, LAMP in 2026 | CodeIgniter |
+| Ruby full-stack, four toolchains | Rails |
+| A router and a prayer | Express |
 
 Dulak's bet: for a large class of apps, a boring, pinned, single-runtime
 boilerplate with auth and uploads already wired is a faster and more
