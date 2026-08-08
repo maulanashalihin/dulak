@@ -22,7 +22,7 @@ const faqs: { q: string; a: string }[] = [
     },
     {
         q: "Why SQLite and not Postgres?",
-        a: "One file for the whole database: bun:sqlite is built into Bun, no server to install, no connection pool, no credentials. WAL mode serves 52K reads/s and 95K writes/s on a single process — enough for most apps. Back up by copying a file. When you outgrow it, Postgres is a deliberate swap point, not an emergency.",
+        a: "One file for the whole database: bun:sqlite is built into Bun, no server to install, no connection pool, no credentials. WAL mode serves 52K reads/s and 95K writes/s on a single process — enough for most apps. Back up by copying a file, or stream replicas to S3 with Litestream. When you outgrow it, Postgres is a deliberate swap point, not an emergency.",
     },
     {
         q: "Is it production-ready?",
