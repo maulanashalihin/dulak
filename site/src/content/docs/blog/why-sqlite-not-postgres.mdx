@@ -49,6 +49,17 @@ With these settings, Dulak serves **52,000 reads per second** and **95,000 write
 
 Most apps never reach 1,000 req/s. SQLite handles 52× that on a laptop. The "SQLite is slow" reputation comes from default settings (`rollback journal` + `FULL` synchronous mode) that run at 3.5K writes/s — 27× slower than WAL + `NORMAL`.
 
+## Faster than Postgres/MySQL on a single server
+
+This is the part that surprises people: on a single server, SQLite is **always** faster than Postgres or MySQL for raw query latency. Not sometimes — always. Four reasons:
+
+1. **No network hop** — Postgres/MySQL require a TCP round-trip per query, even on localhost (0.5–1ms). SQLite reads from a memory-mapped WAL file in the same process. Zero network latency.
+2. **No connection pool overhead** — Postgres/MySQL need a pool (acquire/release per query). SQLite uses a single in-process handle with prepared statements cached at module load.
+3. **No wire protocol** — Postgres/MySQL serialize query text → binary → decode result rows over a wire protocol. SQLite reads pages directly from an mmap'd file into native structs via Bun's native binding. Zero copy.
+4. **No IPC context switch** — Postgres/MySQL run as separate server processes. Every query crosses a process boundary. SQLite runs in-process, on the same event loop as your HTTP server.
+
+Postgres and MySQL only win when you need things SQLite fundamentally cannot provide: multi-server horizontal scaling, concurrent parallel writers, or a more sophisticated query optimizer for very large datasets. On a single server with a single app process, the in-process database will always beat the network-attached one.
+
 ## Backup is copying a file
 
 Postgres backup means `pg_dump`, or setting up replication, or configuring a managed service. MySQL is the same with `mysqldump`.
