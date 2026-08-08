@@ -127,7 +127,7 @@ roles, SSR, and test suite.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `PORT` | `4000` | |
+| `PORT` | `4000` | In dev, auto-increments to the next free port if busy (prod fails fast) |
 | `APP_URL` | `http://localhost:4000` | Absolute base URL (email links, OAuth redirects) |
 | `DATABASE_PATH` | `./data/app.sqlite` | |
 | `SSR` | `true` | `false` ships an empty shell — client renders from scratch (no hydrate) |
