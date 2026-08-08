@@ -7,12 +7,12 @@ tags:
   - ssr
   - performance
   - philosophy
-excerpt: "A SPA ships an empty div and a JS bundle. SSR ships HTML on the first byte. The difference is not theoretical — it's 50ms vs 2 seconds on a budget phone, and it's whether Google can read your page."
+excerpt: "SSR ships HTML on the first byte — 50ms to content. SPA ships an empty div and a JS bundle — 500ms to 2s on a budget phone. SSR is crawlable, mobile-friendly, and has no hydration waterfall. Dulak does it in-process, no separate server."
 ---
 
-The [Inertia post](/blog/why-inertia-not-spa/) covered the architecture: one router, one validator, no API layer, no client-side state. This post is about something different — the rendering strategy. Why does Dulak render HTML on the server instead of shipping a JavaScript bundle to the client?
+SSR sends rendered HTML. SPA sends an empty div and a JavaScript bundle. That's the difference, and it's not theoretical — it's 50ms vs 2 seconds on a budget phone, and it's whether Google can read your page or queues it for a rendering pass that might take weeks.
 
-These are separate decisions. You can use Inertia without SSR (ship an empty shell, let the client render). You can use SSR without Inertia (Next.js, Nuxt). Dulak does both, but the rendering argument stands on its own.
+The [Inertia post](/blog/why-inertia-not-spa/) covered the architecture: one router, one validator, no API layer. This post is about the rendering strategy — what the browser receives on the first byte, and why it matters.
 
 ## The blank screen problem
 
