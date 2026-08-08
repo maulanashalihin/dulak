@@ -135,6 +135,35 @@ that words alone can't convey. The agent reads the image, understands
 the design direction, and produces CSS that matches instead of
 guessing.
 
+**Requirement: the agent's model must be able to read images.** If the
+model behind your agent doesn't support image input, a mockup image is
+useless to it — it can't see the file. Check before you rely on one.
+
+### Can't read images? Use an HTML mockup instead
+
+If your agent can't read images, the alternative is a **single-page
+HTML mockup** — a static `.html` file that lays out the design with
+real markup and CSS. You can generate one in ChatGPT, Gemini Canvas, or
+any design tool that exports HTML. Put it in the project and reference
+it from the plan the same way:
+
+```markdown
+## Design
+
+See `design/bookmarks-mockup.html` for the layout — it's a static
+mockup of the page with real HTML/CSS. Match its structure, spacing,
+and colors in the React implementation.
+```
+
+An HTML mockup works even better than an image for agents, because it
+carries structure: the agent can read the actual elements, classes, and
+styles instead of inferring them from pixels. The text still can't
+describe every detail — the mockup can.
+
+Whether you use an image or an HTML file, the design stays out of the
+plan's prose. The plan tells the story; the mockup shows the design;
+the agent connects the two.
+
 ### What NOT to put in the plan
 
 - **Pages and routes** — the agent decides what pages to create and how
