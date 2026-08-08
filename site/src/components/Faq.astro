@@ -22,7 +22,7 @@ const faqs: { q: string; a: string }[] = [
     },
     {
         q: "Why SQLite?",
-        a: "Because for most apps it is more than enough — and the numbers prove it. Dulak serves 52K point reads per second and 95K writes per second on a single Apple M4 process, with WAL + synchronous=NORMAL. SQLite is zero-config (no server to install, no connection pool, no credentials), zero-dependency (built into Bun), and file-based (back up by copying a file). It is the most deployed database in the world and has maintained backward compatibility for decades. When you outgrow a single process — Postgres-level concurrency, multi-region replication — that is a deliberate, well-documented swap point, not an emergency. See the benchmark page for the full numbers.",
+        a: "One file for the whole database: bun:sqlite is built into Bun, no server to install, no connection pool, no credentials. WAL mode serves 52K reads/s and 95K writes/s on a single process — enough for most apps. Back up by copying a file. When you outgrow it, Postgres is a deliberate swap point, not an emergency.",
     },
     {
         q: "Is it production-ready?",
