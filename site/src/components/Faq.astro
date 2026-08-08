@@ -1,10 +1,6 @@
 ---
 const faqs: { q: string; a: string }[] = [
     {
-        q: "Is Dulak a framework?",
-        a: "No — it is a boilerplate. A framework gives you primitives and you wire them; Dulak ships the wiring already done (auth, uploads, migrations, SSR, tests, Docker) and then gets out of your way. You fork it and own the code.",
-    },
-    {
         q: "How is Dulak different from Next.js, Nuxt, or SvelteKit?",
         a: "Those are meta-frameworks that couple a server model to one client framework (React, Vue, or Svelte) and leave auth, uploads, and persistence to you. Dulak is a single Bun process with Hono + bun:sqlite + Inertia v3, auth and uploads already wired, raw SQL instead of an ORM, and React, Svelte, or Vue as a swappable template. Pick a meta-framework for RSC or edge deploy; pick Dulak for a wired, ownable, single-runtime stack.",
     },
