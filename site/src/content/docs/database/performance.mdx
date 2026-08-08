@@ -162,28 +162,32 @@ schema, same operation mix (50K autocommit inserts, 50K inserts in one
 transaction, 50K point reads, SELECT all), direct access — no HTTP on
 either side:
 
-| Operation | SQLite (WAL+NORMAL) | Postgres 14.17 (default) | Postgres (sync_commit=off) | SQLite faster |
+| Operation | SQLite (WAL+NORMAL) | Postgres 14.17 (default) | MariaDB 12.0.2 | SQLite faster |
 | --- | ---: | ---: | ---: | ---: |
-| Insert autocommit | 84,844 ops/s | 12,055 ops/s | 26,980 ops/s | **7.0×** |
-| Insert in 1 tx | 1,225,875 ops/s | 31,176 ops/s | 30,744 ops/s | **39×** |
-| Point read (PK) | 561,532 ops/s | 29,754 ops/s | 29,882 ops/s | **18.9×** |
-| SELECT all (50K rows) | 8.2ms | 22ms | 22ms | **2.7×** |
+| Insert autocommit | 84,844 ops/s | 12,055 ops/s | 11,931 ops/s | **7.0× / 7.1×** |
+| Insert in 1 tx | 1,225,875 ops/s | 31,176 ops/s | 30,746 ops/s | **39× / 40×** |
+| Point read (PK) | 561,532 ops/s | 29,754 ops/s | 26,852 ops/s | **18.9× / 20.9×** |
+| SELECT all (50K rows) | 8.2ms | 22ms | 15ms | **2.7× / 1.8×** |
 
-Postgres was tuned as far as reasonable: the `sync_commit=off` column
+Postgres was tuned as far as reasonable: `synchronous_commit = off`
 drops fsync per commit (the Postgres equivalent of SQLite's `NORMAL`
-tradeoff) — reads don't move, and even writes stay 3–39× behind SQLite.
+tradeoff) — reads don't move, and even writes stay 3× behind. MariaDB
+was run with its default `innodb_flush_log_at_trx_commit = 1` (the
+durable default) and `sync_binlog = 1`; the numbers are essentially
+identical to Postgres — both server databases pay the same
+process-boundary and wire-protocol cost.
 
-The Postgres number also includes a TCP round trip + wire protocol per
-query even on localhost. pgbench (the Postgres-native benchmark, server
-side, C client) confirms the same ceiling: **6,530 tps** single
-connection, **9,470 tps** at 50 concurrent connections, ~47K tps with
-`sync_commit=off` — still below SQLite's direct numbers, and that's
-before any HTTP layer on top.
+The Postgres/MariaDB numbers also include a TCP round trip + wire
+protocol per query even on localhost. pgbench (the Postgres-native
+benchmark, server side, C client) confirms the same ceiling: **6,530
+tps** single connection, **9,470 tps** at 50 concurrent connections,
+~47K tps with `sync_commit=off` — still below SQLite's direct numbers,
+and that's before any HTTP layer on top.
 
 Same conclusion as the [blog post](/blog/why-sqlite-not-postgres/): on a
 single server, the in-process database wins on raw latency because there
-is no process boundary to cross. Postgres earns its place when you need
-multiple servers — not when you need raw speed.
+is no process boundary to cross. Postgres and MySQL/MariaDB earn their
+place when you need multiple servers — not when you need raw speed.
 
 ## The tradeoff
 
@@ -212,12 +216,15 @@ Methodology:
 - **Direct matrix:** 50K single-row inserts + 50K point reads per config,
   fresh DB file per config, `busy_timeout = 5000` fixed, only
   `journal_mode` / `synchronous` varied.
-- **SQLite vs Postgres:** identical schema and operation mix run on the
+- **SQLite vs server DBs:** identical schema and operation mix run on the
   same machine within minutes of each other. SQLite via `bun:sqlite`
   (in-process); Postgres 14.17 (Homebrew) via `pg` driver over localhost
   TCP, default `postgresql.conf` (fsync on, `synchronous_commit = on`),
-  plus one run with `synchronous_commit = off`. `pgbench` numbers are the
-  server-side baseline (C client, no HTTP, no driver serialization).
+  plus one run with `synchronous_commit = off`; MariaDB 12.0.2
+  (Homebrew) via `mysql2` driver over localhost TCP, default durable
+  settings (`innodb_flush_log_at_trx_commit = 1`, `sync_binlog = 1`).
+  `pgbench` numbers are the server-side baseline (C client, no HTTP, no
+  driver serialization).
 - **Full-stack:** Hono + `bun:sqlite`, concurrent load (50 workers), JSON
   responses, 5K–10K requests per endpoint. Same concurrency used for the
   Laravel comparison.

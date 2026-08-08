@@ -63,9 +63,10 @@ Postgres and MySQL only win when you need things SQLite fundamentally cannot pro
 We measured it on the same MacBook Pro (M4) — same schema, same 50K
 operations, direct access (no HTTP): SQLite does **84.8K autocommit
 inserts/s and 561K point reads/s**; Postgres 14.17 does **12K inserts/s
-and 29.8K reads/s** — 7× and 19× slower. Even with `synchronous_commit
-= off` (Postgres' version of the `NORMAL` tradeoff), writes stay 3×
-behind. See the [full numbers](/database/performance/#sqlite-vs-postgres-on-the-same-machine).
+and 29.8K reads/s** (7× and 19× slower); MariaDB 12.0.2 does **11.9K
+inserts/s and 26.9K reads/s** (7× and 21× slower). Even with
+`synchronous_commit = off` (Postgres' version of the `NORMAL`
+tradeoff), writes stay 3× behind. See the [full numbers](/database/performance/#sqlite-vs-postgres-on-the-same-machine).
 
 ## Backup is copying a file
 
