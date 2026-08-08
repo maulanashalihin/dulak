@@ -5,6 +5,10 @@ const faqs: { q: string; a: string }[] = [
         a: "Those are meta-frameworks that couple a server model to one client framework (React, Vue, or Svelte) and leave auth, uploads, and persistence to you. Dulak is a single Bun process with Hono + bun:sqlite + Inertia v3, auth and uploads already wired, raw SQL instead of an ORM, and React, Svelte, or Vue as a swappable template. Pick a meta-framework for RSC or edge deploy; pick Dulak for a wired, ownable, single-runtime stack.",
     },
     {
+        q: "How is Dulak different from Laravel?",
+        a: "One runtime vs four. Dulak is Bun end to end — HTTP server, database, bundler, test runner, package manager. Laravel glues together PHP, Composer, a web server, and a database driver. Dulak serves 52K reads/s and 95K writes/s on a single process; Laravel on FrankenPHP (8 workers) hits 6K — 8× slower on reads, 5× on writes. No ORM means no abstraction tax. Reach for Laravel if you need jobs, queues, and the PHP ecosystem; pick Dulak for TypeScript everywhere and one runtime.",
+    },
+    {
         q: "Why Bun and not Node?",
         a: "One runtime for everything: Bun.serve is the HTTP server, bun:sqlite is the database, Bun.build is the bundler, bun test is the test runner. No separate language, package manager, web server, and database to wire together before your first running app.",
     },
