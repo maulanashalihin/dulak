@@ -131,4 +131,4 @@ Most apps never reach the point where SQLite is the bottleneck. The apps that do
 
 **SQLite until no single server can handle your traffic — and that's hundreds of thousands of requests per second, not hundreds.**
 
-The numbers: [52K reads/s via HTTP, 19.6K creates/s via HTTP, 95K writes/s direct](/database/performance/) on a laptop. The backup: copy a file. The swap: architectural, not performance — and scheduled, not emergency. The cost: zero infrastructure until you need it.
+The numbers: [526K reads/s and 95K writes/s direct](/database/performance/#sqlite-vs-postgres--mariadb-on-the-same-machine) on a laptop — 7–40× faster than Postgres and MariaDB on the same machine, measured the same way. The backup: copy a file. The swap: architectural, not performance — and scheduled, not emergency. The cost: zero infrastructure until you need it.
