@@ -75,16 +75,21 @@ This isn't a one-sided argument. SQLite has real limitations:
 - **No built-in replication** — Litestream provides *backup*, not *high availability*. If the server dies, you restore to a new server and restart. There's downtime. Postgres streaming replication gives you zero-downtime failover.
 - **No fine-grained access control** — SQLite has no users, roles, or row-level security. If you need multi-tenant access control at the database level, Postgres is the right tool.
 
-## The swap point
+## When is the swap actually worth it?
 
-Dulak uses raw SQL with prepared statements — no ORM, no query builder abstraction. This means migrating to Postgres is a **deliberate swap**, not an emergency rewrite:
+The honest answer: **when no single server can handle your traffic anymore.** That's a much higher bar than most people assume.
 
-1. Replace `bun:sqlite` with a Postgres driver (`pg` or `postgres`)
-2. Update the connection setup in `db.ts`
-3. Adjust SQL syntax differences (SQLite-specific functions, `INTEGER PRIMARY KEY` → `SERIAL`, etc.)
-4. Update prepared statements
+Dulak serves 52K reads/s on a single Bun process on a laptop. A production VPS with NVMe and more cores will do better. Even at 52K req/s, that's **4.5 billion requests per day** — and that's the *database-bound* endpoint, not the health check. Most web apps consider 100K requests per day "high traffic." You'd need to be serving hundreds of thousands of requests per second before SQLite's single-writer constraint becomes the bottleneck, not the HTTP layer, not the app logic, not the network.
 
-The rest of the app — routes, auth, validation, SSR — doesn't change. Because there's no ORM layer to abstract away the database, you're not migrating *through* an abstraction. You're swapping the database directly.
+The real reasons to switch to Postgres are architectural, not performance:
+
+- **You need multiple app servers** — horizontal scaling means multiple processes writing to the same database. SQLite can't do this; Postgres/MySQL can.
+- **You need zero-downtime failover** — Litestream gives you backup, not HA. If the server dies, there's downtime during restore. Postgres streaming replication gives you instant failover.
+- **You need row-level security or fine-grained access control** — SQLite has no users, roles, or RLS.
+
+Notice none of these are "SQLite is too slow." They're "my architecture outgrew single-server." If you're still on one server — even a busy one — SQLite is not your bottleneck.
+
+And when that day comes, the swap is deliberate: replace `bun:sqlite` with a Postgres driver, update `db.ts`, adjust SQL syntax differences. No ORM means no abstraction layer to migrate *through*. Routes, auth, validation, SSR — none of it changes.
 
 ## Why not start with Postgres then?
 
@@ -116,6 +121,6 @@ Most apps never reach the point where SQLite is the bottleneck. The apps that do
 
 ## The short version
 
-**SQLite for the first 99% of apps. Postgres when you outgrow it — and you'll know when.**
+**SQLite until no single server can handle your traffic — and that's hundreds of thousands of requests per second, not hundreds.**
 
-The numbers: [52K reads/s, 95K writes/s](/database/performance/). The backup: copy a file. The swap: scheduled, not emergency. The cost: zero infrastructure until you need it.
+The numbers: [52K reads/s, 95K writes/s](/database/performance/) on a laptop. The backup: copy a file. The swap: architectural, not performance — and scheduled, not emergency. The cost: zero infrastructure until you need it.
