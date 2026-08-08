@@ -14,6 +14,7 @@ export default defineConfig({
 				starlightBlog({
 					title: "Notes",
 					postCount: 20,
+					recentPostCount: 20,
 					authors: {
 						maulana: {
 							name: "Maulana Shalihin",
