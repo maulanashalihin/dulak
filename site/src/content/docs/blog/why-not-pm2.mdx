@@ -1,0 +1,69 @@
+---
+title: "Why Dulak doesn't recommend PM2"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - deployment
+  - bun
+  - philosophy
+excerpt: "PM2 is a Node process manager. Dulak runs on Bun. systemd and Docker already do everything PM2 would do — with zero extra dependencies."
+---
+
+If you're coming from the Node.js ecosystem, PM2 is probably muscle memory. You deploy, you run `pm2 start app.js`, you move on. It works. So why doesn't Dulak recommend it?
+
+## PM2 solves a Node problem
+
+PM2 was built to manage Node.js processes — restart on crash, handle logs, manage cluster mode. It's a good tool *for Node*.
+
+Dulak runs on Bun. Bun is not Node. Using PM2 to manage a Bun process is using a Node tool to manage a non-Node process. It works — PM2 can manage any process — but you're carrying a dependency that was designed for a different runtime.
+
+## systemd already does this
+
+Every Linux server has systemd built in. No install, no dependency, no extra runtime. Dulak's [VPS deployment guide](/deployment/vps/) ships a systemd unit file that:
+
+- Restarts the process on crash (`Restart=always`)
+- Handles graceful shutdown via SIGTERM (Dulak drains in-flight requests and closes the DB)
+- Manages logs via journald
+- Starts on boot (`WantedBy=multi-user.target`)
+
+PM2 duplicates every one of these features. The difference is systemd is already there and PM2 is a dependency you install.
+
+## Docker already does this
+
+If you're deploying with Docker — and Dulak ships a [multi-stage Dockerfile](/deployment/docker/) — the container runtime handles restarts:
+
+```yaml
+services:
+  app:
+    restart: unless-stopped
+```
+
+That's it. No PM2 inside the container, no process manager layer. Docker restarts the container if it exits. Dulak handles SIGTERM for graceful shutdown.
+
+## The philosophy angle
+
+Dulak's philosophy is "zero-dependency where cheap." systemd is zero-dependency — it's already on every Linux server. Docker is zero-dependency for containerized deploys — the runtime handles it.
+
+PM2 is a dependency you install to solve a problem that's already solved. It adds:
+
+- A Node.js runtime (to run PM2 itself, even though your app runs on Bun)
+- A configuration layer (`ecosystem.config.js`)
+- A CLI tool to learn and debug
+- Another thing that can break
+
+## When PM2 makes sense
+
+To be fair, PM2 has legitimate use cases:
+
+- **You're on a shared host without systemd access** — some budget VPS providers restrict systemd. PM2 works without it.
+- **You're migrating a Node.js app and already have PM2 infrastructure** — if your team knows PM2 and your monitoring is wired to it, switching has a cost.
+- **You need cluster mode for a Node app** — PM2's cluster mode is genuinely useful for Node.js multi-core scaling.
+
+None of these apply to Dulak. Dulak is Bun, not Node. Dulak ships with systemd and Docker configs. Dulak handles SIGTERM gracefully.
+
+## The short version
+
+**systemd for bare metal. Docker for containers. PM2 for Node.**
+
+Dulak is not Node.

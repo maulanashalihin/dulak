@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import starlightBlog from "starlight-blog";
 import mdx from "@astrojs/mdx";
 
 // `site` is used for canonical URLs — set it to the production domain
@@ -9,6 +10,18 @@ export default defineConfig({
 	site: "https://dulak.pages.dev",
 	integrations: [
 		starlight({
+			plugins: [
+				starlightBlog({
+					title: "Notes",
+					authors: {
+						maulana: {
+							name: "Maulana Shalihin",
+							title: "Dulak author",
+							url: "https://github.com/maulanashalihin",
+						},
+					},
+				}),
+			],
 			title: "Dulak",
 			description:
 				"Deliberately boring full-stack boilerplate: Hono + bun:sqlite + Inertia v3 on Bun, with React/Svelte/Vue templates (vanilla CSS or Tailwind).",
