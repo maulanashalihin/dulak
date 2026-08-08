@@ -48,8 +48,33 @@ import Faq from "../components/Faq.astro";
     </main>
 
     <footer class="dl-footer">
-      <span>Dulak — the Banjar word for <em>bored</em>.</span>
-      <a href="/getting-started/introduction/">Read the docs</a>
+      <div class="dl-footer-grid">
+        <div class="dl-footer-brand">
+          <div class="dl-footer-logo">
+            <img src="/favicon.svg" alt="" width="20" height="20" />
+            <span>Dulak</span>
+          </div>
+          <p>A deliberately boring full-stack boilerplate. Bun, Hono, SQLite, Inertia — one runtime, wired end to end.</p>
+        </div>
+        <div class="dl-footer-col">
+          <h4>Docs</h4>
+          <a href="/getting-started/introduction/">Getting Started</a>
+          <a href="/architecture/overview/">Architecture</a>
+          <a href="/deployment/docker/">Deployment</a>
+          <a href="/database/schema-migrations/">Database</a>
+        </div>
+        <div class="dl-footer-col">
+          <h4>More</h4>
+          <a href="/comparisons/">Comparisons</a>
+          <a href="/philosophy/">Philosophy</a>
+          <a href="/blog/">Notes</a>
+          <a href="https://github.com/maulanashalihin/dulak" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </div>
+      <div class="dl-footer-bottom">
+        <span>Dulak — the Banjar word for <em>bored</em>.</span>
+        <span>MIT License</span>
+      </div>
     </footer>
   </body>
 </html>
