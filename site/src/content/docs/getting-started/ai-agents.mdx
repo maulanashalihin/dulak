@@ -34,6 +34,24 @@ files and run shell commands.
 6. Ship            agent verifies everything is green
 ```
 
+## Setup: scaffold the project
+
+Tell your agent:
+
+> Scaffold a new Dulak project called `my-app` with the default React
+> template, then start the dev server.
+
+The agent runs `bun create dulak@latest my-app`, enters the directory,
+and starts the dev server. Check the app is running, then confirm the
+agent read the project rules:
+
+> What are the hard rules in AGENTS.md? Summarize them.
+
+You should hear back the core conventions — routes live in
+`routes/<feature>.routes.ts`, SQL in `db.ts`, env in `config.ts`. If
+the agent can't answer, tell it to read `AGENTS.md` before proceeding.
+This is your first checkpoint.
+
 ## Plan: write the story of your needs
 
 Before the agent writes any code, write a `PLAN.md` in the project root.
@@ -100,7 +118,7 @@ friend understand it? If it reads like code, it's too technical —
 rewrite it in plain language. Once it reads like a story, hand it to the
 agent.
 
-## Design first, wire the backend later
+## Design the pages (your review)
 
 Before touching the database, have the agent build **all the pages with
 dummy data**. Every page, every state — filled with fake content that
@@ -125,7 +143,9 @@ Design is the only thing that needs your judgment — it's subjective.
 There's no right or wrong layout, only one you like. So this phase is
 the only one where you review manually.
 
-**Only then** wire the pages to the backend:
+## Wire the backend (automated tests)
+
+Only when the design is final, wire the pages to the backend:
 
 > The design is done. Now replace the dummy data with real data — add
 > the database schema, migrations, and routes so the pages read and
@@ -140,13 +160,22 @@ verification is for. The agent writes strict unit tests for the wiring
 > validation. The wiring isn't done until the tests pass.
 
 Same pages, same design — the agent just swaps the dummy data for real
-queries, and the tests prove it works. You get a working app whose
-design you already approved, without reviewing backend logic yourself.
-Manual review for the subjective part (design), automated tests for the
-objective part (wiring).
+queries, and the tests prove it works. Manual review for the subjective
+part (design), automated tests for the objective part (wiring).
 
-Have the agent commit after each verified step — a checkpoint you can
-roll back to. A plan with several steps produces several commits.
+## Work in slices, then ship
+
+Build one slice at a time — not the whole app in one prompt:
+
+> Read PLAN.md and build the next slice. When it works, commit it.
+
+After each verified slice, the agent commits — a checkpoint you can
+roll back to. A plan with several slices produces several commits.
+
+When the slices are done, the agent verifies everything is green —
+typecheck, tests, browser console — and the app is ready to ship:
+
+> Run the full checks and confirm everything passes.
 
 ## The plan evolves
 
