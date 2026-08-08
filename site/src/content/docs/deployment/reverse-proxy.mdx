@@ -22,13 +22,52 @@ server only runs Bun. **Pick one** — either A1 or A2, not both:
 
 ### A1. Proxied DNS + origin rule (no extra software)
 
-1. DNS: A record `your-domain.com` → server IP, **proxied** (orange cloud).
-2. Dashboard → **Rules → Origin Rules** → create a rule for
-   `your-domain.com` that rewrites the **Host header** to
-   `your-domain.com` (so the app sees the real host for redirects).
-3. SSL/TLS mode: **Full** (edge→origin over HTTPS with a Cloudflare Origin
-   CA cert) or **Flexible** (edge→origin HTTP) — Flexible is fine when the
-   origin port is firewalled to Cloudflare IPs only.
+Cloudflare proxies traffic to your server and handles TLS. No software
+to install on the server — just DNS and dashboard settings.
+
+**Step 1 — DNS record:**
+
+1. Cloudflare Dashboard → **DNS → Records**.
+2. Add an **A record**: name `your-domain.com` (or `@`), content = your
+   server IP, proxy status **Proxied** (orange cloud).
+   - "Proxied" means traffic goes through Cloudflare's edge (TLS, DDoS
+     protection, caching). "DNS only" (grey cloud) just resolves the IP
+     and exposes your server directly — don't use that.
+3. (Optional) Add a `www` CNAME pointing to `your-domain.com`, also
+   proxied.
+
+**Step 2 — SSL/TLS mode:**
+
+Dashboard → **SSL/TLS → Overview** → set mode:
+
+- **Flexible** — Cloudflare terminates TLS at the edge, talks HTTP to
+  your origin on port 4000. Simplest: no cert needed on the server.
+  Safe because the firewall only allows Cloudflare IPs (see
+  [Firewall](#firewall) below).
+- **Full** — edge→origin over HTTPS. You need a cert on the origin
+  (Cloudflare Origin CA cert, free from Dashboard → SSL/TLS → Origin
+  Server → Create Certificate). More secure, slightly more setup.
+
+**Step 3 — Host header (only if redirects or OAuth break):**
+
+Cloudflare normally passes the original `Host` header through, so the
+app sees `your-domain.com` and generates correct redirect URLs. If your
+redirects or OAuth callbacks point to `localhost:4000` or the wrong
+host, Cloudflare may be rewriting the Host header. Fix it with an
+Origin Rule:
+
+1. Dashboard → **Rules → Origin Rules** → **Create rule**.
+2. Name: `Rewrite host for dulak`.
+3. If incoming requests match: `Hostname equals your-domain.com`.
+4. Rewrite Host header to: `your-domain.com`.
+5. Deploy.
+
+This ensures the app's CSRF origin check (`Origin` header vs `Host`)
+passes — both will be `your-domain.com`.
+
+**Step 4 — Firewall:** restrict port 4000 to Cloudflare IPs only (see
+[Firewall](#firewall) below) so nobody can bypass the edge and hit your
+origin directly.
 
 ### A2. Cloudflare Tunnel (zero open ports)
 
