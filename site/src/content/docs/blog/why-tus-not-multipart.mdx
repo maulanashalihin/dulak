@@ -1,0 +1,99 @@
+---
+title: "Why tus uploads, not multipart forms"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - uploads
+  - architecture
+  - philosophy
+excerpt: "Multipart forms buffer the entire file in memory, can't resume, and timeout on large uploads. tus is a protocol designed for resumable, chunked uploads — and Dulak ships a spec-compliant implementation."
+---
+
+Every web framework ships multipart form parsing. It's the default. You add `enctype="multipart/form-data"` to a form, the server parses the file from the request body, you write it to disk. It works. So why does Dulak use the [tus protocol](https://tus.io/protocols/resumable-upload) instead?
+
+Because multipart forms are broken for production uploads. They work for a 100KB profile picture and fall apart at 50MB.
+
+## The multipart problem
+
+Multipart form uploads have four fundamental problems:
+
+1. **No resume.** If the connection drops at 90% of a 500MB upload, you start over. The user waits, the upload fails, they try again, it fails again. On mobile or flaky WiFi, large uploads are basically impossible.
+
+2. **Memory buffering.** Most multipart parsers buffer the entire request body in memory before handing it to your handler. A 100MB upload means 100MB of RAM per concurrent request. Ten concurrent uploads? 1GB. On a $5 VPS, that's an OOM kill waiting to happen.
+
+3. **No progress.** The browser shows a progress bar, but your server has no idea how far along the upload is. If the user closes the tab, the partial upload is gone — no way to know how much was received, no way to continue.
+
+4. **Timeouts.** HTTP servers have request timeouts. A 500MB upload over a slow connection can take 10+ minutes. Most servers default to 30-second timeouts. The upload fails, the user gets a 408 or 500, and nobody knows why.
+
+## What tus does differently
+
+tus is an HTTP-based protocol for resumable uploads. Instead of sending the entire file in one request, tus breaks it into chunks:
+
+1. **POST** — create an upload. The client sends `Upload-Length` (total bytes) and `Upload-Metadata` (filename, content-type). The server responds with a `Location` URL for the upload.
+2. **HEAD** — check the current offset. The server returns `Upload-Offset` (how many bytes have been received). This is how resume works — the client asks "where did you stop?" and continues from there.
+3. **PATCH** — send a chunk. The client sends `application/offset+octet-stream` at the current offset. The server appends to the file and returns the new offset.
+4. **DELETE** — cancel the upload. File and metadata removed.
+
+If the connection drops mid-upload, the client reconnects, sends HEAD to find the offset, and continues from there. No restart. No lost progress.
+
+## How Dulak implements it
+
+Dulak's tus implementation is in three flat modules — no `tus/` subfolder, no abstraction layer:
+
+- **`tus-protocol.ts`** — protocol constants, header helpers, metadata parsing, checksum verification
+- **`tus-storage.ts`** — on-disk storage (`appendFile` for chunks, `readFile` for serving)
+- **`uploads.routes.ts`** — route handlers inline, same convention as every other route file
+
+The implementation covers the core protocol plus five extensions:
+
+- **creation** / **creation-with-upload** — POST creates the upload, optionally with the first chunk
+- **termination** — DELETE removes the upload
+- **expiration** — `Upload-Expires` header + background sweep for stale uploads
+- **checksum** — `Upload-Checksum` header (sha1/256/384/512/md5) verified per chunk
+
+Upload state lives in SQLite — one row per upload with the offset, length, metadata, and owner. No external state store, no Redis, no in-memory tracking that disappears on restart.
+
+## The resume pattern in practice
+
+Dulak's profile avatar upload demonstrates the full pattern:
+
+1. Client sends POST with `Upload-Length` + `Upload-Metadata` (filename, content-type)
+2. Client sends HEAD to reconcile the offset (resume after interruption)
+3. Client sends chunked PATCH (256KB chunks) with a progress bar
+4. On completion, the avatar is linked by upload ID
+5. If interrupted, the pending upload is saved in `localStorage` and resumed when the same file is re-selected
+
+The 256KB chunk size is deliberate — small enough that a dropped connection loses at most 256KB, large enough that the HTTP overhead is negligible. The client doesn't need to re-upload the entire file, just the last chunk.
+
+## Concurrency and safety
+
+tus uploads are auth-gated and ownership-checked on every endpoint:
+
+- **Auth required** — the session cookie is checked on every request (401 without it)
+- **Ownership enforced** — uploads belong to their creator (404 if you try to PATCH someone else's upload)
+- **Atomic offset advancement** — `UPDATE ... WHERE offset = ?` means concurrent PATCHes race safely; losers get 409 and re-sync via HEAD
+- **Unguessable IDs** — 128-bit random base64url IDs; files are effectively private by entropy
+- **Stored-XSS guard** — `/uploads` responses carry `script-src 'none'` in the CSP, and avatars are restricted to raster image types (no SVG)
+
+## When multipart is fine
+
+Multipart isn't wrong for everything. It's fine for:
+
+- **Small files** — under 1MB, the resume and chunking overhead isn't worth it
+- **Server-to-server transfers** — on a fast internal network, timeouts and drops are rare
+- **Simple forms** — if you're collecting a resume PDF and that's it, multipart works
+
+But for user-facing uploads in a web app — avatars, documents, media — tus is the right default. The cost of implementing it is paid once. The cost of multipart failures (frustrated users, support tickets, abandoned uploads) is paid forever.
+
+## The philosophy angle
+
+Dulak's philosophy is "zero-dependency where cheap." The tus implementation is zero-dependency — it uses `node:fs/promises` for disk I/O, `node:crypto` for checksums, and SQLite for state. No `tus-node-server` package, no upload library, no abstraction layer. The protocol is simple enough that the implementation is ~400 lines across three files.
+
+This is the same logic as "no ORM" — the protocol is the standard, the implementation is explicit, and there's no abstraction tax. You can read every line of the upload handler and understand exactly what happens when a chunk arrives.
+
+## The short version
+
+**Multipart for small files. tus for anything a user might upload over a flaky connection.**
+
+The implementation: [zero-dependency, spec-compliant](/uploads/tus/), three flat modules, SQLite state. The resume: HEAD to find the offset, PATCH to continue. The cost: paid once, in ~400 lines of code you own.
