@@ -36,3 +36,112 @@
 	width: 24px;
 	height: 24px;
 }
+
+
+/* --- Blog index (starlight-blog overrides) --- */
+
+/* Page title — reduce from default 42px */
+.posts + h1,
+h1#_top {
+	font-size: 2rem;
+}
+
+/* Post list container — tighten the gap */
+.posts {
+	gap: 1.25rem;
+}
+
+/* Post cards — add background, border, padding, hover */
+article.preview {
+	background: #161b22;
+	border: 1px solid #1f2937;
+	border-radius: 8px;
+	padding: 1.5rem;
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+article.preview:hover {
+	border-color: #059669;
+}
+
+/* Post title — reduce from 35px, match landing text color */
+article.preview .preview-link h2 {
+	font-size: 1.3rem;
+	font-weight: 600;
+	color: #e5e7eb;
+	line-height: 1.3;
+	margin: 0 0 0.5rem;
+	transition: color 0.15s ease;
+}
+article.preview .preview-link:hover h2 {
+	color: #34d399;
+}
+article.preview:hover .preview-link h2 {
+	color: #34d399;
+}
+
+/* Metadata — horizontal layout, muted */
+article.preview .metadata {
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	font-size: 0.85rem;
+	color: #9aa4b2;
+}
+article.preview .metadata .dates {
+	font-size: 0.85rem;
+}
+article.preview .metadata .authors {
+	display: flex;
+}
+article.preview .metadata .author {
+	gap: 0.4rem;
+}
+article.preview .metadata .name {
+	font-size: 0.85rem;
+	color: #9aa4b2;
+	font-weight: 500;
+}
+article.preview .metadata .title {
+	font-size: 0.75rem;
+	color: #64748b;
+}
+article.preview .metadata .author .text {
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+	gap: 0.35rem;
+}
+
+/* Excerpt — slightly muted */
+article.preview .sl-markdown-content p {
+	color: #9aa4b2;
+	font-size: 0.95rem;
+	line-height: 1.6;
+	margin: 0.5rem 0 0;
+}
+
+/* Tags footer — add top separator */
+article.preview footer {
+	border-top: 1px solid #1f2937;
+	padding-top: 0.75rem;
+	margin-top: 1rem;
+}
+article.preview footer b {
+	color: #64748b;
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+article.preview footer ul {
+	gap: 0.4rem;
+}
+article.preview footer a {
+	font-size: 0.8rem;
+	color: #9aa4b2;
+	border-color: #1f2937;
+	transition: color 0.15s ease, border-color 0.15s ease;
+}
+article.preview footer a:hover {
+	color: #34d399;
+	border-color: #059669;
+}
