@@ -138,6 +138,11 @@ guessing.
 - **Architecture decisions** — "use a repository pattern" or "create a
   service layer" will lead the agent down the wrong path. Describe the
   *behavior*, not the *structure*.
+- **Tests and verification** — these are automatic. Every slice the
+  agent implements comes with a unit test and a verification pass
+  (typecheck, test suite, browser console) built in. You don't ask for
+  tests; the agent includes them the way it includes migrations — as a
+  standard part of the work.
 
 ### Review the plan
 
@@ -207,42 +212,43 @@ now than after 6 files.
 
 ### Step 3: Verify
 
-After the agent says it's done, verify in this order:
+The agent verifies its own work — you review the results. You don't
+need to remember or type any commands; the agent knows them. Ask:
 
-**Typecheck first** — it's fast and catches structural mistakes:
+> Run typecheck, then run the test suite (the tests should already be
+> part of this slice — if they're missing, add them). Open the bookmarks
+> page in the browser and check the console for errors. Report the
+> results.
 
-```bash
-bun run typecheck
-```
+The agent should verify in this order:
 
-If the agent forgot to register the page in `pages.ts`, or imported a
-type that doesn't exist, typecheck catches it. Tell the agent to fix any
-errors.
+1. **Typecheck** — `bun run typecheck`. Fast; catches structural
+   mistakes like a page missing from the `pages.ts` registry or a bad
+   import. If it fails, the agent fixes the errors and re-runs.
+2. **Tests** — the slice already ships with unit tests (they're a
+   standard part of every plan). The agent runs `bun run test` (which
+   runs `bun test --isolate`) and fixes any failing tests. If a test is
+   somehow missing, the agent writes it following the pattern in
+   `tests/app.test.ts` — it knows the pattern, you don't need to.
+3. **Browser** — this is where a browser-capable agent shines. The
+   agent drives a real Chromium tab, navigates to the page, logs in,
+   and reads the console output.
 
-**Tests second:**
+Your job is not to run the checks or write the tests — it's to read the
+agent's report and ask for what's missing:
 
-```bash
-bun run test
-```
+> Did typecheck pass? Did you add a test for the new route, and does it
+> pass? What does the browser console show?
 
-This runs `bun test --isolate`. If the agent wrote a test, it should
-pass. If the agent didn't write a test, ask it to add one following the
-pattern in `tests/app.test.ts`.
+Client-side errors — failed imports, hydration mismatches, bad Inertia
+props — don't show up in typecheck or tests. They only show up in the
+browser console. A green build + green tests does NOT mean the page
+works. If the agent doesn't mention the browser check, ask for it
+explicitly.
 
-**Browser third** — this is where a browser-capable agent shines. Tell
-the agent:
-
-> Open `http://localhost:4000/bookmarks` in the browser, log in, and
-> check the console for errors.
-
-The agent drives a real Chromium tab, navigates to the page, logs in,
-and reads the console output. Client-side errors — failed imports,
-hydration mismatches, bad Inertia props — don't show up in typecheck or
-tests. They only show up in the browser console. A green build + green
-tests does NOT mean the page works.
-
-If the agent can't drive a browser (you're using a different tool), do
-this manually: open the page, open DevTools → Console, check for errors.
+If your agent can't drive a browser, you can do the console check
+yourself: open the page, open DevTools → Console, look for errors. But
+for the commands, let the agent handle them — it knows the syntax.
 
 ### Step 4: Course-correct
 
@@ -436,10 +442,13 @@ assumptions. The plan stays the source of truth for the whole build.
 You are not a coder — you are a **reviewer and steering wheel**. The
 agent writes code faster than you can. Your value is in:
 
-1. **Knowing what to ask for** — the URL, the behavior, the constraints
+1. **Knowing what to ask for** — the behavior, the constraints, what
+   "done" looks like
 2. **Catching wrong turns early** — watch the first file, not the sixth
-3. **Verifying in the browser** — typecheck and tests are necessary but
-   not sufficient; the console is the source of truth for UI
+3. **Reviewing the agent's verification** — the agent writes the tests,
+   runs typecheck and the suite, and checks the browser console; you
+   read the report and ask for what it skipped. You never type commands
+   or write tests — you judge results
 4. **Being specific in corrections** — "the POST returns 422 because the
    form sends form-encoded data but the route expects JSON" beats "it
    doesn't work"
