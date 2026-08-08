@@ -20,7 +20,6 @@ Here's the thing nobody says out loud: ORMs were never about performance. They w
 
 In 2026, that value proposition has collapsed. AI generates correct, optimized raw SQL on demand. You describe what you want — "get the 10 most recent users with their session count" — and you get back a query with the right joins, the right indexes, and the right `LIMIT`. The AI doesn't need an ORM to translate your intent into SQL. It writes SQL directly, because SQL is the language the database actually speaks.
 
-
 And here's the deeper point: this isn't just about SQL. In 2026, code is AI-generated. The entire category of "abstractions that make humans more productive" — ORMs, query builders, template engines, utility CSS frameworks — exists to reduce human friction. When code is free to produce, that friction disappears. What's left is the question you should have been asking all along: **does this abstraction make my code faster, or slower?** ORMs make it slower. They add a translation layer between your intent and the database. In a world where AI writes raw SQL at peak performance, accepting that translation layer is paying a tax for a service nobody is rendering anymore.
 
 ## What remains is the cost
@@ -102,13 +101,13 @@ The TypeScript generics give you type safety on the result shape and the paramet
 
 ## When an ORM is the right call
 
-This isn't a religion. ORMs have legitimate use cases:
+The old answers don't survive contact with 2026. Here are the reasons ORMs were recommended, checked against the world AI created:
 
-- **Large teams with varying SQL literacy.** An ORM enforces a consistent query interface. In 2026, AI narrows this gap — but it doesn't close it for teams that want an enforced standard.
-- **Switching databases mid-project.** Some ORMs abstract dialect differences. Dulak doesn't — when you swap to Postgres, you update `db.ts` by hand. We'd rather have explicit SQL than a dialect abstraction layer.
-- **Dynamic query builders.** A search interface with 15 optional filters benefits from a composable query builder. Dulak doesn't ship one because most queries are static — but if you need one, add it. It's a library, not an architecture decision.
+- **"Large teams with varying SQL literacy."** The ORM was a standardization layer for humans who didn't know SQL. In 2026, humans aren't writing the SQL — the AI is, and it writes SQL correctly in every dialect. A consistent query interface is now a code-review convention or a lint rule, not a runtime dependency. This argument collapses.
+- **"Switching databases mid-project."** This was always weaker than it sounded: ORMs abstract *some* dialect differences and leak the rest — types, migrations, transactions, indexes. In 2026 the switch is cheaper *without* an ORM: "port `db.ts` to Postgres" and the AI rewrites the queries in the new dialect. Same task an ORM migration would have been, minus the ORM.
+- **"Dynamic query builders."** This one has a kernel of truth — a search page with 15 optional filters does need composable WHERE clauses. But it needs a *query builder* (kysely, or a 20-line helper that appends conditions), not an ORM. "Dynamic queries" justified the query builder, never the ORM. And in 2026, the AI can generate the conditional SQL itself.
 
-None of these apply to Dulak's scope: a known schema, a single database, queries that don't change shape at runtime. An ORM would be paying a tax for features we don't use.
+None of these apply to Dulak's scope: a known schema, a single database, queries that don't change shape at runtime. An ORM would be paying a tax for features we don't use — and the one feature it was for (humans writing SQL) is no longer rendered by anyone.
 
 ## The short version
 
