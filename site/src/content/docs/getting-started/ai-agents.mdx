@@ -1,99 +1,42 @@
 ---
 title: Building with AI agents
-description: The workflow for building a Dulak app with an AI coding agent — setup, prompting, verification, and course correction.
+description: Build a Dulak app with an AI coding agent — write the story of your needs, let the agent do the technical work, review the result.
 ---
 
-Dulak was designed for AI agents before it was designed for humans. The
-conventions exist so that an agent can navigate the codebase by URL, find
-the right file, and produce code that fits without guessing. But the
-conventions only work if you know how to drive the agent.
-
-This page is not a feature tutorial — it's the **workflow**: how to set
-up the agent, how to prompt it, how to verify its output, and how to
-steer it when it goes wrong. The code examples are real, but they're
-secondary to the loop.
+Dulak was designed for AI agents. `AGENTS.md` at the repo root tells the
+agent where everything lives, so it can build features without guessing
+the conventions. Your job is not to write code or remember syntax — it's
+to describe what you need and review what the agent produces.
 
 <aside>
 **This workflow is opinionated.** It's what works for the Dulak author,
-not a universal law. Your agent, your project, and your habits are
-different — treat this page as a starting point and feel free to
-develop your own workflow. The conventions in `AGENTS.md` are the hard
-rules; everything on this page is a suggestion.
+not a universal law. Treat this page as a starting point and feel free
+to develop your own workflow. The conventions in `AGENTS.md` are the
+hard rules; everything on this page is a suggestion.
 </aside>
 
 <aside>
 **Personally recommended: [omp.sh](https://omp.sh).** It reads
 `AGENTS.md` automatically, runs in your terminal, and can drive a real
-browser to verify UI changes — the part most agents skip. The workflow
-below works with omp.sh, Claude Code, Cursor, opencode, Windsurf, or any
-agent that can read files and run shell commands.
+browser to verify UI changes. The workflow below works with omp.sh,
+Claude Code, Cursor, opencode, Windsurf, or any agent that can read
+files and run shell commands.
 </aside>
 
 ## The workflow at a glance
 
 ```
 1. Scaffold        bun create dulak@latest my-app
-2. Confirm         agent has read AGENTS.md
-3. Plan            write PLAN.md — the story, not the spec
-4. Review          is the plan clear? does it describe what you want?
-5. Loop            prompt → agent implements → verify → fix → commit
-6. Ship            typecheck + tests + browser console all green
+2. Plan            write PLAN.md — the story of your needs
+3. Loop            prompt → agent implements → you review → commit
+4. Ship            agent verifies everything is green
 ```
 
-Each step is one section below. The loop (step 5) is where you'll spend
-most of your time — the rest is setup.
+## Plan: write the story of your needs
 
-## Why Dulak works well with agents
-
-Most codebases require the agent to guess conventions — where does a
-route go? Where does SQL live? How are pages registered? In Dulak, every
-answer is in `AGENTS.md`, and every answer is mechanical:
-
-- URL `/bookmarks` → file `src/server/routes/bookmarks.routes.ts`
-- SQL → `src/server/db.ts`, always
-- Page component → `src/client/pages/Bookmarks.tsx`, registered in
-  `src/client/pages.ts`
-- Env → `src/server/config.ts`, nowhere else
-
-The agent doesn't need to "understand" the architecture — it follows the
-file=URL contract. This means less hallucination, less drift, and less
-time spent correcting the agent.
-
-## Setup
-
-### 1. Scaffold the project
-
-If you haven't scaffolded yet, tell your agent:
-
-> Scaffold a new Dulak project called `my-app` with the default React
-> template, then start the dev server.
-
-The agent runs `bun create dulak@latest my-app`, enters the directory,
-and starts `bun run dev`. You now have a running app at
-`http://localhost:4000` and an agent that's read `AGENTS.md`.
-
-### 2. Confirm the agent read AGENTS.md
-
-Ask:
-
-> What are the hard rules in AGENTS.md? Summarize them.
-
-You should hear: routes are one file per URL, SQL lives in `db.ts`, env
-only in `config.ts`, TypeBox for validation, `bun test --isolate` never
-plain `bun test`, `src/server/` is flat except `routes/`.
-
-If the agent can't answer this, it didn't read the file. Tell it to read
-it before proceeding. This is your first checkpoint — don't skip it.
-
-## Plan before you prompt
-
-Before asking the agent to write code, write a `PLAN.md` in the project
-root. This is not a technical spec — it's the **story of what you want
-to build**. Describe the app in plain language: what it does and who
-uses it. The agent will figure out the pages, the database schema, and
-the technical details from `AGENTS.md` on its own.
-
-Write it like you're explaining the app to a friend:
+Before the agent writes any code, write a `PLAN.md` in the project root.
+This is not a technical spec — it's the **story of what you need**.
+Describe it in plain language, like you're explaining to a friend:
 
 - **What is it?** — "A bookmark manager where users save links and
   organize them with tags."
@@ -102,14 +45,9 @@ Write it like you're explaining the app to a friend:
 - **What does it do?** — "Users can save a link with a title and tags,
   view all saved links sorted by newest, and filter by tag."
 
-Don't list pages, routes, or database tables — the agent will figure
-those out from the feature description and `AGENTS.md`.
-
-### Attach design mockups
-
-If you have a visual design — a mockup from ChatGPT, a Figma export, a
-hand-drawn sketch — put it in the project and reference it from the
-plan:
+Don't mention pages, routes, database tables, or code — the agent
+figures out all of that itself. It knows the conventions from
+`AGENTS.md`; your job is to describe the need, not the implementation.
 
 ```markdown
 # Bookmark Manager
@@ -118,8 +56,7 @@ A simple app where authenticated users save and organize links.
 
 ## Design
 
-See `design/bookmarks-mockup.png` for the layout — colors, spacing, and
-styling are all in the mockup, no need to describe them here.
+See `design/bookmarks-mockup.png` for the layout.
 
 ## Behavior
 
@@ -130,376 +67,95 @@ styling are all in the mockup, no need to describe them here.
 - No public pages. Everything behind login.
 ```
 
-The mockup gives the agent visual context — layout, color, spacing —
-that words alone can't convey. The agent reads the image, understands
-the design direction, and produces CSS that matches instead of
-guessing.
+### Attach a design
 
-**Requirement: the agent's model must be able to read images.** If the
-model behind your agent doesn't support image input, a mockup image is
-useless to it — it can't see the file. Check before you rely on one.
+If you have a visual design — a mockup from ChatGPT, a Figma export, a
+hand-drawn sketch — put it in the project and reference it from the
+plan. The design carries what words can't: colors, spacing, layout.
 
-### Can't read images? Use an HTML mockup instead
+Two ways to provide it:
 
-If your agent can't read images, the alternative is a **single-page
-HTML mockup** — a static `.html` file that lays out the design with
-real markup and CSS. You can generate one in ChatGPT, Gemini Canvas, or
-any design tool that exports HTML. Put it in the project and reference
-it from the plan the same way:
+- **Image** (`design/mockup.png`) — the agent reads it and matches the
+  design. Requires the agent's model to support image input.
+- **HTML mockup** (`design/mockup.html`) — a single static page with
+  real markup and CSS, generated in ChatGPT or Gemini Canvas. Works even
+  when the agent can't read images, because the structure is in the
+  markup itself.
+
+Either way, reference it from the plan and let the agent work from it:
 
 ```markdown
 ## Design
 
-See `design/bookmarks-mockup.html` for the layout — it's a static
-mockup of the page with real HTML/CSS. Match its structure, spacing,
-and colors in the React implementation.
+See `design/bookmarks-mockup.html` for the layout — match its
+structure, spacing, and colors.
 ```
-
-An HTML mockup works even better than an image for agents, because it
-carries structure: the agent can read the actual elements, classes, and
-styles instead of inferring them from pixels. The text still can't
-describe every detail — the mockup can.
-
-Whether you use an image or an HTML file, the design stays out of the
-plan's prose. The plan tells the story; the mockup shows the design;
-the agent connects the two.
-
-### What NOT to put in the plan
-
-- **Pages and routes** — the agent decides what pages to create and how
-  to structure the URLs from the feature description.
-- **File paths** — the agent knows where files go from `AGENTS.md`.
-- **SQL schemas** — the agent designs the table from the feature
-  description.
-- **Code snippets** — the agent writes the code; you write the story.
-- **Architecture decisions** — "use a repository pattern" or "create a
-  service layer" will lead the agent down the wrong path. Describe the
-  *behavior*, not the *structure*.
-- **Tests and verification** — these are automatic. Every slice the
-  agent implements comes with a unit test and a verification pass
-  (typecheck, test suite, browser console) built in. You don't ask for
-  tests; the agent includes them the way it includes migrations — as a
-  standard part of the work.
 
 ### Review the plan
 
-Read it back. Does it describe an app you'd want to use? Is the behavior
-clear? Would a non-technical friend understand what you're building? If
-you can't understand the plan without reading code, it's too technical —
-rewrite it in plain language.
-
-Once the plan reads like a story, hand it to the agent and start the
-workflow loop below. The plan is the source of truth — when the agent
-asks for clarification, point back to it.
+Read it back. Does it describe what you need? Would a non-technical
+friend understand it? If it reads like code, it's too technical —
+rewrite it in plain language. Once it reads like a story, hand it to the
+agent.
 
 ## The workflow loop
 
-Every task follows the same loop:
-
 ```
-prompt → agent implements → you verify → agent fixes (if needed) → commit
+prompt → agent implements → you review → commit
 ```
 
-The key insight: **don't let the agent do everything at once**. Break
-work into small, verifiable steps. The agent is fast — your job is to
-steer and verify, not to wait.
+### Step 1: Prompt
 
-### Step 1: Give the prompt
+Give the agent the plan and let it work. Work through it one slice at a
+time — not the whole app in one prompt:
 
-Work through the plan one step at a time, not all at once. For each
-step, give a short prompt that references the plan and states what
-"done" looks like:
+> Read PLAN.md and build the bookmark manager. Start with saving and
+> listing bookmarks, then show me what you did.
 
-**Good prompt:**
+The agent reads the plan, follows `AGENTS.md`, writes the code, the
+tests, and the migrations. Don't tell it how — it knows.
 
-> Start with step 1 of PLAN.md: build the bookmark manager. Read the
-> plan, then implement the first slice — saving and listing bookmarks
-> for an authenticated user. Follow AGENTS.md conventions. Show me the
-> files you created.
+### Step 2: Review
 
-**Bad prompt:**
+The agent verifies its own work — typecheck, tests, browser console —
+and reports back. Your job is to read the report and judge the result:
 
-> Build the whole bookmark manager now. Also add tags, sharing, and a
-> dark mode. Use a repository pattern.
+- Does the app do what the plan describes?
+- Does it look like the design?
+- Does the agent's report show everything passing?
 
-The bad prompt does three things wrong: it asks for everything at once,
-it injects scope that isn't in the plan (tags, sharing, dark mode), and
-it names architecture that doesn't exist in Dulak. The good prompt
-anchors on the plan, scopes to one slice, and defers structure to
-`AGENTS.md`.
+Open the app and look. If something's off, tell the agent — in any
+words. The agent reasons about what you mean and finds the cause:
 
-### Step 2: Watch what the agent does
+> The form doesn't save. After submitting, the bookmark doesn't appear
+> in the list.
 
-As the agent works, it will show you which files it's reading and
-editing. Watch for these red flags:
+There's no wrong way to describe a problem. Say it as you'd say it to a
+friend; the agent handles the debugging.
 
-- **Reading files outside the convention** — if the agent opens
-  `src/server/auth.ts` to figure out how to structure a route, that's
-  good (it's learning the pattern). If it creates
-  `src/server/bookmarks/` as a folder, stop it.
-- **Creating unexpected files** — `service.ts`, `repository.ts`,
-  `types/bookmarks.ts` — these don't exist in Dulak's vocabulary.
-- **Running plain `bun test`** — without `--isolate`, tests will fail
-  with confusing errors. If you see the agent run `bun test` without the
-  flag, tell it to use `bun test --isolate`.
+### Step 3: Commit
 
-You don't need to watch every line. But check in after the first file is
-created — if the agent is on the wrong track, it's cheaper to correct
-now than after 6 files.
+Once the slice works, have the agent commit it:
 
-### Step 3: Verify
+> Commit this slice.
 
-The agent verifies its own work — you review the results. You don't
-need to remember or type any commands; the agent knows them. Ask:
+Commit after each verified slice — it's a checkpoint you can roll back
+to. A plan with several slices produces several commits.
 
-> Run typecheck, then run the test suite (the tests should already be
-> part of this slice — if they're missing, add them). Open the bookmarks
-> page in the browser and check the console for errors. Report the
-> results.
+## The plan evolves
 
-The agent should verify in this order:
+As you build, you'll realize the plan missed something — a field, a
+behavior, a page. Update `PLAN.md` first, then tell the agent:
 
-1. **Typecheck** — `bun run typecheck`. Fast; catches structural
-   mistakes like a page missing from the `pages.ts` registry or a bad
-   import. If it fails, the agent fixes the errors and re-runs.
-2. **Tests** — the slice already ships with unit tests (they're a
-   standard part of every plan). The agent runs `bun run test` (which
-   runs `bun test --isolate`) and fixes any failing tests. If a test is
-   somehow missing, the agent writes it following the pattern in
-   `tests/app.test.ts` — it knows the pattern, you don't need to.
-3. **Browser** — this is where a browser-capable agent shines. The
-   agent drives a real Chromium tab, navigates to the page, logs in,
-   and reads the console output.
+> I updated PLAN.md — bookmarks now also show the domain. Continue from
+> where you left off.
 
-Your job is not to run the checks or write the tests — it's to read the
-agent's report and ask for what's missing:
-
-> Did typecheck pass? Did you add a test for the new route, and does it
-> pass? What does the browser console show?
-
-Client-side errors — failed imports, hydration mismatches, bad Inertia
-props — don't show up in typecheck or tests. They only show up in the
-browser console. A green build + green tests does NOT mean the page
-works. If the agent doesn't mention the browser check, ask for it
-explicitly.
-
-If your agent can't drive a browser, you can do the console check
-yourself: open the page, open DevTools → Console, look for errors. But
-for the commands, let the agent handle them — it knows the syntax.
-
-### Step 4: Course-correct
-
-If something is wrong, don't rewrite the prompt from scratch. Tell the
-agent exactly what's wrong and what to fix:
-
-> The page renders but the form submission doesn't work. The POST
-> redirect is returning a 422. Check the validation schema — the form
-> sends form-encoded data but the route expects JSON.
-
-Be specific about the symptom. The agent will investigate, find the
-mismatch, and fix it. Vague corrections ("it doesn't work") lead to
-guessing, which leads to more wrong code.
-
-### Step 5: Commit
-
-Once everything passes — typecheck, tests, browser — commit:
-
-> Commit this slice with a descriptive message.
-
-The agent stages the files and writes a commit. Review the message
-before pushing. It should mention what was added, not just
-"feature: bookmarks".
-
-Commit after **every verified slice**, not at the end of the whole
-plan. Each commit is a checkpoint: if a later step goes sideways, you
-can roll back to the last good state and retry instead of unwinding
-half a feature by hand. A plan with eight steps should produce roughly
-eight commits.
-
-## Prompting patterns
-
-### Adding a route
-
-> Add a GET `/settings` route that renders a Settings page for
-> authenticated users. The page shows the user's email and role.
-
-The agent creates `src/server/routes/settings.routes.ts`, mounts it in
-`app.ts`, creates `src/client/pages/Settings.tsx`, registers it in
-`pages.ts`, and adds the type. Six files, one prompt.
-
-### Adding a POST action
-
-> Add a POST handler to the settings route that updates the user's
-> email. Validate with TypeBox. On success, redirect back with a flash
-> message.
-
-The agent edits the existing `settings.routes.ts` — it doesn't create a
-new file because the URL namespace is the same. This is the file=URL
-contract working.
-
-### Styling a page
-
-> Style the bookmarks page. Read styles.css for design tokens and follow
-> the co-located CSS convention. Don't add a CSS framework.
-
-The agent reads `src/client/styles.css` for tokens (`:root` variables,
-`.btn`, `.panel`), creates `src/client/pages/Bookmarks.css`, and imports
-it in `Bookmarks.tsx`. If it adds rules to `styles.css` or reaches for
-Tailwind on a vanilla CSS template, that's a convention violation —
-point it back to `AGENTS.md` rule 7.
-
-### Debugging
-
-> The /bookmarks page shows a blank screen. Check the browser console
-> and fix whatever's wrong.
-
-The agent opens the browser, navigates to the page, reads the console,
-and finds the error — maybe a missing page registry entry, a wrong
-import path, or a hydration mismatch. It fixes the code and re-checks
-the console. This loop — browser → console → fix → browser — is the
-fastest way to debug UI issues with an agent.
-
-### Deploying
-
-> Read the existing Dockerfile and docker-compose.yml. Explain the
-> multi-stage build and what I need to change to deploy my-app.
-
-The agent reads the files and explains. It doesn't invent a new
-Dockerfile — Dulak ships with one. If you need changes (different port,
-extra env, health check), tell the agent specifically.
-
-## When the agent goes wrong
-
-Agents make predictable mistakes on Dulak. Here's what to watch for and
-how to correct each one.
-
-### It creates feature subfolders
-
-**What happens**: `src/server/bookmarks/routes.ts`, `db.ts`, `service.ts`.
-
-**Why**: The agent pattern-matches on other codebases where features get
-their own folder.
-
-**Correction**: "`src/server/` is flat except `routes/`. Delete the
-folder, put the route in `src/server/routes/bookmarks.routes.ts`, and
-put the SQL in `src/server/db.ts`. Re-read AGENTS.md rule 2."
-
-### It scatters SQL
-
-**What happens**: `db.query()` calls inside route files, or a separate
-`bookmarks-db.ts`.
-
-**Why**: The agent doesn't realize `db.ts` is the single SQL module.
-
-**Correction**: "All SQL goes in `src/server/db.ts` as prepared
-statements. Move the queries there. AGENTS.md rule 3."
-
-### It runs plain `bun test`
-
-**What happens**: Tests fail with "prepared statement finalized" or
-config leaks across files.
-
-**Why**: The agent strips the `--isolate` flag because it's not standard.
-
-**Correction**: "Always use `bun test --isolate`. Without it, one test
-file's teardown finalizes the next file's prepared statements.
-AGENTS.md documents this under Testing."
-
-### It reads `process.env` in a route
-
-**What happens**: `const port = process.env.PORT` in a handler.
-
-**Why**: The agent doesn't know env is centralized.
-
-**Correction**: "Env is read once in `config.ts`. Import the `config`
-object instead. AGENTS.md rule 4."
-
-### It forgets `next()` in middleware
-
-**What happens**: "Context is not finalized" error.
-
-**Why**: Hono requires `await next()` to continue the chain — the agent
-assumes returning is enough.
-
-**Correction**: "Call `await next()` at the end of the middleware.
-AGENTS.md documents this under Hono integration notes."
-
-### It adds page CSS to `styles.css`
-
-**What happens**: `styles.css` grows with `.bookmarks-form` rules.
-
-**Why**: The agent puts styles where it thinks "global" styles go.
-
-**Correction**: "Page-specific styles go in a sibling `.css` file
-imported by the component. `styles.css` is global base only. AGENTS.md
-rule 7."
-
-## When the agent gets stuck
-
-Sometimes the agent stalls — it says it can't do something, or it
-produces nothing. Usually it's missing context, not missing ability.
-Unstick it by pointing at concrete reference material:
-
-> Look at how `auth.routes.ts` handles a POST with validation, and
-> mirror that pattern for the bookmarks form.
-
-> The request lifecycle doc explains how middleware is ordered — read
-> it before touching the middleware.
-
-Every convention in Dulak has a working example in the codebase
-(`auth.routes.ts`, `uploads.routes.ts`, `db.ts`) or in the docs
-([Adding a feature](/extending/adding-a-feature/),
-[Conventions](/architecture/conventions/)). The agent just needs to know
-which one to read. "Read the reference and mirror it" unblocks most
-stalls in one message.
-
-If the agent is still stuck after a reference, it's usually a tooling
-issue — it can't reach the dev server, can't run tests, or the browser
-tab is stale. Ask it what it tried and what failed. The error message
-is the next clue.
-
-## The plan evolves — update it
-
-The plan is a living document, not a contract. As you build, you'll
-discover requirements that the original story missed — a field you
-forgot, a behavior that needs defining, a page that's more complex than
-expected.
-
-When that happens, update `PLAN.md` first, then tell the agent:
-
-> I updated PLAN.md — the bookmarks list now also shows the domain next
-> to each title. Continue from where you left off.
-
-Updating the plan before the agent continues keeps the story accurate
-and prevents the agent from drifting back to its original (now wrong)
-assumptions. The plan stays the source of truth for the whole build.
-
-## The mental model
-
-You are not a coder — you are a **reviewer and steering wheel**. The
-agent writes code faster than you can. Your value is in:
-
-1. **Knowing what to ask for** — the behavior, the constraints, what
-   "done" looks like
-2. **Catching wrong turns early** — watch the first file, not the sixth
-3. **Reviewing the agent's verification** — the agent writes the tests,
-   runs typecheck and the suite, and checks the browser console; you
-   read the report and ask for what it skipped. You never type commands
-   or write tests — you judge results
-4. **Being specific in corrections** — "the POST returns 422 because the
-   form sends form-encoded data but the route expects JSON" beats "it
-   doesn't work"
-
-The agent's speed is only useful if you steer it. A fast agent going the
-wrong direction produces more wrong code per minute than a slow one.
+The plan stays the source of truth. Update it, and the agent follows
+the update.
 
 ## What's next
 
-- [Adding a feature](/extending/adding-a-feature/) — the code reference
-  for the route → migration → db.ts → page → test loop.
-- [Conventions](/architecture/conventions/) — the rules from `AGENTS.md`,
-  without the workflow framing.
-- [Request lifecycle](/architecture/request-lifecycle/) — how middleware,
-  guards, and Inertia fit together.
-- [Testing](/testing/) — the test suite structure and why `--isolate`
-  matters.
+- [Adding a feature](/extending/adding-a-feature/) — what the agent
+  produces, step by step, if you want to understand its output.
+- [Conventions](/architecture/conventions/) — the rules in `AGENTS.md`.
+- [Testing](/testing/) — the test suite the agent runs.
