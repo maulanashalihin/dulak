@@ -1,0 +1,223 @@
+---
+title: "Why SSR, not a SPA"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - ssr
+  - performance
+  - philosophy
+excerpt: "A SPA ships an empty div and a JS bundle. SSR ships HTML on the first byte. The difference is not theoretical — it's 50ms vs 2 seconds on a budget phone, and it's whether Google can read your page."
+---
+
+The [Inertia post](/blog/why-inertia-not-spa/) covered the architecture: one router, one validator, no API layer, no client-side state. This post is about something different — the rendering strategy. Why does Dulak render HTML on the server instead of shipping a JavaScript bundle to the client?
+
+These are separate decisions. You can use Inertia without SSR (ship an empty shell, let the client render). You can use SSR without Inertia (Next.js, Nuxt). Dulak does both, but the rendering argument stands on its own.
+
+## The blank screen problem
+
+Here's what a SPA sends on first load:
+
+```html
+<div id="app"></div>
+<script type="module" src="/assets/app-a1b2c3.js"></script>
+```
+
+That's it. The user's browser receives an empty `<div>` and a script tag. Nothing is visible until the browser downloads the JS bundle, parses it, executes it, and the framework mounts and renders. The timeline:
+
+1. **Server response** — ~50ms (TLS + round trip + server processing)
+2. **JS download** — 200KB bundle over 3G: ~800ms. Over 4G: ~200ms.
+3. **JS parse + compile** — 200KB of JS on a budget phone: ~300–500ms. On a desktop: ~50ms.
+4. **Framework init + render** — React mounts, runs effects, fetches data: ~200–500ms.
+
+Total time to first contentful paint: **500ms on a fast desktop, 1.5–2 seconds on a budget phone over 3G.** The user stares at a blank white screen the entire time.
+
+Here's what Dulak sends on first load (public route, SSR enabled):
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Landing — Dulak</title>
+  <link rel="stylesheet" href="/assets/app-a1b2c3.css" />
+</head>
+<body>
+  <div id="app" data-server-rendered="true">
+    <h1>Dulak</h1>
+    <p>The deliberately boring full-stack boilerplate.</p>
+    <!-- full rendered HTML here -->
+  </div>
+  <script type="module" src="/assets/app-a1b2c3.js"></script>
+</body>
+</html>
+```
+
+The HTML arrives with content in it. The browser parses HTML and paints it immediately — before the JS bundle even starts downloading. First contentful paint = server response time, ~50ms. The JS bundle loads in the background and Inertia takes over interactivity after the page is already visible.
+
+The user sees content on the first byte. Not after JS downloads. Not after JS parses. Not after React mounts. **On the first byte.**
+
+## SEO and crawlability
+
+Search engines crawl HTML. When Googlebot fetches a server-rendered page, it gets the full content in the HTTP response. The page is indexable on the first fetch — title, headings, text, links, meta tags, all present in the HTML.
+
+When Googlebot fetches a SPA, it gets `<div id="app"></div>`. The content is behind JavaScript execution. Google *can* render JS — it uses a headless Chromium to execute the page's scripts and index the resulting DOM. But this is a two-phase process:
+
+1. **First pass** — Googlebot fetches the HTML, sees an empty div, queues the page for rendering.
+2. **Second pass** — Google's rendering queue (which has a backlog) executes the JS, renders the DOM, and indexes the content.
+
+The second pass can be **days or weeks later**. And it's less reliable — JS execution can fail, time out, or produce different output than expected. Google's own documentation says: "Rendering JavaScript can be slow and we recommend server-side rendering or pre-rendering where possible."
+
+And Google is the *best case*. Other crawlers — Bing's, social media bots (Twitter, Facebook, Slack, Discord), SEO auditors, accessibility tools — many of them don't execute JavaScript at all. A SPA's `<div id="app"></div>` is all they see. No Open Graph tags, no meta descriptions, no content. Your link preview is blank. Your page doesn't exist to half the internet's crawlers.
+
+Dulak's SSR sends full HTML with rendered content, `<title>` tags, and meta information on every public route. Every crawler sees the page. No rendering queue, no two-phase indexing, no "wait for the JS to execute." The HTML is the content.
+
+## The mobile JS tax
+
+JavaScript is the most expensive byte on the web. Here's why:
+
+- **HTML** is parsed incrementally as it streams in. The browser can paint partial HTML before the full document loads.
+- **CSS** is parsed and matched against the DOM. Also relatively cheap.
+- **JavaScript** must be downloaded, parsed, compiled, and executed before it does anything. On mobile devices, this is 2–10× slower than on desktop.
+
+A 200KB JS bundle (gzipped) is not 200KB of work. It's 200KB of source that expands to 1MB+ of parsed code, which the browser must compile to native, execute, and garbage-collect. On a 2020-era budget Android phone with a slow CPU and limited memory, parsing 200KB of JS takes 300–500ms. On a 2018 phone, it can take over a second.
+
+The SPA industry's answer to this is the "JavaScript budget" — a constant battle to keep bundles small. Code-splitting, tree-shaking, lazy-loading route chunks, dynamic imports. You spend engineering time fighting bundle size because every KB of JS is a KB of delay on mobile.
+
+SSR sidesteps the problem. The server renders HTML — the browser's native, optimized format. The JS bundle still loads (Inertia needs it for interactivity), but it's not on the critical path. The user sees content immediately. The JS loads in the background. If the JS takes 2 seconds to load on 3G, the user has been reading the page for 2 seconds already.
+
+Dulak takes this further: SSR is **skipped for authenticated routes**. Behind a login wall, there's no SEO benefit and no public crawler. The client hydrates and replaces server HTML anyway, so SSR is pure server CPU waste. Public pages get full SSR; authenticated pages ship an empty shell with the page payload inlined as JSON. Less server work, same UX.
+
+```ts
+// inertia.ts — the rendering decision
+if (config.ssr && !this.c.user) {
+  // Public route → full SSR HTML, content on first byte
+  const rendered = await renderPage(page);
+  return this.html(rendered.head, rendered.body, options.status ?? 200);
+}
+// Authenticated route → empty shell + JSON payload, client renders
+return this.html([], this.clientBody(page), options.status ?? 200);
+```
+
+## No hydration waterfall
+
+Here's what Next.js and Nuxt do:
+
+1. **Server renders HTML** — React renders the component tree to HTML on the server.
+2. **HTML sent to client** — user sees content (good).
+3. **JS bundle downloads** — in the background.
+4. **Client hydrates** — React re-renders the *exact same component tree* on the client, walks the DOM, attaches event listeners, and reconciles the server HTML with the client virtual DOM.
+
+Step 4 is the hydration waterfall. The client does the same work the server just did — renders the same components with the same props — to attach interactivity. If the server and client render different output, you get a hydration mismatch warning and React throws away the server HTML and re-renders from scratch. You've paid for rendering twice and gotten nothing extra.
+
+Dulak's Inertia SSR is different. The server renders HTML with `react-dom/server`:
+
+```tsx
+// ssr.tsx — runs inside the Hono process
+export async function renderPage(page: Page) {
+  return createInertiaApp({
+    page,
+    render: renderToString,
+    resolve: (name) => pages[`./pages/${name}.tsx`]?.default ?? notFoundPage!,
+    setup: ({ App, props }) => <App {...props} />,
+    title: (title) => title ? `${title} — Dulak` : "Dulak",
+  });
+}
+```
+
+The client doesn't re-render. When the JS loads, Inertia sees `data-server-rendered="true"` on the mount point and calls `hydrateRoot` instead of `createRoot`:
+
+```tsx
+// app.tsx — client entry
+setup({ el, App, props }) {
+  const element = <App {...props} />;
+  if (el.hasAttribute("data-server-rendered")) {
+    hydrateRoot(el, element);  // attach, don't re-render
+  } else {
+    createRoot(el).render(element);  // fresh render (no SSR)
+  }
+}
+```
+
+`hydrateRoot` attaches event listeners to the existing DOM. It doesn't throw away the server HTML and re-render. It doesn't walk the tree and reconcile. It takes the DOM that's already on screen and makes it interactive. The server did the rendering; the client does the wiring. One render, not two.
+
+This is the key difference from Next.js/Nuxt SSR: those frameworks hydrate by re-rendering. Inertia hydrates by attaching. Less work, less CPU, less chance of mismatch.
+
+## In-process SSR, not a separate server
+
+Next.js needs a Node.js server for SSR. Nuxt needs a Node.js server. SvelteKit needs a Node.js server. The SSR runtime is a separate process from your API, your database layer, your background jobs. You deploy two things (at minimum), manage two runtimes, and debug across process boundaries.
+
+Dulak renders SSR in the **same Bun process** as the HTTP server and the database. The `renderPage` function in `src/client/ssr.tsx` runs inside the Hono request handler. The Inertia adapter calls it directly:
+
+```ts
+// inertia.ts — render() method, inside the HTTP handler
+async render(component, props, options) {
+  const page = this.page(component, props);
+  if (this.isXhr) {
+    return this.json(page, options.status ?? 200);  // Inertia XHR → JSON
+  }
+  if (config.ssr && !this.c.user) {
+    const rendered = await renderPage(page);  // SSR, same process
+    return this.html(rendered.head, rendered.body, options.status ?? 200);
+  }
+  return this.html([], this.clientBody(page), options.status ?? 200);  // empty shell
+}
+```
+
+No second runtime. No inter-process communication. No separate deployment. No SSR server to scale independently. The HTTP server, the database (`bun:sqlite`), and the SSR renderer all share one event loop, one process, one deployment.
+
+This works because Bun runs `react-dom/server` natively. There's no need for a separate Node process — Bun handles the React SSR render in-process, on the same event loop that handles HTTP requests and database queries. The render takes single-digit milliseconds for a typical page. No bottleneck, no separate infrastructure to manage.
+
+The middleware wires it all together per request:
+
+```ts
+// inertia-middleware.ts — one adapter per request, same process
+export const inertiaMiddleware = (assets) => async (c, next) => {
+  const sessionToken = getCookie(c, SESSION_COOKIE);
+  const user = resolveUser(sessionToken);
+  c.set("inertia", new Inertia({ request: c.req.raw, headers: ..., user, flash }, assets));
+  await next();
+};
+```
+
+One process. One middleware. One adapter per request. The route handler calls `c.var.inertia.render(...)` and gets back a `Response` — HTML for browser visits, JSON for Inertia XHR. See the [request lifecycle](/architecture/request-lifecycle/) for the full flow.
+
+## The 2026 angle: less code for AI to break
+
+Here's where this gets interesting. In 2026, a growing share of code is AI-generated. The cost of *producing* code is approaching zero. The cost of *maintaining* code is not.
+
+A SPA architecture requires AI to generate and maintain:
+
+- Client-side routing logic (route definitions, guards, lazy loading, code splitting)
+- State management (stores, reducers, selectors, cache invalidation)
+- An API layer (endpoints, serialization, pagination, error handling)
+- Hydration logic (server/client reconciliation, mismatch handling)
+- Data fetching (loading states, error states, refetching, optimistic updates)
+
+Each of these is code that AI must generate correctly, and then maintain correctly when requirements change. Each is a surface where AI can introduce bugs — a route guard that doesn't match the server, a state shape that drifts from the API contract, a hydration mismatch that only appears in production.
+
+SSR is simpler code. The server renders HTML from database state. The client displays it. There's less to generate, less to maintain, less to break. When code is free to produce, the rational choice is the architecture that produces *less* code — not because the code is expensive to write, but because it's expensive to keep correct.
+
+Dulak's entire client-side rendering logic is 27 lines. The SSR entry point is 22 lines. The rendering decision in the adapter is 4 lines. That's the full rendering strategy — server renders HTML, client attaches interactivity. An AI maintaining this codebase has very few surfaces to get wrong.
+
+The SPA complexity isn't there because it's necessary — it's there because the architecture demands it. Choose a different architecture and the complexity doesn't exist. You can't break code that was never written.
+
+## When a SPA rendering strategy makes sense
+
+SSR isn't universally better. SPAs are the right rendering choice when:
+
+- **The app is already a SPA** — if you've built Figma or Google Maps, the client is the application. SSR adds nothing because the content is generated by user interaction, not by the server.
+- **You're on the edge** — Cloudflare Workers, Vercel Edge Functions. No long-lived process means no in-process SSR. You'd need a separate SSR server, which defeats the point.
+- **Content is fully dynamic and client-generated** — a collaborative whiteboard, a real-time trading dashboard. The server can't pre-render what doesn't exist until the user interacts.
+
+Dulak is for server-rendered web apps — dashboards, admin panels, SaaS products, content sites. Apps where the server knows the state and can render it to HTML. If your app's content exists before the user interacts, SSR is the right rendering strategy.
+
+## The short version
+
+**Ship HTML, not a div.**
+
+A SPA sends `<div id="app"></div>` and a JS bundle. The user waits. A crawler waits (or gives up). A budget phone chokes on the JS parse. Dulak sends rendered HTML on the first byte — content visible immediately, crawlers see everything, mobile users aren't paying the JS tax.
+
+And unlike Next.js/Nuxt, there's no hydration waterfall — Inertia attaches interactivity to existing DOM, it doesn't re-render. No separate SSR server — it runs in the same Bun process as your HTTP server and database. No second deployment, no inter-process communication, no hydration mismatch debugging.
+
+The [Inertia post](/blog/why-inertia-not-spa/) explains why you don't need a client-side router, an API layer, or Redux. This post explains why the user sees content faster, Google can read your page, and budget phones don't choke. Same architecture, different argument. See the [request lifecycle](/architecture/request-lifecycle/) for how it all fits together in one process.
