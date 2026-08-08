@@ -20,7 +20,8 @@ Here's the thing nobody says out loud: ORMs were never about performance. They w
 
 In 2026, that value proposition has collapsed. AI generates correct, optimized raw SQL on demand. You describe what you want — "get the 10 most recent users with their session count" — and you get back a query with the right joins, the right indexes, and the right `LIMIT`. The AI doesn't need an ORM to translate your intent into SQL. It writes SQL directly, because SQL is the language the database actually speaks.
 
-The human-friction problem that justified ORMs for two decades? Solved. Not by a better ORM — by making raw SQL free to produce.
+
+And here's the deeper point: this isn't just about SQL. In 2026, code is AI-generated. The entire category of "abstractions that make humans more productive" — ORMs, query builders, template engines, utility CSS frameworks — exists to reduce human friction. When code is free to produce, that friction disappears. What's left is the question you should have been asking all along: **does this abstraction make my code faster, or slower?** ORMs make it slower. They add a translation layer between your intent and the database. In a world where AI writes raw SQL at peak performance, accepting that translation layer is paying a tax for a service nobody is rendering anymore.
 
 ## What remains is the cost
 

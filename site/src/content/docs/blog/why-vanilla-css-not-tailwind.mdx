@@ -96,6 +96,8 @@ It's 2026. The platform caught up:
 
 The problems Tailwind solved — browser inconsistencies, lack of a grid system, no design tokens — are mostly gone. What's left is the utility-class API itself, which is a *preference*, not a *solution*.
 
+And in 2026, there's a deeper reason to prefer vanilla CSS: code is AI-generated. Tailwind's other pitch was developer speed — `p-4 text-center` is faster to type than writing a `.card` class and a CSS rule. But when AI generates your CSS, that friction is gone. The AI writes vanilla CSS just as easily as it writes Tailwind classes. The "faster to write" argument was a human-friction argument, and human friction is no longer the bottleneck. What matters now is what ships: vanilla CSS is zero-dependency, zero-build-step, and readable by anyone. Tailwind ships a build dependency and a translation layer. When code is free to produce, you optimize for what runs, not what's easy to type.
+
 ## Readability cuts both ways
 
 Tailwind's pitch is that you don't context-switch between HTML and CSS. Everything is in one place. That's true — and for small components, it's genuinely nice.
