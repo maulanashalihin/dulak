@@ -21,7 +21,7 @@ const faqs: { q: string; a: string }[] = [
         a: "ORMs were built to help humans avoid writing SQL. In 2026, AI generates correct, optimized raw SQL on demand — the human-friction problem ORMs solved is gone. What remains is the cost: an ORM is a dependency you upgrade, audit, and debug, and it adds a layer between you and the database that hides the actual query plan. bun:sqlite with prepared statements is synchronous, explicit, and zero-dependency. You see the exact SQL that runs, and the AI writing your next feature writes it at peak performance — no abstraction tax.",
     },
     {
-        q: "Why SQLite?",
+        q: "Why SQLite and not Postgres?",
         a: "One file for the whole database: bun:sqlite is built into Bun, no server to install, no connection pool, no credentials. WAL mode serves 52K reads/s and 95K writes/s on a single process — enough for most apps. Back up by copying a file. When you outgrow it, Postgres is a deliberate swap point, not an emergency.",
     },
     {
