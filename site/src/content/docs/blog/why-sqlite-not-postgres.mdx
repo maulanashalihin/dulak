@@ -1,0 +1,88 @@
+---
+title: "Why SQLite, not Postgres or MySQL"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - database
+  - sqlite
+  - philosophy
+excerpt: "SQLite is a file, not a server. No install, no connection pool, no credentials. 52K reads/s with WAL mode — enough for most apps, and a deliberate swap point when it isn't."
+---
+
+Every boilerplate comparison eventually reaches the database question: "Why SQLite? Shouldn't a production app use Postgres or MySQL?"
+
+It's a fair question — and the answer isn't "SQLite is better than Postgres." It's "SQLite is the right *starting* database, and Dulak is a *starting* point."
+
+## Zero infrastructure
+
+Postgres and MySQL are servers. They run as separate processes, listen on ports, require connection pools, and need credentials managed. Before you write a single query, you need to:
+
+1. Install the database server
+2. Configure it (memory, connections, WAL, replication)
+3. Create a database and user
+4. Set up credentials (env vars, secrets manager)
+5. Wire a driver into your app (`pg`, `mysql2`, etc.)
+6. Configure a connection pool
+
+SQLite is a file. `bun:sqlite` is built into Bun. There is no step 1.
+
+```ts
+import { Database } from "bun:sqlite";
+const db = new Database("app.sqlite");
+```
+
+That's the entire setup. No server process, no port, no credentials, no driver dependency, no connection pool. The database is a file on disk.
+
+## Fast enough for most apps
+
+Dulak ships with four PRAGMAs that make SQLite fast:
+
+```ts
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA synchronous = NORMAL");
+db.exec("PRAGMA busy_timeout = 5000");
+db.exec("PRAGMA foreign_keys = ON");
+```
+
+With these settings, Dulak serves **52,000 reads per second** and **95,000 writes per second** on a single Bun process — full HTTP stack, not just the database layer. For comparison, the no-database health check hits 66K req/s. The database adds only 0.2ms to a 0.76ms HTTP base.
+
+Most apps never reach 1,000 req/s. SQLite handles 52× that on a laptop. The "SQLite is slow" reputation comes from default settings (`rollback journal` + `FULL` synchronous mode) that run at 3.5K writes/s — 27× slower than WAL + `NORMAL`.
+
+## Backup is copying a file
+
+Postgres backup means `pg_dump`, or setting up replication, or configuring a managed service. MySQL is the same with `mysqldump`.
+
+SQLite backup is `cp app.sqlite backup.sqlite`. For continuous replication, [Litestream](https://litestream.io/) streams WAL frames to S3-compatible storage — zero downtime, zero app code changes, ~$0.01/month for a typical database. See the [replication guide](/database/replication/) for the full setup.
+
+## What SQLite cannot do
+
+This isn't a one-sided argument. SQLite has real limitations:
+
+- **Single writer** — WAL allows concurrent readers, but only one writer at a time. `busy_timeout` handles contention, but if your app is write-heavy with high concurrency, Postgres handles this better.
+- **No horizontal scaling** — you can't run multiple Dulak instances against the same SQLite file across different servers. Postgres/MySQL allow shared database access from multiple app instances.
+- **No built-in replication** — Litestream provides *backup*, not *high availability*. If the server dies, you restore to a new server and restart. There's downtime. Postgres streaming replication gives you zero-downtime failover.
+- **No fine-grained access control** — SQLite has no users, roles, or row-level security. If you need multi-tenant access control at the database level, Postgres is the right tool.
+
+## The swap point
+
+Dulak uses raw SQL with prepared statements — no ORM, no query builder abstraction. This means migrating to Postgres is a **deliberate swap**, not an emergency rewrite:
+
+1. Replace `bun:sqlite` with a Postgres driver (`pg` or `postgres`)
+2. Update the connection setup in `db.ts`
+3. Adjust SQL syntax differences (SQLite-specific functions, `INTEGER PRIMARY KEY` → `SERIAL`, etc.)
+4. Update prepared statements
+
+The rest of the app — routes, auth, validation, SSR — doesn't change. Because there's no ORM layer to abstract away the database, you're not migrating *through* an abstraction. You're swapping the database directly.
+
+## Why not start with Postgres then?
+
+Because starting with Postgres means starting with infrastructure. Dulak's philosophy is "your first week should be business logic, not infrastructure." If you start with SQLite and never outgrow it — which most apps don't — you've saved weeks of operational overhead for free. If you do outgrow it, the swap is a scheduled migration, not a fire drill.
+
+Starting with Postgres "just in case" is the same logic as adding a cache service "just in case" — it's solving a problem you don't have yet, at the cost of complexity you pay for from day one.
+
+## The short version
+
+**SQLite for the first 99% of apps. Postgres when you outgrow it — and you'll know when.**
+
+The numbers: [52K reads/s, 95K writes/s](/database/performance/). The backup: copy a file. The swap: scheduled, not emergency. The cost: zero infrastructure until you need it.
