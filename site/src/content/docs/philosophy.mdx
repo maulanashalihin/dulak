@@ -25,6 +25,10 @@ break under you. When 60 lines of our own code are enough, we write them.
 In this repo: the rate limiter is hand-rolled (`rate-limit.ts`), the
 Google OAuth client is plain `fetch` (no SDK), CSS is vanilla by default,
 and the database layer is raw `bun:sqlite` prepared statements — no ORM.
+ORMs were built to help humans avoid writing SQL; in 2026, AI generates
+correct, optimized raw SQL on demand. The friction ORMs solved is gone —
+what remains is the abstraction tax: a dependency to upgrade, a query
+plan to debug, a layer between you and the database.
 
 ## One runtime, zero setup
 
@@ -52,13 +56,13 @@ URL lives in exactly one file, with its GET render and POST actions
 together. Paste a broken URL and you land in exactly one place — no
 guessing.
 
-## Production-shaped, not production
+## Production-grade guardrails, not a production app
 
-The guardrails a deployed app needs are wired from day one: CSRF, rate
-limiting, security headers, versioned migrations, graceful shutdown,
-Docker, CI. But the business features are not — that part is yours. You
-start from a skeleton that is *shaped* like a production app, not from
-zero.
+The infrastructure a deployed app needs — CSRF, rate limiting, security
+headers, versioned migrations, graceful shutdown, Docker, CI — is wired
+and tested from day one, not scaffolded. What is missing is your
+business logic, and that is the point: you start from a skeleton that
+already works, not one you have to harden.
 
 ## Boring versions, pinned, not chased
 
