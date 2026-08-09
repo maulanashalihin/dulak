@@ -73,7 +73,10 @@ export default defineConfig({
 				},
 				{
 					label: "Uploads",
-					items: [{ label: "tus resumable upload", slug: "uploads/tus" }],
+					items: [
+						{ label: "tus resumable upload", slug: "uploads/tus" },
+						{ label: "Plain form data upload", slug: "uploads/form-data" },
+					],
 				},
 				{
 					label: "Deployment",
