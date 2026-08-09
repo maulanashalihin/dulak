@@ -89,15 +89,23 @@ to install on the server — just DNS and dashboard settings.
 
 **Step 2 — SSL/TLS mode:**
 
-Dashboard → **SSL/TLS → Overview** → set mode:
+Dashboard → **SSL/TLS → Overview** → set mode to **Flexible**:
 
-- **Flexible** — Cloudflare terminates TLS at the edge, talks HTTP to
-  your origin on port 4000. Simplest: no cert needed on the server.
-  Safe because the firewall only allows Cloudflare IPs (see
+- **Flexible (recommended)** — Cloudflare terminates TLS at the edge,
+  talks HTTP to your origin on port 4000. No cert needed on the server.
+  This is the simplest setup and works well for boilerplate apps like
+  Dulak. Safe because the firewall only allows Cloudflare IPs (see
   [Firewall](#firewall) below).
-- **Full** — edge→origin over HTTPS. You need a cert on the origin
-  (Cloudflare Origin CA cert, free from Dashboard → SSL/TLS → Origin
-  Server → Create Certificate). More secure, slightly more setup.
+- **Full** (optional) — edge→origin over HTTPS. You need a cert on the
+  origin (Cloudflare Origin CA cert, free from Dashboard → SSL/TLS →
+  Origin Server → Create Certificate). More secure for sensitive apps,
+  but more setup. Skip this unless you have a specific reason.
+
+> **Multiple domains?** Flexible mode is per-zone (per-domain) in
+> Cloudflare, so each domain you point at the same server gets its own
+> TLS at the edge — no extra cert management. Just add another A record
+> + Origin Rule per domain. The same Dulak instance serves all of them
+> on port 4000.
 
 **Step 3 — Origin Rule (set this up now, don't wait for it to break):**
 
