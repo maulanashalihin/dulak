@@ -3,10 +3,19 @@ title: Docker
 description: Multi-stage Dockerfile and docker-compose.
 ---
 
+Run Dulak in a Docker container — one command to build and start,
+everything isolated from the host. The multi-stage image prebuilds
+client assets, ships production dependencies only, and keeps the
+SQLite database in a persistent volume. You'll need a
+[reverse proxy](/deployment/reverse-proxy/) for HTTPS.
+
 ## Prerequisites
 
-You need Docker and Docker Compose installed on your server. Then get the
-code:
+- **Docker and Docker Compose** installed on your server
+  ([install guide](https://docs.docker.com/engine/install/)).
+- **SSH access** to the server.
+- **Your code on GitHub** — the guide clones from
+  `https://github.com/maulanashalihin/dulak.git`; replace with your fork URL.
 
 ```bash
 git clone https://github.com/maulanashalihin/dulak.git
