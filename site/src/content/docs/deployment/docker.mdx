@@ -162,11 +162,28 @@ Caddy, or Nginx) in front for TLS and routing — same setup as bare-metal:
 
 → **[Reverse proxy guide](/deployment/reverse-proxy/)**
 
-For Docker, map the port to localhost only so the proxy can reach it
-but the outside world cannot:
+How you map the port depends on your reverse proxy setup:
+
+**Cloudflare Flexible (origin rule) or no proxy** — expose port 4000
+to Cloudflare IPs (firewall restricts direct access):
 
 ```yaml
-# docker-compose.yml
+# docker-compose.yml — default, accessible from outside
+ports:
+  - "4000:4000"
+```
+
+Then follow the [firewall setup](/deployment/reverse-proxy/#firewall)
+to restrict port 4000 to Cloudflare IPs only.
+
+**Cloudflare Tunnel, Caddy, or Nginx** (proxy on the same server) —
+bind to localhost only so the proxy can reach it but the outside
+world cannot:
+
+```yaml
+# docker-compose.yml — localhost only
 ports:
   - "127.0.0.1:4000:4000"
 ```
+
+No firewall rules needed for port 4000 — it's not exposed publicly.
