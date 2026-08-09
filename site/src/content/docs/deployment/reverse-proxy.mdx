@@ -15,6 +15,10 @@ Internet → [Cloudflare edge | Caddy | Nginx] → 127.0.0.1:4000
 Pick one option. All three work with both [Docker](/deployment/docker/)
 and [bare-metal VPS](/deployment/vps/) deployments.
 
+→ See also: [Nginx is dead. Cloudflare killed it](/blog/why-no-nginx/) —
+  why Cloudflare + Bun.serve covers all five jobs Nginx does, and A1
+  (Proxied DNS + Origin Rule) is the recommended default.
+
 ## Option A — Cloudflare (recommended, nothing to install)
 
 Your domain is on Cloudflare, so the edge handles TLS and proxying; the
