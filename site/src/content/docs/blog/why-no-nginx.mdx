@@ -160,6 +160,26 @@ Plus a DNS record with the orange cloud. That's the entire production setup. No 
 
 With Cloudflare Tunnel, it's even simpler — no open ports, no firewall rules, no public IP. The tunnel connects outbound and Cloudflare routes traffic to it. Your server is a dark node that only talks to Cloudflare.
 
+## Fewer layers, fewer milliseconds
+
+Every hop in your stack adds latency. With Nginx in the middle, a request travels:
+
+```
+User → Cloudflare edge → Nginx (on your server) → Bun
+```
+
+That Nginx hop is a `proxy_pass` to `127.0.0.1:4000` — a TCP connection, header parsing, and a second process wake-up, all on the same machine. It's not a network round-trip across the country, but it's not free either: Nginx adds ~0.5-1ms per request on a typical VPS, plus memory for worker processes, plus context switches between Nginx and Bun.
+
+Remove Nginx and the path becomes:
+
+```
+User → Cloudflare edge → Bun
+```
+
+One fewer process. One fewer hop. One fewer allocation path. The request lands in Bun directly, and Bun handles TLS (if Full mode), routing, compression, and the app — all in one process. For a page that makes 5 API calls, that's 5× the per-request overhead removed. On a budget VPS where CPU is scarce, that's real.
+
+The deeper point: every layer you add is a layer that can break, misconfigure, or silently rewrite headers. Nginx rewriting `Host` or mangling `X-Forwarded-For` is a classic deployment bug. Cloudflare + Bun is two layers that talk directly. Fewer moving parts, fewer midnight debugging sessions.
+
 ## The cert renewal cron you deleted
 
 Certbot installs a systemd timer that renews certs every 12 hours and reloads Nginx. If renewal fails — Let's Encrypt rate limit, expired account, DNS change — your site goes dark in 90 days. You won't notice until it does.
