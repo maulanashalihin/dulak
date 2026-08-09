@@ -56,15 +56,15 @@ export class Inertia {
 		return this.c.headers["x-inertia"] === "true";
 	}
 
-	/** The request URL, corrected for reverse-proxy TLS.
-	 *  `request.url` reflects the origin connection (HTTP behind Cloudflare
-	 *  Flexible SSL). We rewrite the scheme from X-Forwarded-Proto so
-	 *  redirects and Inertia URLs match what the browser sees. */
+	/** The request URL with scheme corrected from APP_URL.
+	 *  Behind a TLS-terminating proxy (Cloudflare Flexible), the origin
+	 *  connection is HTTP so request.url is http:// — but the browser
+	 *  sees https://. We take the scheme from APP_URL (set by the operator)
+	 *  and keep the host from the actual request (supports multi-domain). */
 	private get requestUrl(): URL {
 		try {
 			const url = new URL(this.c.request.url);
-			const proto = this.c.request.headers.get("x-forwarded-proto");
-			if (proto) url.protocol = proto + ":";
+			url.protocol = new URL(config.appUrl).protocol;
 			return url;
 		} catch {
 			return new URL("http://localhost/");
