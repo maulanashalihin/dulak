@@ -3,10 +3,11 @@ title: Plain form data uploads
 description: Upload small files with a regular multipart form — native Bun parsing, no protocol, no state.
 ---
 
-Not every upload needs tus. Plain `multipart/form-data` uploads are
-built into Bun — `request.formData()` parses the multipart body
-natively, no dependency, no protocol, no server-side state. For a small
-file over a stable connection, this is the simplest possible upload.
+Uploading a file is a basic web task, and the most direct way to do it
+is a plain HTML form with `enctype="multipart/form-data"`. Bun parses
+multipart bodies natively — `request.formData()` hands you the fields
+and the file, no dependency, no configuration, no protocol. If the file
+is small and the connection is stable, this is all you need.
 
 ## The handler
 
@@ -56,14 +57,12 @@ plain HTML form:
 Form data is the right choice when the file is small and the connection
 is reliable:
 
-- **Small files** — under ~1MB, where the tus protocol overhead isn't
-  worth it
+- **Small files** — under ~100MB
 - **One-shot documents** — a resume PDF, a config file, an import
 - **Server-to-server transfers** — fast internal network, drops are rare
 
-If the file is big — over ~100MB — or the connection is unreliable,
-use [tus](/uploads/tus/) instead. It's the same `UPLOAD_DIR`, just
-with resumable, chunked transfers that survive dropped connections.
+For anything bigger or less reliable, keep reading — the next section
+explains why multipart forms hit a wall, and what to do about it.
 
 ## Why not always?
 
@@ -76,6 +75,7 @@ Multipart forms have real limitations for larger uploads:
    arrived, and can't continue a partial upload
 4. **Timeouts** — one long request can hit HTTP timeouts on a slow link
 
-The [blog post](/blog/why-tus-not-multipart/) covers these in depth.
-The rule of thumb: **form data for small one-shot files, tus for
-anything a user might upload over an unreliable connection.**
+For files over ~100MB — or any upload that might be interrupted — the
+next page covers [tus resumable uploads](/uploads/tus/), the protocol
+that solves these four problems. It uses the same `UPLOAD_DIR`, just
+with resumable, chunked transfers.
