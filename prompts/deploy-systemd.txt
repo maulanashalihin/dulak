@@ -33,12 +33,13 @@ Steps:
    install path.
 7. Enable and start the service.
 8. Verify: curl http://localhost:4000/health should return 200.
-9. Save these two lines to a file called `deploy.env` in my local
+9. Save these three lines to a file called `deploy.env` in my local
    project root (NOT on the server) and add it to .gitignore.
-   Use the actual SSH and path values from above (not the placeholders):
+   Use the actual values from above (not the placeholders):
    ```
    DEPLOY_SSH=<the USER@SERVER_IP from above>
    DEPLOY_PATH=<the install path from above>
+   DEPLOY_SERVICE=<the service name from package.json>
    ```
 10. Tell me the status and any issues.
 
