@@ -84,13 +84,14 @@ export default defineConfig({
 				},
 				{
 					label: "Deployment",
-					items: [
-						{ label: "Overview", slug: "deployment" },
-						{ label: "Configuration", slug: "deployment/configuration" },
-						{ label: "Docker", slug: "deployment/docker" },
-						{ label: "Linux VPS (no Docker)", slug: "deployment/vps" },
-						{ label: "Reverse proxy", slug: "deployment/reverse-proxy" },
-					],
+				items: [
+					{ label: "Overview", slug: "deployment" },
+					{ label: "Deploy with an AI agent", slug: "deployment/ai-agent" },
+					{ label: "Configuration", slug: "deployment/configuration" },
+					{ label: "Docker", slug: "deployment/docker" },
+					{ label: "Linux VPS (no Docker)", slug: "deployment/vps" },
+					{ label: "Reverse proxy", slug: "deployment/reverse-proxy" },
+				],
 				},
 				{
 					label: "Database",

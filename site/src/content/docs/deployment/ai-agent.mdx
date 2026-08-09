@@ -1,0 +1,188 @@
+---
+title: Deploy with an AI agent
+description: Hand the deployment to an AI agent — copy-paste prompts for systemd or Docker, no Linux knowledge required.
+---
+
+Don't want to SSH in and run commands manually? Hand the deployment
+to an AI coding agent. You describe what you want in plain language,
+the agent SSHes into your server, installs everything, and starts the
+app. This page gives you ready-to-paste prompts for both deployment
+paths.
+
+<aside>
+**Works with any agent that can run shell commands** — omp.sh, Claude
+Code, Cursor, opencode, Windsurf. The agent needs SSH access to your
+server and your permission to run commands remotely.
+</aside>
+
+## What you need before starting
+
+- **A VPS** with root or sudo access (Ubuntu 22.04/24.04/26.04).
+- **SSH access** — the agent connects via `ssh user@your-server-ip`.
+- **Your repo on GitHub** — the agent clones it onto the server.
+- **Your domain** (optional) — if you want HTTPS, point the DNS record
+  to your server IP before starting.
+
+## First deploy
+
+Pick systemd or Docker, copy the prompt, replace the **three
+placeholders** (`USER@SERVER_IP`, `YOUR_USER/YOUR_REPO`, `your-domain.com`),
+and paste it to your agent. The first deploy also saves a `deploy.env`
+file in your local project root so routine updates don't need retyping.
+
+<aside>
+If you don't have a preference, pick **systemd** — it's faster and
+lighter. See the
+[benchmark on the deployment overview](/deployment/#benchmark-systemd-vs-docker).
+</aside>
+
+### systemd (bare VPS)
+
+````text
+Deploy my Dulak app on my VPS using systemd (no Docker). Here are
+the details:
+
+- SSH: ssh USER@SERVER_IP
+- GitHub repo: https://github.com/YOUR_USER/YOUR_REPO.git
+- Domain: your-domain.com (or "none" if no domain yet)
+
+Steps:
+1. SSH into the server.
+2. Install Bun (curl -fsSL https://bun.sh/install | bash).
+3. Clone the repo to /opt/dulak.
+4. Run `bun install` and `bun run build`.
+5. Copy .env.example to .env and change these three lines:
+   - PORT=4000
+   - NODE_ENV=production
+   - APP_URL=https://your-domain.com (or http://SERVER_IP:4000 if no domain)
+   Leave the rest as-is (DATABASE_PATH is relative, works anywhere).
+6. Create a systemd service at /etc/systemd/system/dulak.service
+   that runs `bun run src/index.ts` with WorkingDirectory=/opt/dulak.
+7. Enable and start the service.
+8. Verify: curl http://localhost:4000/health should return 200.
+9. Save the deployment details to a file called `deploy.env` in my
+   local project root (NOT on the server) and add it to .gitignore,
+   so I can run routine updates without retyping the SSH address:
+   ```
+   DEPLOY_SSH=user@server-ip
+   DEPLOY_PATH=/opt/dulak
+   DEPLOY_METHOD=systemd
+   DEPLOY_SERVICE=dulak
+   ```
+10. Tell me the status and any issues.
+````
+
+After the agent finishes, your app is live on port 4000. For HTTPS,
+follow up with:
+
+```text
+Now set up a reverse proxy for HTTPS. Use Caddy in front of
+port 4000, with automatic TLS for your-domain.com.
+```
+
+### Docker
+
+````text
+Deploy my Dulak app on my VPS using Docker. Here are the details:
+
+- SSH: ssh USER@SERVER_IP
+- GitHub repo: https://github.com/YOUR_USER/YOUR_REPO.git
+- Domain: your-domain.com (or "none" if no domain yet)
+
+Steps:
+1. SSH into the server.
+2. Install Docker and Docker Compose if not already installed.
+3. Clone the repo to /opt/dulak.
+4. Copy .env.example to .env and change these three lines:
+   - PORT=4000
+   - NODE_ENV=production
+   - APP_URL=https://your-domain.com (or http://SERVER_IP:4000 if no domain)
+   Leave the rest as-is (DATABASE_PATH is relative, works anywhere).
+5. Run `docker compose up -d --build`.
+6. Wait for the container to be healthy (check with `docker compose ps`).
+7. Verify: curl http://localhost:4000/health should return 200.
+8. Save the deployment details to a file called `deploy.env` in my
+   local project root (NOT on the server) and add it to .gitignore,
+   so I can run routine updates without retyping the SSH address:
+   ```
+   DEPLOY_SSH=user@server-ip
+   DEPLOY_PATH=/opt/dulak
+   DEPLOY_METHOD=docker
+   DEPLOY_CONTAINER=dulak-docker
+   ```
+9. Tell me the status and any issues.
+````
+
+After the agent finishes, your app is live on port 4000 inside a
+container. For HTTPS, use the same reverse proxy prompt as the
+systemd path above.
+
+---
+
+## Routine updates
+
+When you push new code to GitHub, paste the matching prompt. The
+agent reads `deploy.env` (created during first deploy) to reconnect —
+you don't retype anything.
+
+### systemd
+
+```text
+Read deploy.env, then update the Dulak app: SSH in, cd to the
+deploy path, git pull, bun install, bun run build, restart the
+systemd service, and verify /health.
+```
+
+### Docker
+
+```text
+Read deploy.env, then update the Dulak Docker deployment: SSH in,
+cd to the deploy path, git pull, docker compose up -d --build,
+and verify /health.
+```
+
+---
+
+## Troubleshooting
+
+If the agent reports an error, paste it back and ask the agent to fix
+it. Common issues:
+
+### "bun: not found" in systemd logs
+
+The systemd unit points to the wrong Bun path. Tell the agent:
+
+```text
+The systemd service can't find bun. Check `which bun` and update
+the ExecStart path in the systemd unit file.
+```
+
+### "EADDRINUSE: Port 4000"
+
+Another process is using port 4000. Tell the agent:
+
+```text
+Port 4000 is in use. Find what's using it (ss -tlnp | grep 4000)
+and either kill it or change the PORT in .env to 4001.
+```
+
+### Docker container keeps restarting
+
+Tell the agent:
+
+```text
+The Docker container is restarting. Check `docker logs dulak-docker`
+and fix whatever error is causing the crash.
+```
+
+### Health check returns non-200
+
+Tell the agent:
+
+```text
+The /health endpoint is returning a non-200 status. Check the
+service logs (journalctl -u dulak or docker logs) and fix the issue.
+```
+
+The agent will diagnose and fix — you don't need to know the commands
+yourself.
