@@ -27,9 +27,9 @@ Steps:
    - NODE_ENV=production
    - APP_URL=https://your-domain.com (or http://SERVER_IP:4000 if no domain)
    Leave the rest as-is (DATABASE_PATH is relative, works anywhere).
-6. Create a systemd service at /etc/systemd/system/<name>.service
-   (use the "name" field from package.json as the service name)
-   that runs `bun run src/index.ts` with WorkingDirectory set to the
+6. Read the "name" field from package.json — that's the service name.
+   Create a systemd unit at /etc/systemd/system/<name>.service that
+   runs `bun run src/index.ts` with WorkingDirectory set to the
    install path.
 7. Enable and start the service.
 8. Verify: curl http://localhost:4000/health should return 200.
@@ -39,7 +39,7 @@ Steps:
    ```
    DEPLOY_SSH=<the USER@SERVER_IP from above>
    DEPLOY_PATH=<the install path from above>
-   DEPLOY_SERVICE=<the service name from package.json>
+   DEPLOY_SERVICE=<the service name from step 6>
    ```
 10. Tell me the status and any issues.
 
