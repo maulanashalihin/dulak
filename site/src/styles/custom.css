@@ -234,16 +234,19 @@ article.preview footer a:hover {
 	line-height: 1.75;
 }
 
-/* Links — match the emerald design system instead of Starlight purple. */
+/* Links — match the emerald design system instead of Starlight purple.
+   Use text-decoration: underline (follows font metrics) instead of
+   border-bottom (box model, looks detached from text). */
 .sl-markdown-content a {
 	color: var(--sl-color-accent);
-	text-decoration: none;
-	border-bottom: 1px solid var(--sl-color-accent-low);
-	transition: border-color 0.15s ease, color 0.15s ease;
+	text-decoration: underline;
+	text-decoration-color: color-mix(in srgb, var(--sl-color-accent) 35%, transparent);
+	text-underline-offset: 2px;
+	transition: text-decoration-color 0.15s ease, color 0.15s ease;
 }
 .sl-markdown-content a:hover {
 	color: var(--sl-color-accent-high);
-	border-bottom-color: var(--sl-color-accent);
+	text-decoration-color: var(--sl-color-accent);
 }
 
 /* Code blocks — Starlight sets --ec-brdRad: 0px (sharp corners) by default.
