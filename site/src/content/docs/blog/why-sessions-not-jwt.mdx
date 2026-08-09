@@ -106,6 +106,26 @@ You end up with JWT *plus* a database lookup *plus* a revocation list. You have 
 
 Dulak skips the JWT layer entirely. Every request does one session lookup and one user lookup — both primary-key queries on SQLite, both sub-millisecond. That's the same cost as the JWT revocation check, except the architecture is simpler and revocation actually works.
 
+## "But why not cache the session lookup?"
+
+A reasonable question: if every request does two SQLite PK lookups, wouldn't an in-memory cache make it faster? Benchmarked on an M4 with 100K users and 100K sessions in SQLite WAL mode:
+
+| Path | Cost/req | Ops/sec | vs no cache |
+| --- | --- | --- | --- |
+| No cache (hash + 2 PK scans) | 1.73µs | 578K | baseline |
+| Full cache (token → user in a `Map`) | 0.35µs | 2.87M | 5× faster |
+| Session cache (token → session in a `Map`, still fetch user) | 0.95µs | 1.05M | 1.8× faster |
+
+The full cache is 5× faster. It's also a trap.
+
+Remember the stale-payload problem from the last section — "you can't trust the JWT payload anymore" when a role changes or a user is banned? A `token → user` cache has the **exact same problem**. The cached user row goes stale the moment an admin bans the account or changes a role. To stay correct you need cache invalidation: evict on logout, evict on role change, evict on ban, evict on password change, add a TTL safety net. That is a revocation list — the very complexity this architecture exists to avoid. You'd be trading 1.38µs per request for the bug surface JWT was rejected for.
+
+The session-only cache (1.8× faster) is the safe middle ground — user data stays fresh, only the session row is cached. But 0.77µs saved per request doesn't justify the invalidation logic and memory overhead.
+
+And there's a deeper point: SQLite with WAL mode already keeps hot B-tree pages in the OS page cache. The benchmark proves it — scaling from 10K to 100K rows added only 0.09µs (5.5%). If those lookups were disk-bound, 10× the data would be far slower. Near-constant cost means the pages are already in RAM. A JavaScript `Map` on top of the OS page cache is a cache on top of a cache, with invalidation burden and no real I/O to save.
+
+At 1.73µs per request, auth lookup consumes under 0.3% of a core at 1K req/sec. The bottleneck is network, TLS, SSR rendering, business logic — never the session row. The session lookup is not your bottleneck, and caching it would cost you the one property that makes sessions worth choosing over JWT: revocation that actually works.
+
 ## How Dulak's sessions actually work
 
 The full picture, from `src/server/auth.ts`:

@@ -415,6 +415,22 @@ h1#_top {
 .post-footer .sl-link-card:hover {
 	border-color: var(--sl-color-accent);
 }
+/* Pagination prev/next cards — override Starlight's default hover border
+   (--sl-color-gray-2: near-white in dark, near-black in light) which is
+   visually too prominent. Match the accent-border hover pattern used by
+   article.preview and .sl-link-card. */
+.pagination-links a {
+	transition: border-color 0.15s ease;
+}
+.pagination-links a:hover {
+	border-color: var(--sl-color-accent);
+}
+.pagination-links a:hover .link-title {
+	color: var(--sl-color-accent);
+}
+.pagination-links .link-title {
+	transition: color 0.15s ease;
+}
 .post-footer .sl-link-card a {
 	border-bottom: none;
 	color: inherit;
