@@ -7,7 +7,7 @@ description: Put TLS and routing in front of Dulak — Cloudflare, Caddy, or Ngi
 
 When you deploy Dulak, the app listens on a port (default `4000`) and
 speaks **plain HTTP** — no encryption. If a user visits
-`http://your-domain.com:4000`, their browser connects directly to your
+`http://your-server-ip:4000`, their browser connects directly to your
 server and everything (passwords, session cookies, form data) travels
 over the internet in plaintext. Anyone on the path can read it.
 
