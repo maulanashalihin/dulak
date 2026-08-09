@@ -45,6 +45,64 @@ The client implements the correct resumable pattern:
 Interrupted uploads are remembered in `localStorage` and resumed when the
 same file is re-selected.
 
+## tus vs plain form data
+
+tus is the default, but it's not the only way to upload. Plain
+`multipart/form-data` uploads are built into Bun — `request.formData()`
+parses the multipart body natively, no dependency, no protocol, no
+server-side state:
+
+```ts
+// src/server/routes/attachments.routes.ts
+import { Hono } from "hono";
+import { requireAuth } from "../auth";
+import { config } from "../config";
+import type { AppEnv } from "../inertia-middleware";
+
+export const attachmentsRoutes = () => {
+  const app = new Hono<AppEnv>();
+
+  app.post("/attachments", requireAuth, async (c) => {
+    const form = await c.req.formData();
+    const file = form.get("file");
+    if (!(file instanceof File)) {
+      return c.json({ error: "no file field" }, 400);
+    }
+    await Bun.write(`${config.upload.dir}/${file.name}`, file);
+    return c.redirect("/attachments");
+  });
+
+  return app;
+};
+```
+
+`Bun.write` accepts a `File`/`Blob` directly — the whole handler is the
+upload. For a small file over a stable connection, that's the entire
+implementation.
+
+### Which one to use
+
+| Criteria | Plain form data | tus |
+| --- | --- | --- |
+| File size | small (< ~1MB) | large, or no fixed ceiling |
+| Resume after drop | none — restart from zero | continues from the last offset |
+| Server-side progress | none | `Upload-Offset` tracked in SQLite |
+| Large upload timeouts | risk — one long request | chunked, each PATCH is short |
+| Implementation | ~10 lines, native Bun | ~400 lines across 3 modules |
+| State | stateless | one SQLite row per upload |
+| Best for | avatar, resume PDF, one-shot documents | media, video, anything user-facing over flaky networks |
+
+The rule: **form data for small one-shot files, tus for anything a user
+might upload over an unreliable connection.** If the file fits in one
+request and a dropped connection costs nothing, form data is simpler
+and you should use it. The moment size or reliability matters, tus
+earns its complexity.
+
+The [blog post](/blog/why-tus-not-multipart/) explains the tradeoff in
+depth — multipart buffers the whole body, can't resume, and times out
+on slow large uploads. tus solves all three, at the cost of protocol
+complexity you only need when those problems are real.
+
 ## Config
 
 | Variable | Default | Notes |
