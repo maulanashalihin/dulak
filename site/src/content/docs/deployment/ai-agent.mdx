@@ -101,7 +101,7 @@ and either kill it or change the PORT in .env to 4001.
 ### Docker container keeps restarting
 
 ```text
-The Docker container is restarting. Check `docker logs dulak-docker`
+The Docker container is restarting. Check `docker compose logs`
 and fix whatever error is causing the crash.
 ```
 
@@ -109,7 +109,8 @@ and fix whatever error is causing the crash.
 
 ```text
 The /health endpoint is returning a non-200 status. Check the
-service logs (journalctl -u dulak or docker logs) and fix the issue.
+service logs (journalctl -u <name> or docker compose logs) and
+fix the issue.
 ```
 
 The agent will diagnose and fix — you don't need to know the commands

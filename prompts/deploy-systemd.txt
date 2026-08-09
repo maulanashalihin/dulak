@@ -27,7 +27,8 @@ Steps:
    - NODE_ENV=production
    - APP_URL=https://your-domain.com (or http://SERVER_IP:4000 if no domain)
    Leave the rest as-is (DATABASE_PATH is relative, works anywhere).
-6. Create a systemd service at /etc/systemd/system/dulak.service
+6. Create a systemd service at /etc/systemd/system/<name>.service
+   (use the "name" field from package.json as the service name)
    that runs `bun run src/index.ts` with WorkingDirectory set to the
    install path.
 7. Enable and start the service.
