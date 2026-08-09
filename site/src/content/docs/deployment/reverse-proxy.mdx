@@ -18,7 +18,11 @@ and [bare-metal VPS](/deployment/vps/) deployments.
 ## Option A — Cloudflare (recommended, nothing to install)
 
 Your domain is on Cloudflare, so the edge handles TLS and proxying; the
-server only runs Bun. **Pick one** — either A1 or A2, not both:
+server only runs Bun. Two routes are available — **A1 (Proxied DNS +
+Origin Rule) is recommended** as the default: no extra software, no
+open ports beyond what Cloudflare uses, and the Origin Rule ensures the
+app sees the correct `Host` header for CSRF and OAuth. A2 (Tunnel) is
+the alternative when you want zero inbound ports at all.
 
 ### A1. Proxied DNS + origin rule (no extra software)
 
@@ -48,13 +52,14 @@ Dashboard → **SSL/TLS → Overview** → set mode:
   (Cloudflare Origin CA cert, free from Dashboard → SSL/TLS → Origin
   Server → Create Certificate). More secure, slightly more setup.
 
-**Step 3 — Host header (only if redirects or OAuth break):**
+**Step 3 — Origin Rule (set this up now, don't wait for it to break):**
 
-Cloudflare normally passes the original `Host` header through, so the
-app sees `your-domain.com` and generates correct redirect URLs. If your
-redirects or OAuth callbacks point to `localhost:4000` or the wrong
-host, Cloudflare may be rewriting the Host header. Fix it with an
-Origin Rule:
+Cloudflare normally passes the original `Host` header through, but some
+configurations (CNAME setups, partial proxy, Cloudflare Workers) can
+rewrite it. Dulak's CSRF check compares the `Origin` header against
+`Host`, and OAuth redirect URIs depend on the correct host — so a
+rewritten `Host` header breaks both silently. Set up the Origin Rule
+upfront:
 
 1. Dashboard → **Rules → Origin Rules** → **Create rule**.
 2. Name: `Rewrite host for dulak`.
@@ -62,14 +67,17 @@ Origin Rule:
 4. Rewrite Host header to: `your-domain.com`.
 5. Deploy.
 
-This ensures the app's CSRF origin check (`Origin` header vs `Host`)
-passes — both will be `your-domain.com`.
+This guarantees the app sees `your-domain.com` as the `Host` on every
+request — CSRF passes, OAuth callbacks resolve correctly, and redirect
+URLs point to the right domain. It's one rule that prevents a class of
+bugs that are hard to debug because they only manifest on specific
+Cloudflare configurations.
 
 **Step 4 — Firewall:** restrict port 4000 to Cloudflare IPs only (see
 [Firewall](#firewall) below) so nobody can bypass the edge and hit your
 origin directly.
 
-### A2. Cloudflare Tunnel (zero open ports)
+### A2. Cloudflare Tunnel (alternative — zero open ports)
 
 Nothing to install except `cloudflared`:
 
