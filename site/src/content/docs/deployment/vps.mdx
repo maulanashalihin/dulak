@@ -43,31 +43,25 @@ source ~/.bashrc
 bun --version    # should print 1.3.x or higher
 ```
 
-### 1.2 Create the app directory
+### 1.2 Get the code
 
 ```bash
-sudo mkdir -p /opt/dulak/data
-sudo chown -R $USER:$USER /opt/dulak
-```
-
-### 1.3 Get the code
-
-```bash
+git clone <your-repo-url> /opt/dulak
 cd /opt/dulak
-git clone <your-repo-url> .
 ```
 
 Or copy the app from your build machine — the server runs TS directly,
-so the whole repo (minus `.git`) works.
+so the whole repo (minus `.git`) works. The `data/` directory is created
+automatically on first startup.
 
-### 1.4 Install dependencies and build
+### 1.3 Install dependencies and build
 
 ```bash
 bun install
 bun run build
 ```
 
-### 1.5 Environment
+### 1.4 Environment
 
 Create `/opt/dulak/.env`:
 
@@ -87,7 +81,7 @@ Adjust the values for your deployment — see
 `UPLOAD_DIR` defaults to `./data/uploads` — keep it inside
 `/opt/dulak/data` so it survives deploys and is easy to back up.
 
-### 1.6 systemd unit
+### 1.5 systemd unit
 
 Create `/etc/systemd/system/dulak.service`:
 
@@ -117,7 +111,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now dulak
 ```
 
-### 1.7 Verify
+### 1.6 Verify
 
 ```bash
 sudo systemctl is-active dulak          # → active
@@ -126,7 +120,7 @@ curl http://127.0.0.1:4000/health       # → {"status":"ok","uptime":...}
 
 If either check fails, see [Troubleshooting](#troubleshooting) below.
 
-### 1.8 Reverse proxy and firewall
+### 1.7 Reverse proxy and firewall
 
 Dulak does not terminate TLS — that is the proxy's job. Set up
 Cloudflare, Caddy, or Nginx in front of `127.0.0.1:4000`:
