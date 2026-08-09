@@ -26,6 +26,22 @@ Bun + systemd + reverse proxy. More control, fewer moving parts, but
 
 → **[Linux VPS guide](/deployment/vps/)**
 
+## Docker vs. bare VPS — which one?
+
+| | Docker | Bare VPS (systemd) |
+|---|---|---|
+| **First-time setup** | `docker compose up -d --build` (1 command after clone) | ~6 steps: install bun, create user, clone, .env, systemd unit, start |
+| **Routine update** | `git pull && docker compose up -d --build` | `git pull && bun install && bun run build && systemctl restart dulak` |
+| **Downtime on update** | ~1.8s (container swap) | ~1s (process restart) |
+| **Install on server** | [Docker](https://docs.docker.com/engine/install/) + Docker Compose | [Bun](https://bun.sh/docs/install) (curl one-liner) |
+| **Isolation** | Containerized (filesystem, network, process) | Runs directly on host |
+| **Best for** | Most users — simplest setup, reproducible environment | Users who want minimal overhead, already comfortable with Linux |
+
+Both paths serve the same app on port 4000 and need a
+[reverse proxy](#after-either-path-reverse-proxy) for HTTPS. The
+downtime difference (under 1s) is negligible for most apps — pick based on
+which setup you're more comfortable with, not performance.
+
 ## After either path: reverse proxy
 
 Your app is running on port 4000, but it speaks plain HTTP — no
