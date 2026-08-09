@@ -214,8 +214,12 @@ export function clearOAuthStateCookie(c: Context<AppEnv>): void {
 // Route guards (Hono middleware: Response short-circuits, next() continues)
 // ---------------------------------------------------------------------------
 
-const redirectTo = (request: Request, path: string) =>
-	Response.redirect(new URL(path, safeUrl(request.url).toString()).toString());
+const redirectTo = (request: Request, path: string) => {
+	const url = safeUrl(request.url);
+	const proto = request.headers.get("x-forwarded-proto");
+	if (proto) url.protocol = proto + ":";
+	return Response.redirect(new URL(path, url.toString()).toString());
+};
 
 export const requireAuth = async (c: Context<AppEnv>, next: Next) => {
 	if (!c.var.user) return redirectTo(c.req.raw, "/login");
