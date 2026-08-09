@@ -16,6 +16,7 @@
 	--sl-color-accent: #059669; /* emerald-600 */
 	--sl-color-accent-low: #d1fae5; /* emerald-100 */
 	--sl-color-text-accent: #047857;
+	--sl-color-text-invert: #ffffff; /* white text on dark emerald accent in light mode */
 }
 
 /* Landing hero */
