@@ -1,23 +1,25 @@
 # First deploy — Docker
 #
-# Edit the three placeholders below, then paste this entire file
+# Edit the four placeholders below, then paste this entire file
 # to your AI agent (omp.sh, Claude Code, Cursor, etc.)
 #
 # Placeholders to replace:
 #   USER@SERVER_IP       → your SSH login (e.g. root@203.0.113.5)
 #   YOUR_USER/YOUR_REPO  → your GitHub repo (e.g. maulanashalihin/dulak)
 #   your-domain.com      → your domain (or "none" if no domain yet)
+#   /opt/dulak           → where to install on the server (or keep as-is)
 
 Deploy my Dulak app on my VPS using Docker. Here are the details:
 
 - SSH: ssh USER@SERVER_IP
 - GitHub repo: https://github.com/YOUR_USER/YOUR_REPO.git
 - Domain: your-domain.com (or "none" if no domain yet)
+- Install path: /opt/dulak
 
 Steps:
 1. SSH into the server.
 2. Install Docker and Docker Compose if not already installed.
-3. Clone the repo to /opt/dulak.
+3. Clone the repo to the install path.
 4. Copy .env.example to .env and change these three lines:
    - PORT=4000
    - NODE_ENV=production
@@ -26,14 +28,11 @@ Steps:
 5. Run `docker compose up -d --build`.
 6. Wait for the container to be healthy (check with `docker compose ps`).
 7. Verify: curl http://localhost:4000/health should return 200.
-8. Save the deployment details to a file called `deploy.env` in my
-   local project root (NOT on the server) and add it to .gitignore,
-   so I can run routine updates without retyping the SSH address:
+8. Save these two lines to a file called `deploy.env` in my local
+   project root (NOT on the server) and add it to .gitignore:
    ```
    DEPLOY_SSH=user@server-ip
    DEPLOY_PATH=/opt/dulak
-   DEPLOY_METHOD=docker
-   DEPLOY_CONTAINER=dulak-docker
    ```
 9. Tell me the status and any issues.
 

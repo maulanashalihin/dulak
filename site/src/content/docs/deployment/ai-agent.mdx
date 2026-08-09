@@ -27,8 +27,8 @@ The repo includes prompt files for both deployment paths:
 
 | File | Path | What to edit |
 |---|---|---|
-| `prompts/deploy-systemd.txt` | systemd (bare VPS) | 3 placeholders: SSH, repo, domain |
-| `prompts/deploy-docker.txt` | Docker | 3 placeholders: SSH, repo, domain |
+| `prompts/deploy-systemd.txt` | systemd (bare VPS) | 4 placeholders: SSH, repo, domain, install path |
+| `prompts/deploy-docker.txt` | Docker | 4 placeholders: SSH, repo, domain, install path |
 
 <aside>
 If you don't have a preference, pick **systemd** — it's faster and
@@ -40,10 +40,11 @@ lighter. See the
 
 1. Open the prompt file for your chosen path (e.g.
    `prompts/deploy-systemd.txt`).
-2. Replace the three placeholders at the top:
+2. Replace the four placeholders at the top:
    - `USER@SERVER_IP` → your SSH login (e.g. `root@203.0.113.5`)
    - `YOUR_USER/YOUR_REPO` → your GitHub repo
    - `your-domain.com` → your domain (or `none`)
+   - `/opt/dulak` → install path on the server (or keep as-is)
 3. Paste the entire file content to your AI agent.
 
 The agent SSHes in, installs Bun (or Docker), clones the repo, builds
