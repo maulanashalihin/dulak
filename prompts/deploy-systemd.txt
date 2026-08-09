@@ -1,0 +1,47 @@
+# First deploy — systemd (bare VPS)
+#
+# Edit the three placeholders below, then paste this entire file
+# to your AI agent (omp.sh, Claude Code, Cursor, etc.)
+#
+# Placeholders to replace:
+#   USER@SERVER_IP       → your SSH login (e.g. root@203.0.113.5)
+#   YOUR_USER/YOUR_REPO  → your GitHub repo (e.g. maulanashalihin/dulak)
+#   your-domain.com      → your domain (or "none" if no domain yet)
+
+Deploy my Dulak app on my VPS using systemd (no Docker). Here are
+the details:
+
+- SSH: ssh USER@SERVER_IP
+- GitHub repo: https://github.com/YOUR_USER/YOUR_REPO.git
+- Domain: your-domain.com (or "none" if no domain yet)
+
+Steps:
+1. SSH into the server.
+2. Install Bun (curl -fsSL https://bun.sh/install | bash).
+3. Clone the repo to /opt/dulak.
+4. Run `bun install` and `bun run build`.
+5. Copy .env.example to .env and change these three lines:
+   - PORT=4000
+   - NODE_ENV=production
+   - APP_URL=https://your-domain.com (or http://SERVER_IP:4000 if no domain)
+   Leave the rest as-is (DATABASE_PATH is relative, works anywhere).
+6. Create a systemd service at /etc/systemd/system/dulak.service
+   that runs `bun run src/index.ts` with WorkingDirectory=/opt/dulak.
+7. Enable and start the service.
+8. Verify: curl http://localhost:4000/health should return 200.
+9. Save the deployment details to a file called `deploy.env` in my
+   local project root (NOT on the server) and add it to .gitignore,
+   so I can run routine updates without retyping the SSH address:
+   ```
+   DEPLOY_SSH=user@server-ip
+   DEPLOY_PATH=/opt/dulak
+   DEPLOY_METHOD=systemd
+   DEPLOY_SERVICE=dulak
+   ```
+10. Tell me the status and any issues.
+
+# After the agent finishes, your app is live on port 4000.
+# For HTTPS, paste this follow-up prompt:
+#
+#   Now set up a reverse proxy for HTTPS. Use Caddy in front of
+#   port 4000, with automatic TLS for your-domain.com.

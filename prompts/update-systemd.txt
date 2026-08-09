@@ -1,0 +1,9 @@
+# Routine update — systemd
+#
+# No editing needed. The first deploy created deploy.env in your
+# project root with the SSH address and server path.
+# Paste this to your AI agent each time you push new code.
+
+Read deploy.env, then update the Dulak app: SSH in, cd to the
+deploy path, git pull, bun install, bun run build, restart the
+systemd service, and verify /health.
