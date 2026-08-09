@@ -43,12 +43,14 @@
 /* Page title — reduce from default 42px */
 .posts + h1,
 h1#_top {
-	font-size: 2rem;
+	font-size: 2.25rem;
+	line-height: 1.2;
+	letter-spacing: -0.02em;
 }
 
-/* Post list container — tighten the gap */
+/* Post list container — tighten the gap (override starlight-blog default) */
 .posts {
-	gap: 1.25rem;
+	gap: 1.25rem !important;
 }
 
 /* Post cards — add background, border, padding, hover */
@@ -70,16 +72,22 @@ article.preview .preview-link h2 {
 	color: #e5e7eb;
 	line-height: 1.3;
 	margin: 0 0 0.5rem;
+	padding: 0;
+	border-bottom: none;
 	transition: color 0.15s ease;
 }
-article.preview .preview-link:hover h2 {
-	color: #34d399;
-}
+article.preview .preview-link:hover h2,
 article.preview:hover .preview-link h2 {
 	color: #34d399;
 }
 
-/* Metadata — horizontal layout, muted */
+/* Preview link — remove the green underline from .sl-markdown-content a */
+article.preview .preview-link {
+	border-bottom: none;
+	color: inherit;
+}
+
+/* Metadata — horizontal layout, muted, no separator line */
 article.preview .metadata {
 	flex-direction: row;
 	align-items: center;
@@ -87,6 +95,8 @@ article.preview .metadata {
 	gap: 0.5rem;
 	font-size: 0.85rem;
 	color: #9aa4b2;
+	padding-bottom: 0;
+	border-bottom: none;
 }
 article.preview .metadata .dates {
 	font-size: 0.85rem;
@@ -121,11 +131,17 @@ article.preview .sl-markdown-content p {
 	margin: 0.5rem 0 0;
 }
 
-/* Tags footer — add top separator */
+/* Tags footer — pill chips matching the blog post page */
 article.preview footer {
 	border-top: 1px solid #1f2937;
 	padding-top: 0.75rem;
 	margin-top: 1rem;
+}
+article.preview footer > div {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
 }
 article.preview footer b {
 	color: #64748b;
@@ -133,17 +149,32 @@ article.preview footer b {
 	font-weight: 500;
 }
 article.preview footer ul {
-	gap: 0.4rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+article.preview footer li {
+	list-style: none;
 }
 article.preview footer a {
-	font-size: 0.8rem;
+	display: inline-block;
+	font-size: 0.78rem;
 	color: #9aa4b2;
-	border-color: #1f2937;
-	transition: color 0.15s ease, border-color 0.15s ease;
+	border: 1px solid #263041;
+	border-bottom: 1px solid #263041;
+	border-radius: 999px;
+	padding: 0.25rem 0.75rem;
+	background: rgba(15, 17, 23, 0.6);
+	text-decoration: none;
+	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 article.preview footer a:hover {
 	color: #34d399;
 	border-color: #059669;
+	background: rgba(5, 150, 105, 0.1);
 }
 
 /* --- Content pages (blog posts + docs) --- */
@@ -229,4 +260,174 @@ article.preview footer a:hover {
 .sl-markdown-content th {
 	background: #131922;
 	color: #e5e7eb;
+}
+
+/* --- Blog post page (individual article) --- */
+
+/* Article title — more bottom breathing room before metadata */
+h1#_top {
+	margin-bottom: 1rem;
+}
+
+/* Metadata — horizontal row with a hairline separator below */
+.sl-markdown-content .metadata {
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	padding-bottom: 1.25rem;
+	margin-bottom: 0.5rem;
+	border-bottom: 1px solid #1f2937;
+}
+.sl-markdown-content .metadata .dates {
+	font-size: 0.85rem;
+	color: #9aa4b2;
+}
+.sl-markdown-content .metadata .authors {
+	display: flex;
+	align-items: center;
+}
+.sl-markdown-content .metadata .author {
+	text-decoration: none;
+}
+.sl-markdown-content .metadata .author .text {
+	flex-direction: row;
+	align-items: baseline;
+	gap: 0.5rem;
+}
+.sl-markdown-content .metadata .name {
+	font-size: 0.85rem;
+	color: #e5e7eb;
+	font-weight: 600;
+}
+.sl-markdown-content .metadata .title {
+	font-size: 0.75rem;
+	color: #64748b;
+}
+
+/* Lead paragraph — first paragraph after metadata, larger and brighter */
+.sl-markdown-content .metadata + p {
+	font-size: 1.2rem;
+	line-height: 1.65;
+	color: #e5e7eb;
+	margin-top: 1.75rem;
+	font-weight: 400;
+}
+
+/* Post footer — separator above tags + related posts */
+.post-footer {
+	border-top: 1px solid #1f2937;
+	padding-top: 2rem;
+	margin-top: 3rem;
+}
+
+/* Tags — pill chips matching the landing page design */
+.post-footer > div:first-child {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.post-footer > div:first-child b {
+	color: #64748b;
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+.post-footer > div:first-child ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.post-footer > div:first-child li {
+	list-style: none;
+}
+.post-footer > div:first-child a {
+	display: inline-block;
+	font-size: 0.78rem;
+	color: #9aa4b2;
+	border: 1px solid #263041;
+	border-bottom: 1px solid #263041;
+	border-radius: 999px;
+	padding: 0.25rem 0.75rem;
+	background: rgba(15, 17, 23, 0.6);
+	text-decoration: none;
+	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.post-footer > div:first-child a:hover {
+	color: #34d399;
+	border-color: #059669;
+	background: rgba(5, 150, 105, 0.1);
+}
+
+/* Related posts — card styling matching .dl-feature-card */
+.post-footer .card-grid {
+	gap: 1rem;
+}
+.post-footer .sl-link-card {
+	background: #0f141a;
+	border: 1px solid #1f2937;
+	border-radius: 0.5rem;
+	padding: 0.75rem 1rem;
+	display: flex;
+	align-items: center;
+	transition: border-color 0.15s ease;
+}
+.post-footer .sl-link-card:hover {
+	border-color: #059669;
+}
+.post-footer .sl-link-card a {
+	border-bottom: none;
+	color: inherit;
+}
+.post-footer .sl-link-card .title {
+	font-size: 0.85rem;
+	font-weight: 500;
+	color: #9aa4b2;
+	line-height: 1.35;
+	transition: color 0.15s ease;
+}
+.post-footer .sl-link-card:hover .title {
+	color: #34d399;
+}
+
+/* Right sidebar TOC — better hierarchy and visual weight */
+starlight-toc nav h2#starlight__on-this-page {
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #64748b;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 0.75rem;
+}
+starlight-toc nav ul {
+	border-left: 2px solid #1f2937;
+	padding-left: 0;
+}
+starlight-toc nav ul li {
+	list-style: none;
+}
+starlight-toc nav ul li a {
+	display: block;
+	font-size: 0.83rem;
+	color: #9aa4b2;
+	padding: 0.3rem 0 0.3rem 0.75rem;
+	margin-left: -2px;
+	border-left: 2px solid transparent;
+	line-height: 1.4;
+	transition: color 0.15s ease, border-color 0.15s ease;
+}
+starlight-toc nav ul li a:hover {
+	color: #e5e7eb;
+	border-left-color: #374151;
+}
+starlight-toc nav ul li a[aria-current="true"],
+starlight-toc nav ul li a.is-current {
+	color: #34d399;
+	border-left-color: #059669;
+	font-weight: 500;
+	background: transparent;
+	border-radius: 0;
 }
