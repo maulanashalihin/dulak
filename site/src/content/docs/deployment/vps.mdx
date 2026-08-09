@@ -3,11 +3,11 @@ title: Linux VPS (no Docker)
 description: Run Dulak on a bare Linux VPS with systemd and a reverse proxy.
 ---
 
-Deploy without Docker: Bun runs the TypeScript server directly, client
-assets are prebuilt, and a **systemd unit + reverse proxy** handle
-restarts, HTTPS, and traffic. If your domain is on Cloudflare, no reverse
-proxy software is needed on the VPS at all — Cloudflare is the proxy.
-This guide targets Ubuntu 22.04/24.04.
+Run Dulak directly on a Linux VPS — no Docker, no container overhead.
+Bun runs the TypeScript server, client assets are prebuilt, and systemd
+handles restarts. You'll need a [reverse proxy](/deployment/reverse-proxy/)
+for HTTPS (Cloudflare, Caddy, or Nginx). This guide targets Ubuntu
+22.04/24.04/26.04.
 
 ## Architecture
 
