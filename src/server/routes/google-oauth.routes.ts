@@ -150,8 +150,7 @@ export const googleOauthRoutes = () => {
 
 	app.get("/auth/google/callback", async (c) => {
 		const url = safeUrl(c.req.url);
-		const proto = c.req.raw.headers.get("x-forwarded-proto");
-		if (proto) url.protocol = proto + ":";
+		url.protocol = safeUrl(config.appUrl).protocol;
 		const code = url.searchParams.get("code");
 		const state = url.searchParams.get("state");
 		const stored = getCookie(c, OAUTH_STATE_COOKIE) ?? null;

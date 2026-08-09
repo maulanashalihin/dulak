@@ -23,6 +23,7 @@ import {
 	type UserRow,
 } from "./db";
 import type { AppEnv } from "./inertia-middleware";
+import { config } from "./config";
 import { safeUrl } from "./url";
 
 export const SESSION_COOKIE = "session";
@@ -216,8 +217,7 @@ export function clearOAuthStateCookie(c: Context<AppEnv>): void {
 
 const redirectTo = (request: Request, path: string) => {
 	const url = safeUrl(request.url);
-	const proto = request.headers.get("x-forwarded-proto");
-	if (proto) url.protocol = proto + ":";
+	url.protocol = safeUrl(config.appUrl).protocol;
 	return Response.redirect(new URL(path, url.toString()).toString());
 };
 
