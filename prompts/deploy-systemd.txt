@@ -33,10 +33,11 @@ Steps:
 7. Enable and start the service.
 8. Verify: curl http://localhost:4000/health should return 200.
 9. Save these two lines to a file called `deploy.env` in my local
-   project root (NOT on the server) and add it to .gitignore:
+   project root (NOT on the server) and add it to .gitignore.
+   Use the actual SSH and path values from above (not the placeholders):
    ```
-   DEPLOY_SSH=user@server-ip
-   DEPLOY_PATH=/opt/dulak
+   DEPLOY_SSH=<the USER@SERVER_IP from above>
+   DEPLOY_PATH=<the install path from above>
    ```
 10. Tell me the status and any issues.
 
