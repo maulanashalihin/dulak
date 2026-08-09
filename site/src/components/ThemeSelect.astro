@@ -1,0 +1,42 @@
+---
+import Default from "@astrojs/starlight/components/ThemeSelect.astro";
+import StarlightBlogThemeSelect from "starlight-blog/components/ThemeSelect.astro";
+---
+
+<div>
+	<a href="/getting-started/introduction/">Docs</a>
+</div>
+
+<StarlightBlogThemeSelect><slot /></StarlightBlogThemeSelect>
+<Default><slot /></Default>
+
+<style>
+	div {
+		border-inline-end: 1px solid var(--sl-color-gray-5);
+		display: none;
+		gap: 1rem;
+		min-inline-size: 0;
+		padding-inline-end: 1rem;
+	}
+
+	@media (min-width: 50rem) {
+		:global(.header > .right-group) {
+			min-inline-size: 0;
+		}
+
+		div {
+			align-items: center;
+			display: flex;
+		}
+	}
+
+	a {
+		color: var(--sl-color-text-accent);
+		font-weight: 600;
+		min-inline-size: 0;
+		overflow: hidden;
+		text-decoration: none;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+</style>

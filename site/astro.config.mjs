@@ -41,6 +41,9 @@ export default defineConfig({
 				},
 			],
 			customCss: ["./src/styles/custom.css"],
+			components: {
+				ThemeSelect: "./src/components/ThemeSelect.astro",
+			},
 			sidebar: [
 				{
 					label: "Getting Started",
