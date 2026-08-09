@@ -43,19 +43,18 @@ source ~/.bashrc
 bun --version    # should print 1.3.x or higher
 ```
 
-### 1.2 Create the app user and directory
-
-Run the app as a dedicated user, not root:
+### 1.2 Create the app directory
 
 ```bash
-sudo useradd --system --create-home --shell /usr/sbin/nologin dulak
 sudo mkdir -p /opt/dulak/data
-sudo chown -R dulak:dulak /opt/dulak
+sudo chown -R $USER:$USER /opt/dulak
 ```
+
+### 1.3 Get the code
 
 ```bash
 cd /opt/dulak
-sudo -u dulak git clone <your-repo-url> .
+git clone <your-repo-url> .
 ```
 
 Or copy the app from your build machine — the server runs TS directly,
@@ -64,18 +63,16 @@ so the whole repo (minus `.git`) works.
 ### 1.4 Install dependencies and build
 
 ```bash
-sudo -u dulak bash -c 'cd /opt/dulak && bun install'
-sudo -u dulak bash -c 'cd /opt/dulak && bun run build'
+bun install
+bun run build
 ```
-
-**Verify:** `ls /opt/dulak/dist/` should show `ssr.js` and `assets/`.
 
 ### 1.5 Environment
 
 Create `/opt/dulak/.env`:
 
 ```bash
-sudo -u dulak tee /opt/dulak/.env << 'EOF'
+cat > /opt/dulak/.env << 'EOF'
 PORT=4000
 NODE_ENV=production
 APP_URL=https://your-domain.com
@@ -102,10 +99,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=dulak
 WorkingDirectory=/opt/dulak
 EnvironmentFile=/opt/dulak/.env
-ExecStart=/home/dulak/.bun/bin/bun run src/index.ts
+ExecStart=%h/.bun/bin/bun run src/index.ts
 Restart=always
 RestartSec=3
 
@@ -145,9 +141,9 @@ After you push code to GitHub, SSH to the server and run:
 
 ```bash
 cd /opt/dulak
-sudo -u dulak git pull
-sudo -u dulak bun install
-sudo -u dulak bun run build
+git pull
+bun install
+bun run build
 sudo systemctl restart dulak
 curl http://127.0.0.1:4000/health       # → {"status":"ok",...}
 ```
@@ -173,8 +169,8 @@ Common causes:
   [Configuration](/deployment/configuration/). The error message names
   the exact var.
 - **`bun: not found`** — the systemd unit points to
-  `/home/dulak/.bun/bin/bun` but Bun was installed under a different user.
-  Check the path: `which bun` as the `dulak` user, and update
+  `%h/.bun/bin/bun` but Bun is installed elsewhere.
+  Check the path: `which bun`, and update
   `ExecStart` in the unit file.
 - **`EADDRINUSE: Port 4000`** — another process is using port 4000. Find
   it: `ss -tlnp | grep 4000`. Kill it or change `PORT` in `.env`.
@@ -192,7 +188,7 @@ locked or the DB file is missing. Check:
 
 ```bash
 ls -la /opt/dulak/data/app.sqlite        # file exists?
-sudo -u dulak sqlite3 /opt/dulak/data/app.sqlite 'PRAGMA integrity_check;'
+sqlite3 /opt/dulak/data/app.sqlite 'PRAGMA integrity_check;'
 ```
 
 ### Port not reachable from outside
@@ -212,11 +208,11 @@ The app binds to `0.0.0.0:4000` by default. If you can't reach it:
 ### Permission denied on data directory
 
 ```bash
-sudo chown -R dulak:dulak /opt/dulak/data
+sudo chown -R $USER:$USER /opt/dulak/data
 sudo chmod 755 /opt/dulak/data
 ```
 
-The `dulak` user must own the data directory — SQLite needs write access
+The data directory must be owned by your user — SQLite needs write access
 to create the `-wal` and `-shm` files alongside the database.
 
 ---
