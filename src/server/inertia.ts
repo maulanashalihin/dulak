@@ -56,11 +56,16 @@ export class Inertia {
 		return this.c.headers["x-inertia"] === "true";
 	}
 
-	/** The request URL. `request.url` is guaranteed valid by the fetch spec;
-	 *  the guard only keeps a malformed URL from crashing the whole request. */
+	/** The request URL, corrected for reverse-proxy TLS.
+	 *  `request.url` reflects the origin connection (HTTP behind Cloudflare
+	 *  Flexible SSL). We rewrite the scheme from X-Forwarded-Proto so
+	 *  redirects and Inertia URLs match what the browser sees. */
 	private get requestUrl(): URL {
 		try {
-			return new URL(this.c.request.url);
+			const url = new URL(this.c.request.url);
+			const proto = this.c.request.headers.get("x-forwarded-proto");
+			if (proto) url.protocol = proto + ":";
+			return url;
 		} catch {
 			return new URL("http://localhost/");
 		}
@@ -173,7 +178,7 @@ export class Inertia {
 	/** 303 for redirect-after-write; 302 for plain navigation redirects. */
 	redirect(path: string, status: 302 | 303 = 303): Response {
 		return Response.redirect(
-			new URL(path, this.c.request.url).toString(),
+			new URL(path, this.requestUrl).toString(),
 			status,
 		);
 	}
@@ -198,13 +203,12 @@ export class Inertia {
 			headers: {
 				"x-inertia-location": new URL(
 					this.currentUrl,
-					this.c.request.url,
+					this.requestUrl,
 				).toString(),
 				"x-inertia-version": this.assets.version,
 			},
 		});
 	}
-
 	private html(head: string[], body: string, status: number): Response {
 		const headTags = head.filter((h) => h && h.trim().length > 0);
 		const hasTitle = headTags.some((h) => h.includes("<title"));
