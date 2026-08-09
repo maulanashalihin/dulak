@@ -1,10 +1,17 @@
 /* Dulak site — Starlight theme overrides. */
 
 :root {
-	--sl-color-accent-high: #047857; /* emerald-700 */
+	--sl-color-accent-high: #34d399; /* emerald-400 — bright enough on dark */
 	--sl-color-accent: #059669; /* emerald-600 */
 	--sl-color-accent-low: #d1fae5; /* emerald-100 */
-	--sl-color-bg-nav: #0d1117;
+}
+
+/* Emerald accent for light mode */
+:root[data-theme="light"] {
+	--sl-color-accent-high: #047857; /* emerald-700 — dark enough on light */
+	--sl-color-accent: #059669; /* emerald-600 */
+	--sl-color-accent-low: #d1fae5; /* emerald-100 */
+	--sl-color-text-accent: #047857;
 }
 
 /* Landing hero */
@@ -30,7 +37,6 @@
 	gap: 0.5rem;
 	font-weight: 700;
 	font-size: 1.05rem; /* same as .dl-nav-brand */
-	color: #e5e7eb; /* match the landing navbar text color */
 }
 .site-title img {
 	width: 24px;
@@ -55,21 +61,21 @@ h1#_top {
 
 /* Post cards — add background, border, padding, hover */
 article.preview {
-	background: #161b22;
-	border: 1px solid #1f2937;
+	background: var(--sl-color-gray-7);
+	border: 1px solid var(--sl-color-hairline-light);
 	border-radius: 8px;
 	padding: 1.5rem;
 	transition: border-color 0.15s ease, background 0.15s ease;
 }
 article.preview:hover {
-	border-color: #059669;
+	border-color: var(--sl-color-accent);
 }
 
 /* Post title — reduce from 35px, match landing text color */
 article.preview .preview-link h2 {
 	font-size: 1.3rem;
 	font-weight: 600;
-	color: #e5e7eb;
+	color: var(--sl-color-gray-1);
 	line-height: 1.3;
 	margin: 0 0 0.5rem;
 	padding: 0;
@@ -78,7 +84,7 @@ article.preview .preview-link h2 {
 }
 article.preview .preview-link:hover h2,
 article.preview:hover .preview-link h2 {
-	color: #34d399;
+	color: var(--sl-color-accent);
 }
 
 /* Preview link — remove the green underline from .sl-markdown-content a */
@@ -94,7 +100,7 @@ article.preview .metadata {
 	flex-wrap: wrap;
 	gap: 0.5rem;
 	font-size: 0.85rem;
-	color: #9aa4b2;
+	color: var(--sl-color-gray-3);
 	padding-bottom: 0;
 	border-bottom: none;
 }
@@ -109,12 +115,12 @@ article.preview .metadata .author {
 }
 article.preview .metadata .name {
 	font-size: 0.85rem;
-	color: #9aa4b2;
+	color: var(--sl-color-gray-3);
 	font-weight: 500;
 }
 article.preview .metadata .title {
 	font-size: 0.75rem;
-	color: #64748b;
+	color: var(--sl-color-gray-4);
 }
 article.preview .metadata .author .text {
 	display: flex;
@@ -125,7 +131,7 @@ article.preview .metadata .author .text {
 
 /* Excerpt — slightly muted */
 article.preview .sl-markdown-content p {
-	color: #9aa4b2;
+	color: var(--sl-color-gray-3);
 	font-size: 0.95rem;
 	line-height: 1.6;
 	margin: 0.5rem 0 0;
@@ -133,7 +139,7 @@ article.preview .sl-markdown-content p {
 
 /* Tags footer — pill chips matching the blog post page */
 article.preview footer {
-	border-top: 1px solid #1f2937;
+	border-top: 1px solid var(--sl-color-hairline-light);
 	padding-top: 0.75rem;
 	margin-top: 1rem;
 }
@@ -144,7 +150,7 @@ article.preview footer > div {
 	gap: 0.5rem;
 }
 article.preview footer b {
-	color: #64748b;
+	color: var(--sl-color-gray-4);
 	font-size: 0.8rem;
 	font-weight: 500;
 }
@@ -162,19 +168,19 @@ article.preview footer li {
 article.preview footer a {
 	display: inline-block;
 	font-size: 0.78rem;
-	color: #9aa4b2;
-	border: 1px solid #263041;
-	border-bottom: 1px solid #263041;
+	color: var(--sl-color-gray-3);
+	border: 1px solid var(--sl-color-hairline-light);
+	border-bottom: 1px solid var(--sl-color-hairline-light);
 	border-radius: 999px;
 	padding: 0.25rem 0.75rem;
-	background: rgba(15, 17, 23, 0.6);
+	background: var(--sl-color-gray-7);
 	text-decoration: none;
 	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 article.preview footer a:hover {
-	color: #34d399;
-	border-color: #059669;
-	background: rgba(5, 150, 105, 0.1);
+	color: var(--sl-color-accent);
+	border-color: var(--sl-color-accent);
+	background: var(--sl-color-accent-low);
 }
 
 /* --- Content pages (blog posts + docs) --- */
@@ -187,7 +193,7 @@ article.preview footer a:hover {
 	letter-spacing: -0.01em;
 	margin-top: 2.75rem;
 	padding-bottom: 0.4rem;
-	border-bottom: 1px solid #1f2937;
+	border-bottom: 1px solid var(--sl-color-hairline-light);
 }
 .sl-markdown-content h3 {
 	font-size: 1.15rem;
@@ -207,21 +213,20 @@ article.preview footer a:hover {
 
 /* Links — match the emerald design system instead of Starlight purple. */
 .sl-markdown-content a {
-	color: #34d399;
+	color: var(--sl-color-accent);
 	text-decoration: none;
-	border-bottom: 1px solid rgba(52, 211, 153, 0.35);
+	border-bottom: 1px solid var(--sl-color-accent-low);
 	transition: border-color 0.15s ease, color 0.15s ease;
 }
 .sl-markdown-content a:hover {
-	color: #6ee7b7;
-	border-bottom-color: #6ee7b7;
+	color: var(--sl-color-accent-high);
+	border-bottom-color: var(--sl-color-accent);
 }
 
-/* Code blocks — rounded, padded, consistent with the dark cards. */
+/* Code blocks — rounded, padded, consistent with the theme. */
 .sl-markdown-content pre {
 	border-radius: 8px;
-	border: 1px solid #1f2937;
-	background: #131922;
+	border: 1px solid var(--sl-color-hairline-light);
 	padding: 1.1rem 1.25rem;
 	line-height: 1.6;
 }
@@ -233,8 +238,8 @@ article.preview footer a:hover {
 
 /* Inline code — soft chip instead of a sharp rectangle. */
 .sl-markdown-content code:not(pre code) {
-	background: #1c2430;
-	border: 1px solid #2d3444;
+	background: var(--sl-color-bg-inline-code);
+	border: 1px solid var(--sl-color-hairline-light);
 	border-radius: 4px;
 	padding: 0.1em 0.35em;
 	font-size: 0.9em;
@@ -242,8 +247,8 @@ article.preview footer a:hover {
 
 /* Blockquotes — styled callout. */
 .sl-markdown-content blockquote {
-	border-left: 3px solid #059669;
-	background: #0f141a;
+	border-left: 3px solid var(--sl-color-accent);
+	background: var(--sl-color-gray-7);
 	border-radius: 0 8px 8px 0;
 	margin: 1.5rem 0;
 	padding: 0.9rem 1.2rem;
@@ -252,14 +257,14 @@ article.preview footer a:hover {
 	margin: 0;
 }
 
-/* Tables — consistent with the dark theme. */
+/* Tables — consistent with the theme. */
 .sl-markdown-content table {
 	border-radius: 8px;
 	overflow: hidden;
 }
 .sl-markdown-content th {
-	background: #131922;
-	color: #e5e7eb;
+	background: var(--sl-color-gray-7);
+	color: var(--sl-color-gray-1);
 }
 
 /* --- Blog post page (individual article) --- */
@@ -277,11 +282,11 @@ h1#_top {
 	gap: 0.75rem;
 	padding-bottom: 1.25rem;
 	margin-bottom: 0.5rem;
-	border-bottom: 1px solid #1f2937;
+	border-bottom: 1px solid var(--sl-color-hairline-light);
 }
 .sl-markdown-content .metadata .dates {
 	font-size: 0.85rem;
-	color: #9aa4b2;
+	color: var(--sl-color-gray-3);
 }
 .sl-markdown-content .metadata .authors {
 	display: flex;
@@ -297,26 +302,26 @@ h1#_top {
 }
 .sl-markdown-content .metadata .name {
 	font-size: 0.85rem;
-	color: #e5e7eb;
+	color: var(--sl-color-gray-1);
 	font-weight: 600;
 }
 .sl-markdown-content .metadata .title {
 	font-size: 0.75rem;
-	color: #64748b;
+	color: var(--sl-color-gray-4);
 }
 
 /* Lead paragraph — first paragraph after metadata, larger and brighter */
 .sl-markdown-content .metadata + p {
 	font-size: 1.2rem;
 	line-height: 1.65;
-	color: #e5e7eb;
+	color: var(--sl-color-gray-1);
 	margin-top: 1.75rem;
 	font-weight: 400;
 }
 
 /* Post footer — separator above tags + related posts */
 .post-footer {
-	border-top: 1px solid #1f2937;
+	border-top: 1px solid var(--sl-color-hairline-light);
 	padding-top: 2rem;
 	margin-top: 3rem;
 }
@@ -329,7 +334,7 @@ h1#_top {
 	gap: 0.5rem;
 }
 .post-footer > div:first-child b {
-	color: #64748b;
+	color: var(--sl-color-gray-4);
 	font-size: 0.8rem;
 	font-weight: 500;
 }
@@ -347,19 +352,19 @@ h1#_top {
 .post-footer > div:first-child a {
 	display: inline-block;
 	font-size: 0.78rem;
-	color: #9aa4b2;
-	border: 1px solid #263041;
-	border-bottom: 1px solid #263041;
+	color: var(--sl-color-gray-3);
+	border: 1px solid var(--sl-color-hairline-light);
+	border-bottom: 1px solid var(--sl-color-hairline-light);
 	border-radius: 999px;
 	padding: 0.25rem 0.75rem;
-	background: rgba(15, 17, 23, 0.6);
+	background: var(--sl-color-gray-7);
 	text-decoration: none;
 	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 .post-footer > div:first-child a:hover {
-	color: #34d399;
-	border-color: #059669;
-	background: rgba(5, 150, 105, 0.1);
+	color: var(--sl-color-accent);
+	border-color: var(--sl-color-accent);
+	background: var(--sl-color-accent-low);
 }
 
 /* Related posts — card styling matching .dl-feature-card */
@@ -367,8 +372,8 @@ h1#_top {
 	gap: 1rem;
 }
 .post-footer .sl-link-card {
-	background: #0f141a;
-	border: 1px solid #1f2937;
+	background: var(--sl-color-gray-7);
+	border: 1px solid var(--sl-color-hairline-light);
 	border-radius: 0.5rem;
 	padding: 0.75rem 1rem;
 	display: flex;
@@ -376,7 +381,7 @@ h1#_top {
 	transition: border-color 0.15s ease;
 }
 .post-footer .sl-link-card:hover {
-	border-color: #059669;
+	border-color: var(--sl-color-accent);
 }
 .post-footer .sl-link-card a {
 	border-bottom: none;
@@ -385,25 +390,25 @@ h1#_top {
 .post-footer .sl-link-card .title {
 	font-size: 0.85rem;
 	font-weight: 500;
-	color: #9aa4b2;
+	color: var(--sl-color-gray-3);
 	line-height: 1.35;
 	transition: color 0.15s ease;
 }
 .post-footer .sl-link-card:hover .title {
-	color: #34d399;
+	color: var(--sl-color-accent);
 }
 
 /* Right sidebar TOC — better hierarchy and visual weight */
 starlight-toc nav h2#starlight__on-this-page {
 	font-size: 0.8rem;
 	font-weight: 600;
-	color: #64748b;
+	color: var(--sl-color-gray-4);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	margin-bottom: 0.75rem;
 }
 starlight-toc nav ul {
-	border-left: 2px solid #1f2937;
+	border-left: 2px solid var(--sl-color-hairline-light);
 	padding-left: 0;
 }
 starlight-toc nav ul li {
@@ -412,7 +417,7 @@ starlight-toc nav ul li {
 starlight-toc nav ul li a {
 	display: block;
 	font-size: 0.83rem;
-	color: #9aa4b2;
+	color: var(--sl-color-gray-3);
 	padding: 0.3rem 0 0.3rem 0.75rem;
 	margin-left: -2px;
 	border-left: 2px solid transparent;
@@ -420,13 +425,13 @@ starlight-toc nav ul li a {
 	transition: color 0.15s ease, border-color 0.15s ease;
 }
 starlight-toc nav ul li a:hover {
-	color: #e5e7eb;
-	border-left-color: #374151;
+	color: var(--sl-color-gray-1);
+	border-left-color: var(--sl-color-gray-5);
 }
 starlight-toc nav ul li a[aria-current="true"],
 starlight-toc nav ul li a.is-current {
-	color: #34d399;
-	border-left-color: #059669;
+	color: var(--sl-color-accent);
+	border-left-color: var(--sl-color-accent);
 	font-weight: 500;
 	background: transparent;
 	border-radius: 0;
