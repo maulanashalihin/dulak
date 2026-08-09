@@ -14,7 +14,7 @@ for HTTPS (Cloudflare, Caddy, or Nginx). This guide targets Ubuntu
 - **A Linux VPS** with root or sudo access (Ubuntu 22.04/24.04/26.04).
 - **SSH access** to the server.
 - **Git installed** on the server (`sudo apt install git` if missing).
-- **Your code on GitHub** — clone your fork (replace `<your-fork-url>`
+- **Your code on GitHub** — clone your app repo (replace `<your-repo-url>`
   with your repo URL).
 
 ## Architecture
@@ -55,7 +55,7 @@ sudo chown -R dulak:dulak /opt/dulak
 
 ```bash
 cd /opt/dulak
-sudo -u dulak git clone <your-fork-url> .
+sudo -u dulak git clone <your-repo-url> .
 ```
 
 Or copy the app from your build machine — the server runs TS directly,
