@@ -61,9 +61,9 @@ is reliable:
 - **One-shot documents** — a resume PDF, a config file, an import
 - **Server-to-server transfers** — fast internal network, drops are rare
 
-If the file can be large, the upload can be interrupted, or you want
-progress reporting, use [tus](/uploads/tus/) instead — it's the same
-`UPLOAD_DIR`, just with resumable, chunked transfers.
+If the file is big — over ~100MB — or the connection is unreliable,
+use [tus](/uploads/tus/) instead. It's the same `UPLOAD_DIR`, just
+with resumable, chunked transfers that survive dropped connections.
 
 ## Why not always?
 
