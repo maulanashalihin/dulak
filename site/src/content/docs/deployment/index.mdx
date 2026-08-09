@@ -1,0 +1,40 @@
+---
+title: Deployment
+description: Pick your deployment path — Docker (one command) or bare VPS with systemd.
+---
+
+Dulak runs on Bun — no Node.js, no build step on the server (Bun runs
+TypeScript directly). Pick **one** path:
+
+## Docker (recommended for most)
+
+One command, everything containerized:
+
+```bash
+docker compose up -d --build
+```
+
+Multi-stage image, persistent SQLite volume, healthcheck built in. If you
+have Docker on your server, start here.
+
+→ **[Docker guide](/deployment/docker/)**
+
+## Bare VPS (no Docker)
+
+Bun + systemd + reverse proxy. More control, fewer moving parts, but
+~6 manual steps for first-time setup.
+
+→ **[Linux VPS guide](/deployment/vps/)**
+
+## After either path: reverse proxy
+
+Dulak does not terminate TLS. Put Cloudflare, Caddy, or Nginx in front
+for HTTPS — works the same for both Docker and bare VPS.
+
+→ **[Reverse proxy guide](/deployment/reverse-proxy/)**
+
+## Configuration
+
+Env vars, fail-fast validation, and the full `.env` reference table.
+
+→ **[Configuration](/deployment/configuration/)**

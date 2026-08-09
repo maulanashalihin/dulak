@@ -3,6 +3,20 @@ title: Docker
 description: Multi-stage Dockerfile and docker-compose.
 ---
 
+## Prerequisites
+
+You need Docker and Docker Compose installed on your server. Then get the
+code:
+
+```bash
+git clone https://github.com/maulanashalihin/dulak.git
+cd dulak
+```
+
+The rest of this guide runs from inside the cloned repo directory.
+
+## Quick start
+
 ```bash
 docker compose up -d --build
 ```
@@ -118,6 +132,19 @@ docker compose up -d
 Alternatives: `bun build --compile` for a single binary, or plain
 `bun run start` behind your process supervisor — it handles SIGTERM
 gracefully (drains in-flight requests, closes the DB).
+
+## Routine updates
+
+After you push code to GitHub, pull and rebuild on the server:
+
+```bash
+git pull
+docker compose up -d --build
+curl http://localhost:4000/health       # → {"status":"ok",...}
+```
+
+The `./data` volume persists across rebuilds — your SQLite database and
+uploads are not affected.
 
 ## Reverse proxy
 
