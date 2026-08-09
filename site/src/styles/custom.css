@@ -4,6 +4,10 @@
 	--sl-color-accent-high: #34d399; /* emerald-400 — bright enough on dark */
 	--sl-color-accent: #059669; /* emerald-600 */
 	--sl-color-accent-low: #d1fae5; /* emerald-100 */
+	/* Starlight defaults --sl-color-text-invert to --sl-color-accent-low (#d1fae5)
+	   in dark mode, which is pale mint on a bright mint accent background —
+	   nearly invisible. Use dark text on accent backgrounds instead. */
+	--sl-color-text-invert: #022c22; /* emerald-950 — dark text on bright accent */
 }
 
 /* Emerald accent for light mode */
@@ -223,12 +227,11 @@ article.preview footer a:hover {
 	border-bottom-color: var(--sl-color-accent);
 }
 
-/* Code blocks — rounded, padded, consistent with the theme. */
-.sl-markdown-content pre {
-	border-radius: 8px;
-	border: 1px solid var(--sl-color-hairline-light);
-	padding: 1.1rem 1.25rem;
-	line-height: 1.6;
+/* Code blocks — Starlight sets --ec-brdRad: 0px (sharp corners) by default.
+   Override to rounded so header (figcaption) and body (pre) match each other
+   and the rest of the site's 8px card radius. */
+.sl-markdown-content .expressive-code {
+	--ec-brdRad: 0.5rem;
 }
 .sl-markdown-content pre code {
 	background: transparent;
