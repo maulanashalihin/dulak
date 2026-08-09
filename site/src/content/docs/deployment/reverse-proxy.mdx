@@ -3,6 +3,49 @@ title: Reverse proxy
 description: Put TLS and routing in front of Dulak — Cloudflare, Caddy, or Nginx. Works for both Docker and bare-metal.
 ---
 
+## Why do I need a reverse proxy?
+
+When you deploy Dulak, the app listens on a port (default `4000`) and
+speaks **plain HTTP** — no encryption. If a user visits
+`http://your-domain.com:4000`, their browser connects directly to your
+server and everything (passwords, session cookies, form data) travels
+over the internet in plaintext. Anyone on the path can read it.
+
+You need **HTTPS** (`https://your-domain.com` — the lock icon). That
+requires three things the app doesn't do itself:
+
+1. **TLS certificate** — proves your server is really
+   `your-domain.com` and encrypts traffic. Browsers refuse to show the
+   lock icon without it.
+2. **Listen on port 443** (HTTPS) instead of `4000` — browsers default
+   to 443 for `https://` URLs. Port 4000 is non-standard; users would
+   have to type `:4000` manually.
+3. **A way to get the certificate and renew it** — certs expire every
+   90 days (Let's Encrypt) or are managed for you (Cloudflare).
+
+A **reverse proxy** sits between the internet and your app, handles all
+three, and forwards traffic to your app on port 4000:
+
+```
+User's browser
+    │  HTTPS (port 443, encrypted)
+    ▼
+Reverse proxy (TLS cert, port 443)
+    │  HTTP (port 4000, local only)
+    ▼
+Dulak (Bun, port 4000)
+```
+
+The app never sees the internet directly — the proxy terminates TLS,
+then forwards the decrypted request locally. Your app stays simple
+(no cert management, no TLS config), and the proxy handles the parts
+it's good at.
+
+**Which one?** If your domain is on Cloudflare, use that — it's the
+proxy, nothing to install. Otherwise, Caddy (auto-TLS via Let's
+Encrypt) or Nginx + Certbot both work. Details below.
+
+
 Dulak listens on a single port (default `4000`). It does not terminate
 TLS — that is the proxy's job. Whether you run Docker or bare-metal, the
 proxy sits in front and forwards to `127.0.0.1:4000`.

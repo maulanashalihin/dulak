@@ -28,8 +28,12 @@ Bun + systemd + reverse proxy. More control, fewer moving parts, but
 
 ## After either path: reverse proxy
 
-Dulak does not terminate TLS. Put Cloudflare, Caddy, or Nginx in front
-for HTTPS — works the same for both Docker and bare VPS.
+Your app is running on port 4000, but it speaks plain HTTP — no
+encryption. Before users can visit `https://your-domain.com` (with the
+lock icon), you need a reverse proxy in front to handle TLS
+(HTTPS certificates) and route traffic to port 4000. If your domain is
+on Cloudflare, that's the proxy — nothing to install. Otherwise, Caddy
+or Nginx both work.
 
 → **[Reverse proxy guide](/deployment/reverse-proxy/)**
 
