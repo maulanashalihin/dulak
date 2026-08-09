@@ -42,6 +42,7 @@ export default defineConfig({
 			],
 			customCss: ["./src/styles/custom.css"],
 			components: {
+				Head: "./src/components/Head.astro",
 				ThemeSelect: "./src/components/ThemeSelect.astro",
 			},
 			sidebar: [
