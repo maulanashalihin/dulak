@@ -157,33 +157,11 @@ uploads are not affected.
 
 ## Reverse proxy
 
-The container listens on port 4000. Put a reverse proxy (Cloudflare,
-Caddy, or Nginx) in front for TLS and routing — same setup as bare-metal:
+The container listens on port 4000 (already mapped in `docker-compose.yml`).
+For HTTPS, put a reverse proxy in front — same setup as bare-metal:
 
 → **[Reverse proxy guide](/deployment/reverse-proxy/)**
 
-How you map the port depends on your reverse proxy setup:
-
-**Cloudflare Flexible (origin rule) or no proxy** — expose port 4000
-to Cloudflare IPs (firewall restricts direct access):
-
-```yaml
-# docker-compose.yml — default, accessible from outside
-ports:
-  - "4000:4000"
-```
-
-Then follow the [firewall setup](/deployment/reverse-proxy/#firewall)
-to restrict port 4000 to Cloudflare IPs only.
-
-**Cloudflare Tunnel, Caddy, or Nginx** (proxy on the same server) —
-bind to localhost only so the proxy can reach it but the outside
-world cannot:
-
-```yaml
-# docker-compose.yml — localhost only
-ports:
-  - "127.0.0.1:4000:4000"
-```
-
-No firewall rules needed for port 4000 — it's not exposed publicly.
+If your proxy runs on the same server (Caddy, Nginx, Cloudflare Tunnel),
+change the port mapping in `docker-compose.yml` to `"127.0.0.1:4000:4000"`
+so port 4000 is not exposed publicly.
