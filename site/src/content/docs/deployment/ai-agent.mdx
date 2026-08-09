@@ -52,14 +52,28 @@ assets, creates `.env`, starts the service, and verifies `/health`.
 It also saves a `deploy.env` file in your local project root (added
 to `.gitignore`) so routine updates don't need retyping.
 
-### After first deploy
+### After first deploy: HTTPS
 
-Your app is live on port 4000. For HTTPS, paste this follow-up:
+Your app is live on port 4000 (plain HTTP). For HTTPS, pick one:
 
-```text
-Now set up a reverse proxy for HTTPS. Use Caddy in front of
-port 4000, with automatic TLS for your-domain.com.
-```
+| File | Path | What you need |
+|---|---|---|
+| `prompts/setup-cloudflare.txt` | Cloudflare (recommended) | Cloudflare API token + domain on Cloudflare |
+| `prompts/setup-caddy.txt` | Caddy (no Cloudflare) | Just a domain pointing to your server |
+
+**Cloudflare** — the agent creates the DNS record, sets SSL to
+Flexible, creates an Origin Rule (so CSRF and OAuth work), and
+configures the firewall to only allow Cloudflare IPs. You need a
+[Cloudflare API token](https://dash.cloudflare.com/profile/api-tokens)
+with Zone → DNS → Edit and Zone → Read permissions.
+
+**Caddy** — the agent installs Caddy, creates a Caddyfile with
+automatic TLS via Let's Encrypt, and starts it. No Cloudflare
+account needed.
+
+Edit the placeholders in the prompt file, paste to your agent. For
+the full manual walkthrough (including Nginx + Certbot), see the
+[reverse proxy guide](/deployment/reverse-proxy/).
 
 ---
 
