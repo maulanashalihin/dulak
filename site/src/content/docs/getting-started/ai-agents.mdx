@@ -26,72 +26,106 @@ files and run shell commands.
 ## The workflow at a glance
 
 ```
-1. Scaffold        bun create dulak@latest my-app
-2. Plan            write PLAN.md — the story of your needs
+1. Install         bun create dulak@latest my-app — you do this first
+2. Plan            tell the story — the agent writes PLAN.md
 3. Design          all pages with dummy data — you review, until you love it
 4. Wire            backend + database — strict unit tests prove it works
 5. Loop            prompt → agent implements → tests pass → commit
 6. Ship            agent verifies everything is green
 ```
 
-## Setup: scaffold the project
+## Setup: install first, then bring in the agent
 
-Tell your agent:
+The agent works inside an already-installed project — you scaffold and
+install before it ever starts:
 
-> Scaffold a new Dulak project called `my-app` with the default React
-> template, then start the dev server.
+```bash
+bun create dulak@latest my-app
+cd my-app
+bun run dev
+```
 
-The agent runs `bun create dulak@latest my-app`, enters the directory,
-and starts the dev server. Check the app is running, then confirm the
-agent read the project rules:
+(Full walkthrough — templates and scripts — is in
+[Installation](/getting-started/installation/).)
+
+Once the app runs, open the project in your agent (omp.sh, Claude Code,
+Cursor, opencode, Windsurf) and confirm it read the project rules:
 
 > What are the hard rules in AGENTS.md? Summarize them.
 
 You should hear back the core conventions — routes live in
-`routes/<feature>.routes.ts`, SQL in `db.ts`, env in `config.ts`. If
-the agent can't answer, tell it to read `AGENTS.md` before proceeding.
-This is your first checkpoint.
+`src/server/routes/<feature>.routes.ts`, SQL in `db.ts`, env in
+`config.ts`. If the agent can't answer, tell it to read `AGENTS.md`
+before proceeding. This is your first checkpoint.
 
-## Plan: write the story of your needs
+## Plan: tell the story — the agent writes PLAN.md
 
-Before the agent writes any code, write a `PLAN.md` in the project root.
-This is not a technical spec — it's the **story of what you need**.
-Describe it in plain language, like you're explaining to a friend:
+Describe what you need in plain language, like you're explaining to a
+friend. No structure, no technical detail — just the story:
 
-- **What is it?** — "A bookmark manager where users save links and
-  organize them with tags."
-- **Who uses it?** — "Authenticated users. No public pages except login
-  and register."
-- **What does it do?** — "Users can save a link with a title and tags,
-  view all saved links sorted by newest, and filter by tag."
+> I want a bookmark manager where users save links and organize them
+> with tags. Only logged-in users, no public pages. Write PLAN.md —
+> what it is, who uses it, what it does. Ask me if anything's unclear.
 
-Don't mention pages, routes, database tables, or code — the agent
-figures out all of that itself. It knows the conventions from
-`AGENTS.md`; your job is to describe the need, not the implementation.
+The agent turns your story into a `PLAN.md` in the project root — the
+full plan: pages, data model, routes, validation, edge cases, and an
+implementation order. You never mention pages, routes, database tables,
+or code — the agent figures out all of that itself. It knows the
+conventions from `AGENTS.md`; your job is to describe the need, not the
+implementation.
+
+A real result looks something like this (abridged):
 
 ```markdown
-# Bookmark Manager
+# PLAN — Bookmark Manager
 
-A simple app where authenticated users save and organize links.
+> **Clarifying questions (non-blocking):** per-user or global tags?
+> Allow duplicate URLs? (Assumptions noted — you can veto them.)
 
-## Design
+## What it is
+A private bookmark manager inside the app. Logged-in users save URLs
+with a title, note, and tags. No public pages, no sharing.
 
-See `design/bookmarks-mockup.png` for the layout.
+## Pages
+- `/bookmarks` — paginated list + search + tag filter
+- `/bookmarks/new` — create form
+- `/bookmarks/:id/edit` — edit form (owner only)
 
-## Behavior
+## Data model
+`migrations/0005_bookmarks.sql` — bookmarks, tags, bookmark_tags
+(user-scoped, FK cascade, indexes on user_id).
 
-- Adding a bookmark: user pastes a URL, types a title, picks tags. On
-  submit, the bookmark appears at the top of the list.
-- Filtering by tag: clicking a tag narrows the list to bookmarks with
-  that tag. Clicking "All" resets the filter.
-- No public pages. Everything behind login.
+## Routes & endpoints
+All in `src/server/routes/bookmarks.routes.ts`:
+- GET /bookmarks — requireAuth guard, Inertia render Bookmarks/Index
+- POST /bookmarks — TypeBox validation, tag normalization, flash + redirect
+- POST /bookmarks/:id/delete — ownership check → delete → orphan tag cleanup
+
+## Edge cases
+- Ownership enforced in handlers (foreign bookmarks get 404, not 403)
+- Tags trimmed / lowercased / deduplicated server-side
+- Empty state when a user has zero bookmarks
+
+## Acceptance criteria
+- [ ] Auth-only, strictly user-scoped (no cross-user access)
+- [ ] Search + tag filter combine correctly
+- [ ] `bun run typecheck` and `bun run test` pass
+
+## Implementation order
+1. Migration → 2. db.ts queries → 3. routes → 4. client pages → 5. tests
 ```
 
-### Attach a design
+Real plans are longer — this is the shape. The agent lists the
+assumptions it made and asks questions wherever your story was
+ambiguous.
+
+### Include a design in your prompt
 
 If you have a visual design — a mockup from ChatGPT, a Figma export, a
-hand-drawn sketch — put it in the project and reference it from the
-plan. The design carries what words can't: colors, spacing, layout.
+hand-drawn sketch — put it in the project and mention it in the same
+prompt. The design carries what words can't: colors, spacing, layout.
+Without one, the agent plans without it; it never invents a design
+reference on its own.
 
 Two ways to provide it:
 
@@ -102,21 +136,24 @@ Two ways to provide it:
   when the agent can't read images, because the structure is in the
   markup itself.
 
-Either way, reference it from the plan and let the agent work from it:
+Either way, reference it in your prompt:
 
-```markdown
-## Design
+> I want a bookmark manager where users save links and organize them
+> with tags. Only logged-in users, no public pages. Design reference:
+> `design/bookmarks-mockup.html` — match its structure, spacing, and
+> colors. Write PLAN.md — what it is, who uses it, what it does. Ask me
+> if anything's unclear.
 
-See `design/bookmarks-mockup.html` for the layout — match its
-structure, spacing, and colors.
-```
+The agent reflects the design in the plan — layout, components, pages —
+and builds against it.
 
 ### Review the plan
 
-Read it back. Does it describe what you need? Would a non-technical
-friend understand it? If it reads like code, it's too technical —
-rewrite it in plain language. Once it reads like a story, hand it to the
-agent.
+Read back what the agent wrote. Does it describe what you need? Would a
+non-technical friend understand it? If it reads like code, it's too
+technical — tell the agent to rewrite it in plain language. Check the
+assumptions it listed and veto anything wrong. Once it reads like a
+story, the agent can start building.
 
 ## Design the pages (your review)
 
@@ -180,12 +217,12 @@ typecheck, tests, browser console — and the app is ready to ship:
 ## The plan evolves
 
 As you build, you'll realize the plan missed something — a field, a
-behavior, a page. Update `PLAN.md` first, then tell the agent:
+behavior, a page. Tell the agent what changed, and it updates `PLAN.md`:
 
-> I updated PLAN.md — bookmarks now also show the domain. Continue from
-> where you left off.
+> Bookmarks should also show the domain. Update PLAN.md and continue
+> from where you left off.
 
-The plan stays the source of truth. Update it, and the agent follows
+The plan stays the source of truth. When it changes, the agent follows
 the update.
 
 ## What's next
