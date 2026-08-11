@@ -1,0 +1,93 @@
+---
+const reasons = [
+  {
+    title: "Boring means predictable",
+    blurb: "Routes in one place, SQL in one file, env in one module — no guessing where things live. No clever tricks to figure out. Whoever comes next — human or AI — can read it and change it without fear of breaking it.",
+    icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.821 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.821 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.821 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.821 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.821 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.821 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.821-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.821-1.946 3.42 3.42 0 013.138-3.138z",
+  },
+  {
+    title: "Everything in one runtime",
+    blurb: "No separate language, package manager, web server, and database to install and configure. Bun does all of it — one install, one runtime, and your app is running with auth, SSR, and tests already working.",
+    icon: "M4 5h16v14H4zM9 9h6M9 13h6M4 17h16",
+  },
+  {
+    title: "Built for AI agents",
+    blurb: "Conventions codified in AGENTS.md, validation errors with exact shapes, strict TypeScript that fails at compile time, deterministic tests as the safety net. A codebase an agent can extend without inventing conventions stays coherent.",
+    icon: "M12 2a4 4 0 014 4v1h1a3 3 0 013 3v3a5 5 0 01-5 5h-6a5 5 0 01-5-5V10a3 3 0 013-3h1V6a4 4 0 014-4z",
+  },
+];
+---
+
+<section class="dl-why">
+  <h2 class="dl-section-title">Why Dulak <span class="dl-accent">exists</span></h2>
+  <p class="dl-section-sub">Because your first week should be business logic, not infrastructure.</p>
+  <div class="dl-why-grid">
+    {reasons.map((r) => (
+      <div class="dl-why-card">
+        <div class="dl-why-head">
+          <span class="dl-why-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d={r.icon} />
+            </svg>
+          </span>
+          <h3>{r.title}</h3>
+        </div>
+        <p>{r.blurb}</p>
+      </div>
+    ))}
+  </div>
+  <p class="dl-why-link">For the full reasoning, read the <a href="/philosophy/">philosophy page</a>.</p>
+</section>
+
+<style>
+  .dl-why { max-width: 960px; margin: 0 auto 4.5rem; padding: 0 1.5rem; }
+  .dl-section-title { font-size: 1.7rem; letter-spacing: -0.02em; text-align: center; }
+  .dl-section-sub { text-align: center; color: #8b95a5; margin: 0.4rem 0 2.2rem; }
+  .dl-accent { color: #34d399; }
+  .dl-why-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 1rem;
+  }
+  .dl-why-card {
+    border: 1px solid #1f2937;
+    border-radius: 0.75rem;
+    padding: 1.4rem;
+    background: #0f141a;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .dl-why-card:hover {
+    border-color: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(5, 150, 105, 0.12);
+  }
+  .dl-why-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.8rem;
+  }
+  .dl-why-head h3 { margin: 0; font-size: 1.05rem; }
+  .dl-why-icon {
+    display: inline-flex;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background: rgba(5, 150, 105, 0.12);
+    color: #34d399;
+    flex-shrink: 0;
+  }
+  .dl-why-card p { margin: 0; font-size: 0.88rem; line-height: 1.55; color: #9aa4b2; }
+  .dl-why-link {
+    text-align: center;
+    margin: 2rem 0 0;
+    color: #8b95a5;
+    font-size: 0.9rem;
+  }
+  .dl-why-link a {
+    color: #34d399;
+    text-decoration: none;
+  }
+  .dl-why-link a:hover {
+    text-decoration: underline;
+  }
+</style>

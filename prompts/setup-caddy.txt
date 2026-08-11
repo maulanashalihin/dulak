@@ -1,0 +1,28 @@
+# After first deploy — Caddy (no Cloudflare)
+#
+# Caddy handles TLS automatically via Let's Encrypt.
+# No editing needed except the domain.
+#
+# Placeholders to replace:
+#   your-domain.com → your domain
+
+Set up Caddy as the reverse proxy for my Dulak app with automatic
+TLS via Let's Encrypt. Here are the details:
+
+- Domain: your-domain.com
+- App port: 4000
+
+Steps:
+1. SSH into the server (use deploy.env for the SSH address).
+2. Install Caddy (sudo apt install -y caddy).
+3. Create /etc/caddy/Caddyfile with:
+   ```
+   your-domain.com {
+     reverse_proxy 127.0.0.1:4000
+   }
+   ```
+4. Enable and start Caddy (sudo systemctl enable --now caddy).
+5. Set up UFW: allow OpenSSH, allow 80/tcp, allow 443/tcp, enable UFW.
+   Port 4000 must NOT be exposed publicly.
+6. Verify: curl https://your-domain.com/health should return 200.
+7. Tell me the status and any issues.

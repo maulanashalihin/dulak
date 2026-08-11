@@ -73,6 +73,11 @@ export const config = {
 		clientSecret: googleClientSecret || null,
 	},
 	rateLimit: {
+		/** Per-IP limit applied to all routes (DDoS baseline). Excludes
+		 *  /health and /assets/* (health probes + bulk asset fetches). */
+		globalMax: Number(pick(process.env.RATE_LIMIT_GLOBAL_MAX, "200")),
+		globalWindow: Number(pick(process.env.RATE_LIMIT_GLOBAL_WINDOW, "60")),
+		/** Stricter per-IP limit layered on auth endpoints (brute-force). */
 		authMax: Number(pick(process.env.RATE_LIMIT_AUTH_MAX, "30")),
 		authWindow: Number(pick(process.env.RATE_LIMIT_AUTH_WINDOW, "60")),
 	},

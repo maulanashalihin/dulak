@@ -1,10 +1,22 @@
 /* Dulak site — Starlight theme overrides. */
 
 :root {
-	--sl-color-accent-high: #047857; /* emerald-700 */
+	--sl-color-accent-high: #34d399; /* emerald-400 — bright enough on dark */
 	--sl-color-accent: #059669; /* emerald-600 */
 	--sl-color-accent-low: #d1fae5; /* emerald-100 */
-	--sl-color-bg-nav: var(--sl-color-gray-7);
+	/* Starlight defaults --sl-color-text-invert to --sl-color-accent-low (#d1fae5)
+	   in dark mode, which is pale mint on a bright mint accent background —
+	   nearly invisible. Use dark text on accent backgrounds instead. */
+	--sl-color-text-invert: #022c22; /* emerald-950 — dark text on bright accent */
+}
+
+/* Emerald accent for light mode */
+:root[data-theme="light"] {
+	--sl-color-accent-high: #047857; /* emerald-700 — dark enough on light */
+	--sl-color-accent: #059669; /* emerald-600 */
+	--sl-color-accent-low: #d1fae5; /* emerald-100 */
+	--sl-color-text-accent: #047857;
+	--sl-color-text-invert: #ffffff; /* white text on dark emerald accent in light mode */
 }
 
 /* Landing hero */
@@ -30,9 +42,445 @@
 	gap: 0.5rem;
 	font-weight: 700;
 	font-size: 1.05rem; /* same as .dl-nav-brand */
-	color: #e5e7eb; /* match the landing navbar text color */
 }
 .site-title img {
 	width: 24px;
 	height: 24px;
+}
+
+
+/* --- Blog index (starlight-blog overrides) --- */
+
+/* Page title — reduce from default 42px */
+.posts + h1,
+h1#_top {
+	font-size: 2.25rem;
+	line-height: 1.2;
+	letter-spacing: -0.02em;
+}
+
+/* Post list container — tighten the gap (override starlight-blog default) */
+.posts {
+	gap: 1.25rem !important;
+}
+
+/* Post cards — add background, border, padding, hover */
+article.preview {
+	background: var(--sl-color-gray-7);
+	border: 1px solid var(--sl-color-hairline-light);
+	border-radius: 8px;
+	padding: 0.75rem 1rem;
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+article.preview:hover {
+	border-color: var(--sl-color-accent);
+}
+
+/* Post title — reduce from 35px, match landing text color */
+article.preview .preview-link h2 {
+	font-size: 1.3rem;
+	font-weight: 600;
+	color: var(--sl-color-gray-1);
+	line-height: 1.3;
+	margin: 0 0 0.25rem;
+	padding: 0;
+	border-bottom: none;
+	transition: color 0.15s ease;
+}
+article.preview .preview-link:hover h2,
+article.preview:hover .preview-link h2 {
+	color: var(--sl-color-accent);
+}
+
+/* Preview link — remove the green underline from .sl-markdown-content a */
+article.preview .preview-link {
+	border-bottom: none;
+	color: inherit;
+}
+
+/* Metadata — horizontal layout, muted, no separator line */
+article.preview .metadata {
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	font-size: 0.85rem;
+	color: var(--sl-color-gray-3);
+	padding-bottom: 0;
+	border-bottom: none;
+}
+article.preview .metadata .dates {
+	font-size: 0.85rem;
+}
+article.preview .metadata .authors {
+	display: flex;
+}
+article.preview .metadata .author {
+	gap: 0.4rem;
+}
+article.preview .metadata .name {
+	font-size: 0.85rem;
+	color: var(--sl-color-gray-3);
+	font-weight: 500;
+}
+article.preview .metadata .name a {
+	border-bottom: none;
+	color: inherit;
+	text-decoration: none;
+}
+article.preview .metadata .author {
+	border-bottom: none;
+	color: inherit;
+	text-decoration: none;
+}
+article.preview .metadata .title {
+	font-size: 0.75rem;
+	color: var(--sl-color-gray-4);
+}
+article.preview .metadata .author .text {
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+	gap: 0.35rem;
+}
+
+/* Excerpt — slightly muted. Override starlight-blog's default
+   .sl-markdown-content margin-top (16px) and .metadata margin-bottom (8px)
+   which create excessive vertical gaps inside the card. */
+article.preview .metadata {
+	margin-bottom: 0;
+}
+article.preview .sl-markdown-content {
+	margin-top: 0.25rem;
+}
+article.preview .sl-markdown-content p {
+	color: var(--sl-color-gray-3);
+	font-size: 0.95rem;
+	line-height: 1.55;
+	margin: 0;
+}
+
+/* Tags footer — pill chips matching the blog post page */
+article.preview footer {
+	border-top: 1px solid var(--sl-color-hairline-light);
+	padding-top: 0.375rem;
+	margin-top: 0.375rem;
+}
+article.preview footer > div {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+article.preview footer b {
+	color: var(--sl-color-gray-4);
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+article.preview footer ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+article.preview footer li {
+	list-style: none;
+}
+article.preview footer a {
+	display: inline-block;
+	font-size: 0.78rem;
+	color: var(--sl-color-gray-3);
+	border: 1px solid var(--sl-color-hairline-light);
+	border-bottom: 1px solid var(--sl-color-hairline-light);
+	border-radius: 999px;
+	padding: 0.25rem 0.75rem;
+	background: var(--sl-color-gray-7);
+	text-decoration: none;
+	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+article.preview footer a:hover {
+	color: var(--sl-color-accent);
+	border-color: var(--sl-color-accent);
+	background: var(--sl-color-accent-low);
+}
+
+/* --- Content pages (blog posts + docs) --- */
+
+/* Heading hierarchy — Starlight's default h2 (35px) is bigger than the
+   page h1 (32px). Fix the scale and give h2 a visual anchor. */
+.sl-markdown-content h2 {
+	font-size: 1.5rem;
+	line-height: 1.3;
+	letter-spacing: -0.01em;
+	margin-top: 2.75rem;
+	padding-bottom: 0.4rem;
+	border-bottom: 1px solid var(--sl-color-hairline-light);
+}
+.sl-markdown-content h3 {
+	font-size: 1.15rem;
+	margin-top: 2rem;
+}
+
+/* Paragraph measure — 16px/28px is tight for a 694px column. */
+.sl-markdown-content p {
+	line-height: 1.75;
+}
+
+/* Lists — breathe between items. */
+.sl-markdown-content li {
+	margin-block: 0.35rem;
+	line-height: 1.75;
+}
+
+/* Links — match the emerald design system instead of Starlight purple.
+   Use text-decoration: underline (follows font metrics) instead of
+   border-bottom (box model, looks detached from text). */
+.sl-markdown-content a {
+	color: var(--sl-color-accent);
+	text-decoration: underline;
+	text-decoration-color: color-mix(in srgb, var(--sl-color-accent) 35%, transparent);
+	text-underline-offset: 2px;
+	transition: text-decoration-color 0.15s ease, color 0.15s ease;
+}
+.sl-markdown-content a:hover {
+	color: var(--sl-color-accent-high);
+	text-decoration-color: var(--sl-color-accent);
+}
+
+/* Code blocks — Starlight sets --ec-brdRad: 0px (sharp corners) by default.
+   Override to rounded so header (figcaption) and body (pre) match each other
+   and the rest of the site's 8px card radius. */
+.sl-markdown-content .expressive-code {
+	--ec-brdRad: 0.5rem;
+}
+.sl-markdown-content pre code {
+	background: transparent;
+	border: none;
+	padding: 0;
+}
+
+/* Inline code — soft chip instead of a sharp rectangle. */
+.sl-markdown-content code:not(pre code) {
+	background: var(--sl-color-bg-inline-code);
+	border: 1px solid var(--sl-color-hairline-light);
+	border-radius: 4px;
+	padding: 0.1em 0.35em;
+	font-size: 0.9em;
+}
+
+/* Blockquotes — styled callout. */
+.sl-markdown-content blockquote {
+	border-left: 3px solid var(--sl-color-accent);
+	background: var(--sl-color-gray-7);
+	border-radius: 0 8px 8px 0;
+	margin: 1.5rem 0;
+	padding: 0.9rem 1.2rem;
+}
+.sl-markdown-content blockquote p {
+	margin: 0;
+}
+
+/* Tables — consistent with the theme. */
+.sl-markdown-content table {
+	border-radius: 8px;
+	overflow: hidden;
+}
+.sl-markdown-content th {
+	background: var(--sl-color-gray-7);
+	color: var(--sl-color-gray-1);
+}
+
+/* --- Blog post page (individual article) --- */
+
+/* Article title — more bottom breathing room before metadata */
+h1#_top {
+	margin-bottom: 1rem;
+}
+
+/* Metadata — horizontal row with a hairline separator below */
+.sl-markdown-content .metadata {
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	padding-bottom: 1.25rem;
+	margin-bottom: 0.5rem;
+	border-bottom: 1px solid var(--sl-color-hairline-light);
+}
+.sl-markdown-content .metadata .dates {
+	font-size: 0.85rem;
+	color: var(--sl-color-gray-3);
+}
+.sl-markdown-content .metadata .authors {
+	display: flex;
+	align-items: center;
+}
+.sl-markdown-content .metadata .author {
+	text-decoration: none;
+	border-bottom: none;
+	color: inherit;
+}
+.sl-markdown-content .metadata .author .text {
+	flex-direction: row;
+	align-items: baseline;
+	gap: 0.5rem;
+}
+.sl-markdown-content .metadata .name {
+	font-size: 0.85rem;
+	color: var(--sl-color-gray-1);
+	font-weight: 600;
+}
+.sl-markdown-content .metadata .name a {
+	border-bottom: none;
+	color: inherit;
+	text-decoration: none;
+}
+.sl-markdown-content .metadata .title {
+	font-size: 0.75rem;
+	color: var(--sl-color-gray-4);
+}
+
+/* Lead paragraph — first paragraph after metadata, larger and brighter */
+.sl-markdown-content .metadata + p {
+	font-size: 1.2rem;
+	line-height: 1.65;
+	color: var(--sl-color-gray-1);
+	margin-top: 1.75rem;
+	font-weight: 400;
+}
+
+/* Post footer — separator above tags + related posts */
+.post-footer {
+	border-top: 1px solid var(--sl-color-hairline-light);
+	padding-top: 2rem;
+	margin-top: 3rem;
+}
+
+/* Tags — pill chips matching the landing page design */
+.post-footer > div:first-child {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.post-footer > div:first-child b {
+	color: var(--sl-color-gray-4);
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+.post-footer > div:first-child ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.post-footer > div:first-child li {
+	list-style: none;
+}
+.post-footer > div:first-child a {
+	display: inline-block;
+	font-size: 0.78rem;
+	color: var(--sl-color-gray-3);
+	border: 1px solid var(--sl-color-hairline-light);
+	border-bottom: 1px solid var(--sl-color-hairline-light);
+	border-radius: 999px;
+	padding: 0.25rem 0.75rem;
+	background: var(--sl-color-gray-7);
+	text-decoration: none;
+	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.post-footer > div:first-child a:hover {
+	color: var(--sl-color-accent);
+	border-color: var(--sl-color-accent);
+	background: var(--sl-color-accent-low);
+}
+
+/* Related posts — card styling matching .dl-feature-card */
+.post-footer .card-grid {
+	gap: 1rem;
+}
+.post-footer .sl-link-card {
+	background: var(--sl-color-gray-7);
+	border: 1px solid var(--sl-color-hairline-light);
+	border-radius: 0.5rem;
+	padding: 0.75rem 1rem;
+	display: flex;
+	align-items: center;
+	transition: border-color 0.15s ease;
+}
+.post-footer .sl-link-card:hover {
+	border-color: var(--sl-color-accent);
+}
+/* Pagination prev/next cards — override Starlight's default hover border
+   (--sl-color-gray-2: near-white in dark, near-black in light) which is
+   visually too prominent. Match the accent-border hover pattern used by
+   article.preview and .sl-link-card. */
+.pagination-links a {
+	transition: border-color 0.15s ease;
+}
+.pagination-links a:hover {
+	border-color: var(--sl-color-accent);
+}
+.pagination-links a:hover .link-title {
+	color: var(--sl-color-accent);
+}
+.pagination-links .link-title {
+	transition: color 0.15s ease;
+}
+.post-footer .sl-link-card a {
+	border-bottom: none;
+	color: inherit;
+}
+.post-footer .sl-link-card .title {
+	font-size: 0.85rem;
+	font-weight: 500;
+	color: var(--sl-color-gray-3);
+	line-height: 1.35;
+	transition: color 0.15s ease;
+}
+.post-footer .sl-link-card:hover .title {
+	color: var(--sl-color-accent);
+}
+
+/* Right sidebar TOC — better hierarchy and visual weight */
+starlight-toc nav h2#starlight__on-this-page {
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--sl-color-gray-4);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 0.75rem;
+}
+starlight-toc nav ul {
+	border-left: 2px solid var(--sl-color-hairline-light);
+	padding-left: 0;
+}
+starlight-toc nav ul li {
+	list-style: none;
+}
+starlight-toc nav ul li a {
+	display: block;
+	font-size: 0.83rem;
+	color: var(--sl-color-gray-3);
+	padding: 0.3rem 0 0.3rem 0.75rem;
+	margin-left: -2px;
+	border-left: 2px solid transparent;
+	line-height: 1.4;
+	transition: color 0.15s ease, border-color 0.15s ease;
+}
+starlight-toc nav ul li a:hover {
+	color: var(--sl-color-gray-1);
+	border-left-color: var(--sl-color-gray-5);
+}
+starlight-toc nav ul li a[aria-current="true"],
+starlight-toc nav ul li a.is-current {
+	color: var(--sl-color-accent);
+	border-left-color: var(--sl-color-accent);
+	font-weight: 500;
+	background: transparent;
+	border-radius: 0;
 }
