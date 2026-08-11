@@ -1,9 +1,10 @@
 ---
 const rows = [
   { op: "Point read via HTTP", detail: "GET /users/:id · p99 2.6ms · median of 3", value: "52K", unit: "req/s" },
-  { op: "Transactional insert", detail: "db.transaction() · 0.75µs/row", value: "1.3M", unit: "ops/s" },
-  { op: "Autocommit insert", detail: "WAL + synchronous=NORMAL", value: "95K", unit: "ops/s" },
-  { op: "Point read (direct)", detail: "bun:sqlite prepared stmt", value: "526K", unit: "ops/s" },
+  { op: "Create via HTTP", detail: "POST /users · p99 14ms · median of 3", value: "19.6K", unit: "req/s" },
+  { op: "Point read (direct)", detail: "bun:sqlite prepared stmt · no HTTP", value: "526K", unit: "ops/s" },
+  { op: "Autocommit insert (direct)", detail: "WAL + synchronous=NORMAL · no HTTP", value: "95K", unit: "ops/s" },
+  { op: "Transactional insert (direct)", detail: "db.transaction() · 0.75µs/row", value: "1.3M", unit: "ops/s" },
 ];
 
 const compare = [
@@ -15,10 +16,14 @@ const compare = [
 
 ---
 <section class="dl-bench">
-  <h2 class="dl-section-title">Numbers from <span class="dl-gradient">real hardware</span></h2>
+  <h2 class="dl-section-title">Numbers from <span class="dl-accent">real hardware</span></h2>
   <p class="dl-section-sub">
     bun:sqlite + Hono on Apple M4, measured — not estimated.
     <a href="/database/performance/">Full benchmark →</a>
+  </p>
+  <p class="dl-bench-legend">
+    <span class="dl-bench-legend-item"><span class="dl-bench-legend-dot dl-bench-legend-http"></span>via HTTP = full stack, what users experience</span>
+    <span class="dl-bench-legend-item"><span class="dl-bench-legend-dot dl-bench-legend-direct"></span>direct = raw bun:sqlite, no HTTP layer</span>
   </p>
   <div class="dl-bench-table-wrap">
     <table class="dl-bench-table">
@@ -84,17 +89,38 @@ const compare = [
     font-weight: 600;
   }
   .dl-section-sub a:hover { text-decoration: underline; }
-  .dl-gradient {
-    background: linear-gradient(100deg, #34d399, #059669 55%, #0d9488);
-    -webkit-background-clip: text;
-    background-clip: text;
+  .dl-accent {
+    color: #34d399;
+  }
+
+  .dl-bench-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin: -1.2rem 0 1.2rem;
+    font-size: 0.78rem;
     color: #8b95a5;
   }
+  .dl-bench-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .dl-bench-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .dl-bench-legend-http { background: #34d399; }
+  .dl-bench-legend-direct { background: #475569; }
 
   .dl-bench-table-wrap {
     border: 1px solid #1f2937;
     border-radius: 0.75rem;
     overflow: hidden;
+    padding: 0.4rem 0.4rem 0.2rem;
     background: #0f141a;
   }
   .dl-bench-table {
@@ -136,7 +162,7 @@ const compare = [
   .dl-bench-op-detail {
     display: block;
     font-size: 0.78rem;
-    color: #6b7685;
+    color: #8b95a5;
     font-family: ui-monospace, monospace;
     margin-top: 0.15rem;
   }
@@ -145,15 +171,12 @@ const compare = [
     font-size: 1.35rem;
     font-weight: 800;
     letter-spacing: -0.02em;
-    background: linear-gradient(180deg, #34d399, #059669);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #34d399;
   }
   .dl-bench-unit {
     font-size: 0.78rem;
     font-weight: 600;
-    color: #6b7685;
+    color: #8b95a5;
     margin-left: 0.3rem;
   }
   .dl-bench-vs {
@@ -163,7 +186,7 @@ const compare = [
   .dl-bench-vs-label {
     text-align: center;
     font-size: 0.82rem;
-    color: #6b7685;
+    color: #8b95a5;
     margin: 0 0 0.6rem;
   }
   .dl-bench-vs-table {
@@ -185,9 +208,9 @@ const compare = [
     font-size: 0.85rem;
   }
   .dl-bench-th-unit {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     font-weight: 500;
-    color: #6b7685;
+    color: #8b95a5;
     display: block;
     margin-top: 0.1rem;
   }

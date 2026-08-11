@@ -8,7 +8,7 @@ and fails fast with a clear message. Never read `process.env` elsewhere.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `PORT` | `4000` | |
+| `PORT` | `4000` | In dev, auto-increments to the next free port if busy (prod fails fast) |
 | `APP_URL` | `http://localhost:4000` | Absolute base URL (email links, OAuth redirects) |
 | `DATABASE_PATH` | `./data/app.sqlite` | |
 | `SSR` | `true` | `false` ships an empty shell — client renders from scratch (no hydrate) |
@@ -18,7 +18,8 @@ and fails fast with a clear message. Never read `process.env` elsewhere.
 | `MAILTRAP_API_TOKEN` | — | required when `MAIL_DRIVER=mailtrap` |
 | `MAILTRAP_INBOX_ID` | — | sandbox endpoint when set |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
-| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `30` / `60` | requests per window on auth endpoints |
+| `RATE_LIMIT_GLOBAL_MAX` / `RATE_LIMIT_GLOBAL_WINDOW` | `200` / `60` | per-IP requests per window on all routes (excludes `/health`, `/assets/*`) |
+| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `30` / `60` | stricter per-IP limit on auth endpoints (brute-force protection) |
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
 | `TUS_MAX_SIZE` | `0` | max upload size (`0` = unlimited) |
 | `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL (`0` = no expiry) |

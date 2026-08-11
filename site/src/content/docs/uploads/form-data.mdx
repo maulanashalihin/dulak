@@ -1,0 +1,81 @@
+---
+title: Plain form data uploads
+description: Upload small files with a regular multipart form — native Bun parsing, no protocol, no state.
+---
+
+Uploading a file is a basic web task, and the most direct way to do it
+is a plain HTML form with `enctype="multipart/form-data"`. Bun parses
+multipart bodies natively — `request.formData()` hands you the fields
+and the file, no dependency, no configuration, no protocol. If the file
+is small and the connection is stable, this is all you need.
+
+## The handler
+
+```ts
+// src/server/routes/attachments.routes.ts
+import { Hono } from "hono";
+import { requireAuth } from "../auth";
+import { config } from "../config";
+import type { AppEnv } from "../inertia-middleware";
+
+export const attachmentsRoutes = () => {
+  const app = new Hono<AppEnv>();
+
+  app.post("/attachments", requireAuth, async (c) => {
+    const form = await c.req.formData();
+    const file = form.get("file");
+    if (!(file instanceof File)) {
+      return c.json({ error: "no file field" }, 400);
+    }
+    await Bun.write(`${config.upload.dir}/${file.name}`, file);
+    return c.redirect("/attachments");
+  });
+
+  return app;
+};
+```
+
+`Bun.write` accepts a `File`/`Blob` directly — the whole handler is the
+upload. Mount it in `app.ts` next to the other routes:
+
+```ts
+app.route("/", attachmentsRoutes());
+```
+
+That's the entire implementation. The form on the client side is a
+plain HTML form:
+
+```html
+<form method="POST" action="/attachments" enctype="multipart/form-data">
+  <input type="file" name="file" required />
+  <button type="submit">Upload</button>
+</form>
+```
+
+## When to use it
+
+Form data is the right choice when the file is small and the connection
+is reliable:
+
+- **Small files** — under ~100MB
+- **One-shot documents** — a resume PDF, a config file, an import
+- **Server-to-server transfers** — fast internal network, drops are rare
+
+For anything bigger or less reliable, keep reading — the next section
+explains why multipart forms hit a wall, and what to do about it.
+
+## Why not always?
+
+Multipart forms have real limitations for larger uploads:
+
+1. **No resume** — a dropped connection at 90% means starting over
+2. **Memory buffering** — the body is buffered before your handler runs;
+   a 100MB upload is 100MB of RAM per concurrent request
+3. **No server-side progress** — the server can't report how much
+   arrived, and can't continue a partial upload
+4. **Timeouts** — one long request can hit HTTP timeouts on a slow link
+
+For files over ~100MB — or any upload that might be interrupted — the
+next page covers [tus resumable uploads](/uploads/tus/), the protocol
+that solves these four problems. It uses the same `UPLOAD_DIR`, just
+with resumable, chunked transfers.

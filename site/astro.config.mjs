@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import starlightBlog from "starlight-blog";
 import mdx from "@astrojs/mdx";
 
 // `site` is used for canonical URLs — set it to the production domain
@@ -9,6 +10,20 @@ export default defineConfig({
 	site: "https://dulak.pages.dev",
 	integrations: [
 		starlight({
+			plugins: [
+				starlightBlog({
+					title: "Notes",
+					postCount: 20,
+					recentPostCount: 20,
+					authors: {
+						maulana: {
+							name: "Maulana Shalihin",
+							title: "Dulak author",
+							url: "https://github.com/maulanashalihin",
+						},
+					},
+				}),
+			],
 			title: "Dulak",
 			description:
 				"Deliberately boring full-stack boilerplate: Hono + bun:sqlite + Inertia v3 on Bun, with React/Svelte/Vue templates (vanilla CSS or Tailwind).",
@@ -26,12 +41,17 @@ export default defineConfig({
 				},
 			],
 			customCss: ["./src/styles/custom.css"],
+			components: {
+				Head: "./src/components/Head.astro",
+				ThemeSelect: "./src/components/ThemeSelect.astro",
+			},
 			sidebar: [
 				{
 					label: "Getting Started",
 					items: [
 						{ label: "Introduction", slug: "getting-started/introduction" },
 						{ label: "Installation", slug: "getting-started/installation" },
+						{ label: "Building with AI agents", slug: "getting-started/ai-agents" },
 					],
 				},
 			{ label: "Philosophy", slug: "philosophy" },
@@ -57,25 +77,20 @@ export default defineConfig({
 				},
 				{
 					label: "Uploads",
-					items: [{ label: "tus resumable upload", slug: "uploads/tus" }],
-				},
-				{
-					label: "Deployment",
 					items: [
-						{ label: "Configuration", slug: "deployment/configuration" },
-						{ label: "Docker", slug: "deployment/docker" },
-						{ label: "Linux VPS (no Docker)", slug: "deployment/vps" },
+						{ label: "Plain form data upload", slug: "uploads/form-data" },
+						{ label: "tus resumable upload", slug: "uploads/tus" },
 					],
 				},
 				{
-					label: "Templates",
-					items: [
-					{ label: "default (React + vanilla CSS)", slug: "getting-started/installation" },
-					{ label: "svelte-vanilla", slug: "templates/svelte-vanilla" },
-					{ label: "vue-vanilla", slug: "templates/vue-vanilla" },
-					{ label: "react-tailwind", slug: "templates/react-tailwind" },
-					{ label: "svelte-tailwind", slug: "templates/svelte-tailwind" },
-					{ label: "vue-tailwind", slug: "templates/vue-tailwind" },
+					label: "Deployment",
+				items: [
+					{ label: "Overview", slug: "deployment" },
+					{ label: "Deploy with an AI agent", slug: "deployment/ai-agent" },
+					{ label: "Configuration", slug: "deployment/configuration" },
+					{ label: "Docker", slug: "deployment/docker" },
+					{ label: "Linux VPS (no Docker)", slug: "deployment/vps" },
+					{ label: "Reverse proxy", slug: "deployment/reverse-proxy" },
 				],
 				},
 				{
@@ -83,6 +98,7 @@ export default defineConfig({
 					items: [
 						{ label: "Schema & migrations", slug: "database/schema-migrations" },
 						{ label: "Performance", slug: "database/performance" },
+						{ label: "Replication & backup", slug: "database/replication" },
 					],
 				},
 				{ label: "Testing", slug: "testing" },

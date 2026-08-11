@@ -1,0 +1,131 @@
+---
+title: Deploy with an AI agent
+description: Hand the deployment to an AI agent — edit the prompt files in the repo, paste to your agent, done.
+---
+
+Don't want to SSH in and run commands manually? Hand the deployment
+to an AI coding agent. The repo ships with ready-to-use prompt files
+in `prompts/` — edit the placeholders, paste to your agent, done.
+
+<aside>
+**Works with any agent that can run shell commands** — omp.sh, Claude
+Code, Cursor, opencode, Windsurf. The agent needs SSH access to your
+server and your permission to run commands remotely.
+</aside>
+
+## What you need before starting
+
+- **A VPS** with root or sudo access (Ubuntu 22.04/24.04/26.04).
+- **SSH access** — the agent connects via `ssh user@your-server-ip`.
+- **Your repo on GitHub** — the agent clones it onto the server.
+- **Your domain** (optional) — if you want HTTPS, point the DNS record
+  to your server IP before starting.
+
+## First deploy
+
+The repo includes prompt files for both deployment paths:
+
+| File | Path | What to edit |
+|---|---|---|
+| `prompts/deploy-systemd.txt` | systemd (bare VPS) | 4 placeholders: SSH, repo, domain, install path |
+| `prompts/deploy-docker.txt` | Docker | 4 placeholders: SSH, repo, domain, install path |
+
+<aside>
+If you don't have a preference, pick **systemd** — it's faster and
+lighter. See the
+[benchmark on the deployment overview](/deployment/#benchmark-systemd-vs-docker).
+</aside>
+
+### Steps
+
+1. Open the prompt file for your chosen path (e.g.
+   `prompts/deploy-systemd.txt`).
+2. Replace the four placeholders at the top:
+   - `USER@SERVER_IP` → your SSH login (e.g. `root@203.0.113.5`)
+   - `YOUR_USER/YOUR_REPO` → your GitHub repo
+   - `your-domain.com` → your domain (or `none`)
+   - `/opt/dulak` → install path on the server (or keep as-is)
+3. Paste the entire file content to your AI agent.
+
+The agent SSHes in, installs Bun (or Docker), clones the repo, builds
+assets, creates `.env`, starts the service, and verifies `/health`.
+It also saves a `deploy.env` file in your local project root (added
+to `.gitignore`) so routine updates don't need retyping.
+
+### After first deploy: HTTPS
+
+Your app is live on port 4000 (plain HTTP). For HTTPS, pick one:
+
+| File | Path | What you need |
+|---|---|---|
+| `prompts/setup-cloudflare.txt` | Cloudflare (recommended) | Cloudflare API token + domain on Cloudflare |
+| `prompts/setup-caddy.txt` | Caddy (no Cloudflare) | Just a domain pointing to your server |
+
+**Cloudflare** — the agent creates the DNS record, sets SSL to
+Flexible, creates an Origin Rule (so CSRF and OAuth work), and
+configures the firewall to only allow Cloudflare IPs. You need a
+[Cloudflare API token](https://dash.cloudflare.com/profile/api-tokens)
+with Zone → DNS → Edit and Zone → Read permissions.
+
+**Caddy** — the agent installs Caddy, creates a Caddyfile with
+automatic TLS via Let's Encrypt, and starts it. No Cloudflare
+account needed.
+
+Edit the placeholders in the prompt file, paste to your agent. For
+the full manual walkthrough (including Nginx + Certbot), see the
+[reverse proxy guide](/deployment/reverse-proxy/).
+
+---
+
+## Routine updates
+
+When you push new code to GitHub, paste the matching update prompt.
+No editing needed — the agent reads `deploy.env` (created during
+first deploy) to reconnect.
+
+| File | Path |
+|---|---|
+| `prompts/update-systemd.txt` | systemd |
+| `prompts/update-docker.txt` | Docker |
+
+Just paste the file content to your agent. It SSHes in, pulls the
+latest code, rebuilds, restarts, and verifies `/health`.
+
+---
+
+## Troubleshooting
+
+If the agent reports an error, paste it back and ask the agent to fix
+it. Common issues:
+
+### "bun: not found" in systemd logs
+
+```text
+The systemd service can't find bun. Check `which bun` and update
+the ExecStart path in the systemd unit file.
+```
+
+### "EADDRINUSE: Port 4000"
+
+```text
+Port 4000 is in use. Find what's using it (ss -tlnp | grep 4000)
+and either kill it or change the PORT in .env to 4001.
+```
+
+### Docker container keeps restarting
+
+```text
+The Docker container is restarting. Check `docker compose logs`
+and fix whatever error is causing the crash.
+```
+
+### Health check returns non-200
+
+```text
+The /health endpoint is returning a non-200 status. Check the
+service logs (journalctl -u <name> or docker compose logs) and
+fix the issue.
+```
+
+The agent will diagnose and fix — you don't need to know the commands
+yourself.

@@ -3,11 +3,11 @@ title: Introduction
 description: What Dulak is and why it exists.
 ---
 
-Dulak is a production-shaped full-stack boilerplate running entirely on **Bun**:
+Dulak is a production-grade full-stack boilerplate running entirely on **Bun**:
 
 - **Hono 4.x** — HTTP layer, served via `Bun.serve`
 - **bun:sqlite** — synchronous, zero-ORM database
-- **Inertia v3 / React 19** — server-driven UI with in-process SSR
+- **Inertia v3** — server-driven UI with in-process SSR (React 19, Svelte 5, or Vue 3)
 - **Bun >= 1.3** — runtime, bundler, and test runner
 
 The name is the philosophy — *dulak* is the Banjar word for **bored**. Every
@@ -22,7 +22,7 @@ discoverability as a contract.
 - Resumable uploads (tus protocol v1) — demonstrated by the avatar upload
 - Versioned SQL migrations applied at startup
 - Rate limiting, CSRF, security headers, batched request logging, gzip
-- 62-test E2E suite (`bun test --isolate`)
+- 63-test E2E suite (`bun test --isolate`)
 - Multi-stage Docker, CI, graceful shutdown
 - Templates: React, Svelte 5, and Vue 3 clients with Tailwind CSS v4
 

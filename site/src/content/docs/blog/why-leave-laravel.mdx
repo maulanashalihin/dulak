@@ -1,0 +1,119 @@
+---
+title: "Laravel is good. Your next project should not use it"
+description: "PHP was great in 2005. In 2026, TypeScript has won, Bun has won, and AI writes code in any language. The language barrier that kept you in PHP is gone — so which ecosystem gives you less infrastructure to manage?"
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - laravel
+  - comparisons
+  - philosophy
+excerpt: "PHP was great in 2005. In 2026, TypeScript has won, Bun has won, and AI writes code in any language. The language barrier that kept you in PHP is gone — so which ecosystem gives you less infrastructure to manage?"
+---
+
+Laravel is a good framework. It's well-documented, has a thriving ecosystem, and has shipped thousands of production apps. This is not a hit piece. This is a case for why your *next* project should not be one of them.
+
+## The four-toolchain tax
+
+Laravel doesn't run on one thing. It runs on four:
+
+1. **PHP** — the language and runtime
+2. **Composer** — the package manager
+3. **A web server** — Nginx, Apache, or FrankenPHP (which is itself a Go binary embedding PHP)
+4. **A database driver** — PDO MySQL, PDO PostgreSQL, or the SQLite driver
+
+Each of these has its own version, its own configuration, its own upgrade cycle, and its own breaking changes. When you deploy a Laravel app, you're maintaining four toolchains. When one of them releases a breaking change — PHP 8.4 deprecates something, Composer v3 changes resolution behavior, Nginx updates its config syntax — you're debugging the intersection.
+
+Dulak runs on **one runtime**: Bun. Bun is the HTTP server, the database engine (bun:sqlite), the bundler, the test runner, and the package manager. One install, one version, one upgrade. The web server is built in. The database is built in. There is no second toolchain to configure.
+
+## The SSR tax
+
+Laravel's Inertia SSR — the feature that lets you render React or Vue on the server — requires a **separate Node.js process**. You're running PHP *and* Node to serve one application. Two runtimes, two process managers, two sets of environment variables, two things that can crash independently.
+
+Dulak renders SSR in the **same Bun process** as the HTTP server and the database. `renderToString` runs inside the Hono handler, in the same event loop that serves the request. No second runtime, no IPC, no separate deployment. One process does everything.
+
+If you want Inertia SSR in Laravel, you need Node installed on your production server alongside PHP. If you want SSR in Dulak, you need nothing — it's already running.
+
+## The ORM tax
+
+Eloquent is a full-featured ORM. It has model hydration, collections, query builders, relationships, scopes, accessors, mutators, and event dispatch. It's impressive. It's also 8× slower than raw SQL.
+
+The numbers, from the [benchmark page](/database/performance/):
+
+| Endpoint | Dulak (Hono+Bun) | Laravel (FrankenPHP, 8 workers) | Dulak faster |
+| --- | ---: | ---: | ---: |
+| `GET /health` (no DB) | 65,807 req/s | 6,237 req/s | 10.5× |
+| `GET /users/:id` (PK read) | 51,934 req/s | 6,391 req/s | 8.1× |
+| `GET /users?limit=20` (list) | 32,222 req/s | 4,734 req/s | 6.8× |
+| `DELETE /users/:id` (delete) | 27,744 req/s | 5,655 req/s | 4.9× |
+
+Laravel's health check (6,237 req/s) and DB point read (6,391 req/s) are nearly identical — the database adds no measurable overhead because ~7ms of framework overhead dwarfs the ~0.1ms SQLite query. The framework is the bottleneck, not the database.
+
+Dulak uses raw SQL prepared statements. No model hydration, no collection wrapping, no event dispatch. The query plan is compiled once at module load and reused for every request. You see the exact SQL that runs. The AI writing your next feature writes it at peak performance — no abstraction layer to generate through.
+
+## TypeScript everywhere
+
+Laravel developers write PHP on the server and JavaScript on the client. Two languages, two type systems, two mental models, two sets of tooling. Every feature requires context-switching between PHP and JS. Every shared type is manually synced — a `User` model in Eloquent and a `User` interface in TypeScript, kept in sync by hope and code review.
+
+Dulak is TypeScript end to end. Server, client, shared types — all in `src/shared/types.ts`. The `User` type that the database returns is the same `User` type the React component receives. No sync, no drift, no duplicate definitions.
+
+In 2026 where AI generates code, having one language means the AI is always in context. It doesn't switch between PHP mode and JavaScript mode. It doesn't forget the shape of a model because it was defined in a different language. One language, one type system, one context window.
+
+## The deployment complexity
+
+A production Laravel deployment looks like this:
+
+- Install PHP + Composer
+- Install and configure a web server (Nginx or FrankenPHP)
+- Configure PHP-FPM (or Octane for persistent workers)
+- Run `composer install --no-dev --optimize-autoloader`
+- Set up environment variables (`.env`)
+- Configure a queue worker (Supervisor + `php artisan queue:work`)
+- Configure a scheduler (`cron` + `php artisan schedule:run`)
+- If you want SSR: install Node, configure the Inertia SSR server, manage it as a separate process
+- Configure a reverse proxy to route to PHP-FPM or FrankenPHP
+
+A production Dulak deployment looks like this:
+
+```bash
+bun run start
+```
+
+Or with Docker:
+
+```bash
+docker compose up -d
+```
+
+One process. One binary. The queue worker, the scheduler, the SSR server — they don't exist as separate things to manage. If you need a background job, you write a function and call it. If you need SSR, it's already running. The entire deployment is one process that does everything.
+
+## The 2026 angle
+
+Here's the argument that matters most: **PHP was a great language for 2005.** It was easy to learn, easy to deploy (upload files to a server), and had a massive ecosystem. The language barrier — "I already know PHP" — kept developers in the Laravel ecosystem for decades.
+
+In 2026, that barrier is gone. AI writes code in whatever language you ask. TypeScript is as easy to generate as PHP. The question "but who will maintain the TypeScript?" has the same answer as "but who will maintain the PHP?" — the AI will, and it's equally fluent in both.
+
+So the remaining question is: **which ecosystem gives you less infrastructure to manage?**
+
+- Laravel: 4 toolchains, 2 languages, 2 runtimes for SSR, a queue worker, a scheduler, a web server, a database driver.
+- Dulak: 1 runtime, 1 language, 1 process, 1 binary.
+
+The answer is not subtle.
+
+## When to stay with Laravel
+
+This is not a "rewrite everything" argument. If you have:
+
+- **An existing Laravel app with years of code** — don't rewrite. The switching cost is real, and Laravel is a fine framework for maintaining what you have.
+- **A team deep in PHP expertise** — switching to TypeScript + Bun has a learning curve. If your team is fast and happy in Laravel, the productivity cost of switching may not be worth it.
+- **Laravel-specific packages you depend on** — Nova, Horizon, Telescope, Filament, Livewire. These are genuinely good tools with no Dulak equivalents. If your app is built on them, Dulak is not a drop-in replacement.
+
+This is about what to start *new* projects in. When you're choosing a stack for a greenfield app in 2026, the question is not "which framework do I know?" — AI knows all of them. The question is "which stack gives me the least infrastructure to wire, the fewest toolchains to maintain, and the fastest path from zero to business logic?"
+
+That's Dulak.
+
+## The short version
+
+**Laravel for existing apps. Dulak for new ones.**
+
+The numbers: [8× slower on reads, 5× slower on writes](/database/performance/). The toolchains: 4 vs 1. The runtimes for SSR: 2 vs 1. The languages: 2 vs 1. The deployment: 8 steps vs 1 command. See the [full comparison](/comparisons/) for the detailed breakdown.
