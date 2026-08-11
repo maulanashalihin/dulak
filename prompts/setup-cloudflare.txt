@@ -9,6 +9,8 @@
 # Template: "Edit zone DNS" (add Zone → Read if missing)
 #
 # Edit the four placeholders below, then paste to your AI agent.
+# For APP_PORT, use the port the app is actually running on
+# (check deploy.env or the deploy output).
 
 Set up Cloudflare as the reverse proxy for my Dulak app. Here are
 the details:
@@ -16,7 +18,7 @@ the details:
 - Cloudflare API token: CLOUDFLARE_API_TOKEN
 - Domain: your-domain.com
 - Server IP: SERVER_IP
-- App port: 4000
+- App port: APP_PORT
 
 Steps:
 1. Use the Cloudflare API (https://api.cloudflare.com/client/v4)
@@ -25,13 +27,13 @@ Steps:
 3. Create an A record for the domain pointing to the server IP,
    with proxied: true (orange cloud).
 4. Set SSL/TLS mode to Flexible (edge terminates TLS, talks HTTP
-   to origin on port 4000).
+   to origin on the app port).
 5. Create an Origin Rule: rewrite Host header to the domain for
    incoming requests matching the hostname. This ensures CSRF
    and OAuth work correctly.
-6. On the server, set up UFW to only allow Cloudflare IPs on port 4000:
+6. On the server, set up UFW to only allow Cloudflare IPs on the app port:
    - Allow OpenSSH
-   - Fetch Cloudflare IP ranges from the API and allow them on port 4000
+   - Fetch Cloudflare IP ranges from the API and allow them on the app port
    - Enable UFW
 7. Verify: curl https://your-domain.com/health should return 200.
 8. Tell me the status and any issues.
