@@ -1,0 +1,170 @@
+---
+title: Replication & backup with Litestream
+description: Stream Dulak's SQLite database to S3 for continuous replication and point-in-time recovery.
+---
+
+SQLite is a single file — back it up by copying it. But for production,
+you want continuous replication: every WAL frame streamed to object
+storage so you can restore to any point in time, with zero downtime.
+[Litestream](https://litestream.io/) does exactly this, and it works
+seamlessly with Dulak's WAL-mode `bun:sqlite` database.
+
+## How it works
+
+```
+Dulak (Bun) → app.sqlite (WAL mode)
+                    ↓
+              Litestream daemon
+                    ↓
+              S3 / R2 / MinIO
+```
+
+Litestream runs as a sidecar process alongside Dulak. It tails the WAL
+file and streams changes to your replica — no app code changes, no
+downtime, no locks. If the server dies, you restore from the replica and
+restart.
+
+## Install
+
+```bash
+# Linux (amd64)
+curl -L https://github.com/litestream/litestream/releases/latest/download/litestream-linux-amd64 -o /usr/local/bin/litestream
+chmod +x /usr/local/bin/litestream
+```
+
+Or with Homebrew on macOS for local testing:
+
+```bash
+brew install litestream
+```
+
+## Configure
+
+Create `/etc/litestream.yml`:
+
+```yaml
+dbs:
+  - path: /opt/dulak/data/app.sqlite
+    replicas:
+      - url: s3://your-bucket/dulak
+        # S3-compatible endpoints work too: Cloudflare R2, MinIO, Backblaze B2
+        # For R2:  s3://your-bucket@dulak-backup.<account-id>.r2.cloudflarestorage.com/dulak
+        # For B2:  s3://your-bucket@s3.us-west-000.backblazeb2.com/dulak
+        sync-interval: 1s
+```
+
+Credentials go in environment variables, not the config file:
+
+```bash
+export LITESTREAM_ACCESS_KEY_ID=...
+export LITESTREAM_SECRET_ACCESS_KEY=...
+```
+
+Or put them in `/opt/dulak/.env.litestream` and source it from the
+systemd unit.
+
+## Run as a systemd service
+
+`/etc/systemd/system/litestream.service`:
+
+```ini
+[Unit]
+Description=Litestream replication
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/opt/dulak/.env.litestream
+ExecStart=/usr/local/bin/litestream replicate -config /etc/litestream.yml
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now litestream
+sudo systemctl status litestream
+```
+
+Litestream starts after Dulak and tails the WAL file. If Dulak restarts,
+Litestream picks up where it left off — no coordination needed.
+
+## Run with Docker
+
+If you deploy Dulak with Docker, run Litestream as a sidecar in
+`docker-compose.yml`:
+
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:4000:4000"
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  litestream:
+    image: litestream/litestream:latest
+    command: replicate -config /etc/litestream.yml
+    environment:
+      LITESTREAM_ACCESS_KEY_ID: ${LITESTREAM_ACCESS_KEY_ID}
+      LITESTREAM_SECRET_ACCESS_KEY: ${LITESTREAM_SECRET_ACCESS_KEY}
+    volumes:
+      - ./data:/data:ro          # read-only access to the SQLite file
+      - ./litestream.yml:/etc/litestream.yml:ro
+    restart: unless-stopped
+    depends_on:
+      - app
+```
+
+Update the `path` in `litestream.yml` to `/data/app.sqlite` (the volume
+mount path inside the Litestream container).
+
+## Restore
+
+If your server dies or the database file corrupts:
+
+```bash
+# Stop Dulak first
+sudo systemctl stop dulak
+
+# Restore from the replica
+litestream restore -o /opt/dulak/data/app.sqlite s3://your-bucket/dulak
+
+# Start Dulak
+sudo systemctl start dulak
+```
+
+You can also restore to a specific point in time:
+
+```bash
+litestream restore -o /opt/dulak/data/app.sqlite \
+  -timestamp 2026-08-08T10:30:00Z \
+  s3://your-bucket/dulak
+```
+
+## What Litestream does NOT do
+
+Litestream is replication, not high availability. It protects against
+data loss — not against downtime. If the server dies, you restore to a
+new server and restart. For zero-downtime failover, you need multiple
+Dulak instances behind a load balancer with a shared database
+(Postgres, MySQL) — that is the swap point where SQLite is no longer the
+right tool.
+
+## Cost
+
+Litestream is free, open-source, and self-hosted. You pay only for
+object storage:
+
+- **Cloudflare R2**: $0.015/GB/month, no egress fees — cheapest option
+- **AWS S3**: $0.023/GB/month + egress
+- **Backblaze B2**: $0.006/GB/month — cheapest storage, egress is free
+  up to 3× storage cost
+
+A Dulak database with 10K users and uploads metadata is likely under
+100MB — that is less than $0.01/month on any provider.

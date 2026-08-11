@@ -1,0 +1,119 @@
+---
+title: "ORMs are dead in 2026. AI killed them"
+description: "ORMs were built to help humans avoid writing SQL. In 2026, AI generates correct, optimized raw SQL on demand — the problem ORMs solved is gone. What remains is the cost."
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - database
+  - philosophy
+  - ai
+excerpt: "ORMs were built to help humans avoid writing SQL. In 2026, AI generates correct, optimized raw SQL on demand — the problem ORMs solved is gone. What remains is the cost."
+---
+
+Every boilerplate in the TypeScript ecosystem ships an ORM. Prisma, Drizzle, TypeORM, MikroORM — pick your poison. So when people see that Dulak has zero ORM dependencies and every query is raw SQL in `db.ts`, the reaction is predictable: "That doesn't scale. You'll regret this."
+
+Let's talk about why that's wrong, and why the ORM question in 2026 is fundamentally different from the ORM question in 2015.
+
+## The problem ORMs solved is gone
+
+Here's the thing nobody says out loud: ORMs were never about performance. They were about *human friction*. Writing SQL by hand was painful — you had to know the syntax, remember the join types, get the escaping right, and deal with the fact that your database spoke a different language than your application code. ORMs let you write TypeScript instead of SQL, and that was genuinely valuable when the alternative was string-concatenating queries in a text editor.
+
+In 2026, that value proposition has collapsed. AI generates correct, optimized raw SQL on demand. You describe what you want — "get the 10 most recent users with their session count" — and you get back a query with the right joins, the right indexes, and the right `LIMIT`. The AI doesn't need an ORM to translate your intent into SQL. It writes SQL directly, because SQL is the language the database actually speaks.
+
+And here's the deeper point: this isn't just about SQL. In 2026, code is AI-generated. The entire category of "abstractions that make humans more productive" — ORMs, query builders, template engines, utility CSS frameworks — exists to reduce human friction. When code is free to produce, that friction disappears. What's left is the question you should have been asking all along: **does this abstraction make my code faster, or slower?** ORMs make it slower. They add a translation layer between your intent and the database. In a world where AI writes raw SQL at peak performance, accepting that translation layer is paying a tax for a service nobody is rendering anymore.
+
+## What remains is the cost
+
+An ORM is a dependency. Dependencies have a lifecycle, and it's never free:
+
+- **You upgrade it.** Prisma had four major versions in four years. Each one changed the schema syntax, the query API, or the migration format. Every upgrade is a project.
+- **You audit it.** An ORM that generates SQL is a code generator running in your production process. When a query is slow, you have to figure out what SQL the ORM *actually generated* — which means enabling query logging, reading the output, and mapping it back to the ORM method chain that produced it.
+- **You debug it.** When the ORM's eager-loading strategy produces an N+1 query (more on that below), you're debugging two layers: your application logic and the ORM's loading strategy. The ORM is a black box between you and the database.
+
+None of this is the ORM's fault — it's the inherent cost of an abstraction layer. The question is whether the abstraction earns its cost. In 2026, with AI writing your SQL, it doesn't.
+
+## The N+1 problem is an ORM problem
+
+Here's a pattern every ORM user has lived through:
+
+```ts
+// Looks fine. Runs fine in dev with 5 users.
+const users = await User.findMany();
+for (const user of users) {
+  const sessions = await user.sessions(); // ← N+1
+}
+```
+
+Five users, five extra queries. In production with 10,000 users, that's 10,001 queries for a single page load. The ORM made the wrong thing *easy* — iterating over a relationship looks natural, so you do it without thinking about the query count.
+
+Every ORM has a fix for this — `include`, `with`, `eager`, `populate` — but the fix is ORM-specific syntax you have to learn, and the default behavior is always the dangerous one. The ORM optimizes for developer convenience at the call site, not for query efficiency at the database.
+
+Raw SQL makes joins explicit:
+
+```sql
+SELECT u.id, u.name, u.email, COUNT(s.token_hash) AS session_count
+FROM users u
+LEFT JOIN sessions s ON s.user_id = u.id
+GROUP BY u.id
+ORDER BY u.id DESC
+LIMIT 10;
+```
+
+One query. You can see it's one query because it *is* one query. There's no hidden loading strategy, no lazy evaluation, no "did I remember to eager-load this relationship?" The SQL is the query plan.
+
+## Migrations: explicit vs. generated
+
+ORMs ship migration generators. You change your model file, run a command, and the ORM diffs the old schema against the new one and produces a migration. It sounds great until you see what it generates.
+
+ORM-generated migrations are conservative by design — they don't know your intent, so they do safe things. Want to rename a column? The ORM sees "column dropped, column added" and generates a `DROP COLUMN` + `ADD COLUMN`. Your data is gone. You have to manually rewrite the migration to do `ALTER TABLE ... RENAME COLUMN`, assuming your database even supports it.
+
+Dulak's migrations are hand-written SQL, versioned, and applied in a transaction. You can see the [schema migration guide](/database/schema-migrations/) for the full pattern, but the shape is simple:
+
+```sql
+-- migrations/0003_add_user_avatar.sql
+ALTER TABLE users ADD COLUMN avatar_url TEXT;
+```
+
+That's it. You wrote the SQL. You know what it does. The migration runner applies it in a transaction — if it fails, the database rolls back and the app doesn't start. No generator to second-guess your intent, no auto-generated migration that drops a column you wanted to rename.
+
+## What Dulak actually does
+
+Open `src/server/db.ts` and you'll see the entire database layer. It's prepared statements, prepared once at module load, typed with TypeScript generics:
+
+```ts
+export const findUserByEmail = db.query<UserRow, [string]>(
+  `SELECT id, name, email, password_hash AS passwordHash, role,
+          google_id AS googleId, avatar_url AS avatarUrl,
+          created_at AS createdAt
+   FROM users WHERE email = ?`,
+);
+
+export const createUser = db.query<{ id: number }, [string, string, string]>(
+  `INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?) RETURNING id`,
+);
+```
+
+Every query in the application is defined here. The SQL is right there in the source — you can read it, copy it into a SQLite shell, run `EXPLAIN QUERY PLAN` on it, and see exactly what the database will do. No logging required, no query inspector, no "what did the ORM generate?" debugging session.
+
+The TypeScript generics give you type safety on the result shape and the parameter tuple. `findUserByEmail` takes a `string` and returns a `UserRow`. The compiler checks both. This is the same type safety an ORM provides — except it's zero-dependency and the types describe the actual SQL, not an ORM model that *generates* SQL.
+
+`bun:sqlite` is synchronous, so there's no `await` on every query, no promise chain, no event loop scheduling overhead. The query runs, returns, you move on. SQLite is in-process — the query is already done by the time you'd schedule a microtask. Async database drivers exist for network-attached databases where the query might take 50ms over the wire. That's not this.
+
+## When an ORM is the right call
+
+The old answers don't survive contact with 2026. Here are the reasons ORMs were recommended, checked against the world AI created:
+
+- **"Large teams with varying SQL literacy."** The ORM was a standardization layer for humans who didn't know SQL. In 2026, humans aren't writing the SQL — the AI is, and it writes SQL correctly in every dialect. A consistent query interface is now a code-review convention or a lint rule, not a runtime dependency. This argument collapses.
+- **"Switching databases mid-project."** This was always weaker than it sounded: ORMs abstract *some* dialect differences and leak the rest — types, migrations, transactions, indexes. In 2026 the switch is cheaper *without* an ORM: "port `db.ts` to Postgres" and the AI rewrites the queries in the new dialect. Same task an ORM migration would have been, minus the ORM.
+- **"Dynamic query builders."** This one has a kernel of truth — a search page with 15 optional filters does need composable WHERE clauses. But it needs a *query builder* (kysely, or a 20-line helper that appends conditions), not an ORM. "Dynamic queries" justified the query builder, never the ORM. And in 2026, the AI can generate the conditional SQL itself.
+
+None of these apply to Dulak's scope: a known schema, a single database, queries that don't change shape at runtime. An ORM would be paying a tax for features we don't use — and the one feature it was for (humans writing SQL) is no longer rendered by anyone.
+
+## The short version
+
+**ORMs solved the problem of humans writing SQL. AI writes SQL now. What's left is the cost: a dependency, an abstraction layer, and a debugging black box between you and your data.**
+
+Dulak's database layer is `db.ts` — prepared statements, typed with generics, zero dependencies. You see the SQL. The AI writing your next feature sees the SQL. The database sees the SQL. Everyone is looking at the same thing, and that thing is the actual query plan.
+
+When you outgrow SQLite and swap to Postgres, you replace `db.ts` with a Postgres driver and update the SQL syntax. No ORM migration, no model layer to rewrite, no abstraction to fight through. The [performance numbers](/database/performance/) don't change because the bottleneck was never the query layer — it was always the network hop you added by choosing a server database.

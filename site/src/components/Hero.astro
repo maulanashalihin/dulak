@@ -19,17 +19,15 @@
     </div>
 
     <h1 class="dl-title">
-      Deliberately <span class="dl-gradient">boring</span>.<br />
-      Production-shaped by default.
+      Deliberately <span class="dl-accent">boring</span>.<br />
+      A full-stack starter that actually works.
     </h1>
 
     <p class="dl-tagline">
-      A full-stack starter running entirely on <strong>Bun</strong>:
-      <strong>Hono</strong> for HTTP, <strong>bun:sqlite</strong> for data,
-      <strong>Inertia v3</strong> for server-driven UI with
-      <strong>in-process SSR</strong> — with React, Svelte, and Vue
-      templates. Auth, uploads, migrations, tests, Docker — wired end to
-      end.
+      One Bun process: <strong>Hono</strong> + <strong>bun:sqlite</strong> +
+      <strong>Inertia v3</strong> with in-process SSR. React, Svelte, or Vue —
+      your choice. Auth, uploads, migrations, tests, Docker — wired end to end,
+      not left for you to glue.
     </p>
 
     <div class="dl-actions">
@@ -130,11 +128,8 @@
     line-height: 1.08;
     letter-spacing: -0.03em;
   }
-  .dl-gradient {
-    background: linear-gradient(100deg, #34d399, #059669 55%, #0d9488);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  .dl-accent {
+    color: #34d399;
   }
   .dl-tagline {
     max-width: 620px;
@@ -157,7 +152,7 @@
   }
   .dl-btn:hover { transform: translateY(-1px); }
   .dl-btn-primary {
-    background: linear-gradient(180deg, #10b981, #059669);
+    background: #047857;
     color: #fff;
     box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35);
   }

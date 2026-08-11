@@ -1,0 +1,135 @@
+---
+title: "SQLite beats Postgres — we benchmarked it"
+description: "SQLite is a file, not a server. No install, no connection pool, no credentials. 52K reads/s with WAL mode — enough for most apps, and a deliberate swap point when it isn't."
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - database
+  - sqlite
+  - philosophy
+excerpt: "SQLite is a file, not a server. No install, no connection pool, no credentials. 52K reads/s with WAL mode — enough for most apps, and a deliberate swap point when it isn't."
+---
+
+Every boilerplate comparison eventually reaches the database question: "Why SQLite? Shouldn't a production app use Postgres or MySQL?"
+
+It's a fair question — and the answer isn't "SQLite is better than Postgres." It's "SQLite is the right *starting* database, and Dulak is a *starting* point."
+
+## Zero infrastructure
+
+Postgres and MySQL are servers. They run as separate processes, listen on ports, require connection pools, and need credentials managed. Before you write a single query, you need to:
+
+1. Install the database server
+2. Configure it (memory, connections, WAL, replication)
+3. Create a database and user
+4. Set up credentials (env vars, secrets manager)
+5. Wire a driver into your app (`pg`, `mysql2`, etc.)
+6. Configure a connection pool
+
+SQLite is a file. `bun:sqlite` is built into Bun. There is no step 1.
+
+```ts
+import { Database } from "bun:sqlite";
+const db = new Database("app.sqlite");
+```
+
+That's the entire setup. No server process, no port, no credentials, no driver dependency, no connection pool. The database is a file on disk.
+
+## Fast enough for most apps
+
+Dulak ships with four PRAGMAs that make SQLite fast:
+
+```ts
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA synchronous = NORMAL");
+db.exec("PRAGMA busy_timeout = 5000");
+db.exec("PRAGMA foreign_keys = ON");
+```
+
+With these settings, Dulak serves **52,000 reads per second through the full HTTP stack** (point read, `GET /users/:id`) and **19,600 creates per second** (`POST /users`, also via HTTP). Drop the HTTP layer and raw `bun:sqlite` reaches **526,000 reads/s** and **95,000 writes/s** — the engine ceiling, not what your users experience. For comparison, the no-database health check hits 66K req/s. The database adds only 0.2ms to a 0.76ms HTTP base.
+
+Most apps never reach 1,000 req/s. SQLite handles 52× that on a laptop. The "SQLite is slow" reputation comes from default settings (`rollback journal` + `FULL` synchronous mode) that run at 3.5K writes/s — 27× slower than WAL + `NORMAL`.
+
+## Faster than Postgres/MySQL on a single server
+
+This is the part that surprises people: on a single server, SQLite is **always** faster than Postgres or MySQL for raw query latency. Not sometimes — always. Four reasons:
+
+1. **No network hop** — Postgres/MySQL require a TCP round-trip per query, even on localhost (0.5–1ms). SQLite reads from a memory-mapped WAL file in the same process. Zero network latency.
+2. **No connection pool overhead** — Postgres/MySQL need a pool (acquire/release per query). SQLite uses a single in-process handle with prepared statements cached at module load.
+3. **No wire protocol** — Postgres/MySQL serialize query text → binary → decode result rows over a wire protocol. SQLite reads pages directly from an mmap'd file into native structs via Bun's native binding. Zero copy.
+4. **No IPC context switch** — Postgres/MySQL run as separate server processes. Every query crosses a process boundary. SQLite runs in-process, on the same event loop as your HTTP server.
+
+Postgres and MySQL only win when you need things SQLite fundamentally cannot provide: multi-server horizontal scaling, concurrent parallel writers, or a more sophisticated query optimizer for very large datasets. On a single server with a single app process, the in-process database will always beat the network-attached one.
+
+We measured it on the same MacBook Pro (M4) — same schema, same 50K
+operations, direct access (no HTTP): SQLite does **84.8K autocommit
+inserts/s and 561K point reads/s**; Postgres 14.17 does **12K inserts/s
+and 29.8K reads/s** (7× and 19× slower); MariaDB 12.0.2 does **11.9K
+inserts/s and 26.9K reads/s** (7× and 21× slower). Even with
+`synchronous_commit = off` (Postgres' version of the `NORMAL`
+tradeoff), writes stay 3× behind. See the [full numbers](/database/performance/#sqlite-vs-postgres--mariadb-on-the-same-machine).
+
+## Backup is copying a file
+
+Postgres backup means `pg_dump`, or setting up replication, or configuring a managed service. MySQL is the same with `mysqldump`.
+
+SQLite backup is `cp app.sqlite backup.sqlite`. For continuous replication, [Litestream](https://litestream.io/) streams WAL frames to S3-compatible storage — zero downtime, zero app code changes, ~$0.01/month for a typical database. See the [replication guide](/database/replication/) for the full setup.
+
+## What SQLite cannot do
+
+This isn't a one-sided argument. SQLite has real limitations:
+
+- **Single writer** — WAL allows concurrent readers, but only one writer at a time. `busy_timeout` handles contention, but if your app is write-heavy with high concurrency, Postgres handles this better.
+- **No horizontal scaling** — you can't run multiple Dulak instances against the same SQLite file across different servers. Postgres/MySQL allow shared database access from multiple app instances.
+- **No built-in replication** — Litestream provides *backup*, not *high availability*. If the server dies, you restore to a new server and restart. There's downtime. Postgres streaming replication gives you zero-downtime failover.
+- **No fine-grained access control** — SQLite has no users, roles, or row-level security. If you need multi-tenant access control at the database level, Postgres is the right tool.
+
+## When is the swap actually worth it?
+
+The honest answer: **when no single server can handle your traffic anymore.** That's a much higher bar than most people assume.
+
+Dulak serves 52K reads/s on a single Bun process on a laptop. A production VPS with NVMe and more cores will do better. Even at 52K req/s, that's **4.5 billion requests per day** — and that's the *database-bound* endpoint, not the health check. Most web apps consider 100K requests per day "high traffic." You'd need to be serving hundreds of thousands of requests per second before SQLite's single-writer constraint becomes the bottleneck, not the HTTP layer, not the app logic, not the network.
+
+The real reasons to switch to Postgres are architectural, not performance:
+
+- **You need multiple app servers** — horizontal scaling means multiple processes writing to the same database. SQLite can't do this; Postgres/MySQL can.
+- **You need zero-downtime failover** — Litestream gives you backup, not HA. If the server dies, there's downtime during restore. Postgres streaming replication gives you instant failover.
+- **You need row-level security or fine-grained access control** — SQLite has no users, roles, or RLS.
+
+Notice none of these are "SQLite is too slow." They're "my architecture outgrew single-server." If you're still on one server — even a busy one — SQLite is not your bottleneck.
+
+And when that day comes, the swap is deliberate: replace `bun:sqlite` with a Postgres driver, update `db.ts`, adjust SQL syntax differences. No ORM means no abstraction layer to migrate *through*. Routes, auth, validation, SSR — none of it changes.
+
+## Why not start with Postgres then?
+
+Because starting with Postgres means starting with infrastructure. Dulak's philosophy is "your first week should be business logic, not infrastructure." If you start with SQLite and never outgrow it — which most apps don't — you've saved weeks of operational overhead for free. If you do outgrow it, the swap is a scheduled migration, not a fire drill.
+
+Starting with Postgres "just in case" is the same logic as adding a cache service "just in case" — it's solving a problem you don't have yet, at the cost of complexity you pay for from day one.
+
+## Common SQLite myths
+
+### "SQLite is only for testing and prototypes"
+
+SQLite is the [most deployed database in the world](https://www.sqlite.org/mostdeployed.html) — it runs in every Android device, every iOS device, every web browser (via WebSQL/WASM), every macOS installation, and countless production apps. It's not a toy database; it's a battle-tested engine that handles exabyte-scale workloads at Apple, Google, and Mozilla. The "prototype only" reputation comes from people who tried it with default settings and never tuned the PRAGMAs.
+
+### "SQLite can't handle concurrent access"
+
+WAL mode allows **unlimited concurrent readers** alongside one writer. Readers never block, and the writer never blocks readers. The only constraint is one writer at a time — and `busy_timeout` handles contention by waiting up to 5 seconds (configurable) before returning `SQLITE_BUSY`. For a web app where most requests are reads, this is a non-issue. Dulak serves 52K concurrent reads/s with zero lock contention.
+
+### "SQLite loses data on power failure"
+
+With `synchronous = FULL`, SQLite is as durable as any database — every commit is fsync'd to disk before acknowledging. Dulak uses `synchronous = NORMAL` by default, which trades the *last few WAL transactions* for 27× write throughput. The database **never corrupts** — you might lose the last few milliseconds of writes on a power loss, but the file is always consistent. For financial records, switch to `FULL`. For a web app, `NORMAL` is the right tradeoff.
+
+### "SQLite doesn't scale"
+
+"Scale" means different things. SQLite scales to **terabytes** of data and **billions of rows** in a single file — the format handles it fine. What it doesn't scale to is **multiple servers writing simultaneously**. If "scale" means "more servers," you need Postgres. If "scale" means "more data on one server," SQLite handles it.
+
+### "You'll need to migrate to Postgres eventually"
+
+Most apps never reach the point where SQLite is the bottleneck. The apps that do outgrow SQLite are the ones with specific needs: multi-server architecture, high-concurrency writes, or advanced replication. If you build a successful app that hits those limits, that's a good problem to have — and the migration is a scheduled project, not an emergency. Starting with Postgres "just in case" means paying infrastructure tax from day one for a migration that probably never happens.
+
+## The short version
+
+**SQLite until no single server can handle your traffic — and that's hundreds of thousands of requests per second, not hundreds.**
+
+The numbers: [526K reads/s and 95K writes/s direct](/database/performance/#sqlite-vs-postgres--mariadb-on-the-same-machine) on a laptop — 7–40× faster than Postgres and MariaDB on the same machine, measured the same way. The backup: copy a file. The swap: architectural, not performance — and scheduled, not emergency. The cost: zero infrastructure until you need it.

@@ -1,0 +1,9 @@
+# Routine update — Docker
+#
+# No editing needed. The first deploy created deploy.env in your
+# project root with the SSH address and server path.
+# Paste this to your AI agent each time you push new code.
+
+Read deploy.env, then update the Dulak Docker deployment: SSH in,
+cd to the deploy path, git pull, docker compose up -d --build,
+and verify /health.

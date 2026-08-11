@@ -1,0 +1,58 @@
+---
+title: "Your database is already the cache"
+description: "SQLite with WAL mode serves 526K reads/s and 95K writes/s direct — 52K reads/s even through the full HTTP stack. Adding Redis would be a dependency that solves a problem Dulak doesn't have."
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - architecture
+  - sqlite
+  - philosophy
+excerpt: "SQLite with WAL mode serves 526K reads/s and 95K writes/s direct — 52K reads/s even through the full HTTP stack. Adding Redis would be a dependency that solves a problem Dulak doesn't have."
+---
+
+Every time someone evaluates Dulak, the same question comes up: "Where's the cache layer?"
+
+The answer is: you're looking at it. It's the database.
+
+## SQLite is already fast enough
+
+bun:sqlite with WAL mode serves **526,000 reads per second** and **95,000 writes per second** direct — the raw engine numbers, measured on a MacBook Pro (M4). Through the full HTTP stack — auth, sessions, and request routing included — that's still **52,000 reads per second** and 19,600 creates per second. The database is not the bottleneck at any layer.
+
+For comparison, a typical Redis deployment over the network adds 0.5–1ms of latency per round trip. SQLite reads from a local file with WAL cache — no network hop, no serialization, no connection pool. The database *is* the cache.
+
+## Prepared statements are already cached
+
+Dulak creates all prepared statements once at module load in `db.ts`:
+
+```ts
+const stmts = {
+  getUserById: db.query("SELECT * FROM users WHERE id = ?"),
+  getSession: db.query("SELECT * FROM sessions WHERE token = ?"),
+  // ...
+};
+```
+
+These are reused for every request. The query plan is compiled once and cached in memory. This is the same caching layer that an ORM provides — except it's zero-dependency and you can see the exact SQL.
+
+## Cache invalidation is a business-logic problem
+
+A generic cache service doesn't know what to cache. It doesn't know which queries are expensive, which results change frequently, and which can be safely stale. Only *your* business logic knows that.
+
+A cache that caches the wrong thing is worse than no cache at all. It serves stale data, causes confusing bugs, and adds a debugging layer between your code and your database. Dulak's philosophy is "no abstraction tax" — a cache service you haven't needed yet is exactly that tax.
+
+## When you actually need a cache
+
+Dulak doesn't ship a cache because most apps don't need one at launch. But there are legitimate cases:
+
+- **Read-heavy workloads with expensive queries** — complex joins or aggregations that can't be optimized further. An in-memory LRU for specific query results makes sense.
+- **Outgrowing SQLite** — if you move to Postgres with a connection pool, Redis for session storage or query caching may help.
+- **External API rate limits** — caching third-party API responses to avoid hitting rate limits.
+
+These are all **post-launch decisions**. You build, you ship, you measure, and *then* you add a cache where the data tells you to. Not before.
+
+## The real question
+
+The real question isn't "why no cache service?" It's: **what problem would it solve that SQLite doesn't already solve?**
+
+If your answer is "I might need it someday" — that's not a problem. That's a maybe. Dulak ships solutions to real problems, not maybes.

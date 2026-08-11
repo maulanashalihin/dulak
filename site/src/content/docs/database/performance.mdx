@@ -1,12 +1,205 @@
 ---
 title: SQLite performance
-description: The benchmark data behind Dulak's DB settings — why synchronous=NORMAL, and what to expect on Apple Silicon.
+description: Why Dulak is fast — the benchmark data behind the DB settings, and how it compares to Laravel.
 ---
 
-Dulak ships with WAL + `synchronous = NORMAL` + `busy_timeout = 5000` +
-`foreign_keys = ON` in `src/server/db.ts`. This page documents why, with
-numbers measured on the reference hardware (see
-[Test environment](#test-environment) below).
+Dulak serves **52K point reads per second** from a single Bun process on
+a laptop — no Redis, no connection pool, no ORM. Just `bun:sqlite` with
+the right PRAGMAs. This page shows the numbers and explains why.
+
+## The settings
+
+Dulak ships with four PRAGMAs in `src/server/db.ts` that make the
+difference between 3.5K and 95K writes per second:
+
+```ts
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA synchronous = NORMAL"); // the one that matters for writes
+db.exec("PRAGMA busy_timeout = 5000");
+db.exec("PRAGMA foreign_keys = ON");
+```
+
+Most SQLite deployments run the defaults (`rollback journal` + `FULL`)
+and never realize they're leaving 27× write throughput on the table.
+
+## The pragma matrix
+
+Direct `bun:sqlite` prepared statements (no HTTP), 50K single-row
+inserts + 50K point reads, fresh DB per config:
+
+| Config | writes/s | reads/s |
+| --- | ---: | ---: |
+| `rollback journal` + `FULL` (SQLite default) | 3,508 | 244K |
+| **WAL + `NORMAL`** (Dulak) | **94,813** | **526K** |
+| WAL + `OFF` (unsafe) | 115,325 | 538K |
+
+- **`NORMAL` is ~27× faster for writes** than the default `FULL`. Reads
+  more than double (+115%) because WAL eliminates the rollback-journal
+  lock that serialises readers.
+- `OFF` is another 22% on top but risks **database corruption** on power
+  loss — never use it for real data.
+- On HDD-based VPS hardware the write gap is even wider (~48×) because
+  `FULL`-mode fsync costs ~2.4ms per commit vs ~10µs on NVMe. The ratio
+  scales with disk latency; the conclusion is the same: `NORMAL` wins.
+
+### Why WAL alone isn't enough
+
+WAL fixes **read concurrency** (readers don't block the writer) but does
+**not** remove the per-commit fsync — that is `synchronous`'s job. With
+the SQLite default (`rollback journal` + `FULL`), every commit calls
+`fsync` (~10µs on NVMe, ~2.4ms on HDD), and because `bun:sqlite` is
+synchronous, commits serialize on the single event loop. `NORMAL` keeps
+WAL's crash consistency but skips the per-commit fsync → ~95K writes/s
+on NVMe.
+
+## Full-stack numbers
+
+Through a real HTTP server (Hono + `bun:sqlite`, concurrent load, JSON
+responses, 50 workers):
+
+| Endpoint | req/s | p50 latency | p99 latency |
+| --- | ---: | ---: | ---: |
+| Point read (`GET /users/:id`) | 51,934 | 0.82ms | 2.89ms |
+| List 20 rows (`GET /users?limit=20`) | 32,222 | 1.45ms | 3.09ms |
+| Create (`POST /users`) | 19,614 | 1.82ms | 13.96ms |
+| Update (`PUT /users/:id`) | 25,337 | 0.62ms | 3.28ms |
+| Delete (`DELETE /users/:id`) | 27,744 | 1.41ms | 5.29ms |
+
+The database is so fast it's barely visible in the HTTP path. The no-DB
+health check (66K req/s) is only 26% faster than the DB point read (52K)
+— HTTP overhead (routing, JSON serialization) costs ~15µs per request,
+while the SQLite query adds only ~0.2ms.
+
+For context, the TCP kernel ceiling on this machine is ~180K req/s — the
+point-read endpoint reaches 29% of that. Numbers are median of 3 solo
+runs (no other server running during each test).
+
+### Direct vs HTTP — don't mix the two
+
+The two tables measure different things. "Direct" is raw `bun:sqlite`
+prepared statements — the engine ceiling, no HTTP in the path. "Via
+HTTP" is the full stack (routing, middleware, JSON serialization) —
+what your users actually experience. Comparing a direct number to an
+HTTP number is not apples-to-apples:
+
+| Operation | Direct (no HTTP) | Via HTTP | HTTP overhead |
+| --- | ---: | ---: | ---: |
+| Point read | 526K ops/s | 51,934 req/s | 10× |
+| Insert (autocommit) | 94,813 ops/s | 19,614 req/s (POST) | 4.8× |
+
+The blog's "52K reads/s" is the **via HTTP** number; "95K writes/s" is
+the **direct** number — they are not the same measurement. If you quote
+one, quote the matching one: 52K reads/s and 19.6K creates/s via HTTP,
+or 526K reads/s and 95K writes/s direct.
+
+## Dulak vs Laravel
+
+Same machine, same SQLite (WAL + `NORMAL` + `busy_timeout = 5000`), same
+CRUD endpoints, same concurrency (c=50). Laravel 13.24 on FrankenPHP
+(8 workers) — the fastest production PHP server available for Laravel.
+
+| Endpoint | Dulak (Hono+Bun) | Laravel (FrankenPHP) | Dulak faster |
+| --- | ---: | ---: | ---: |
+| `GET /health` (no DB) | 65,807 req/s | 6,237 req/s | 10.5× |
+| `GET /users/:id` (PK read) | 51,934 req/s | 6,391 req/s | 8.1× |
+| `GET /users?limit=20` (list) | 32,222 req/s | 4,734 req/s | 6.8× |
+| `DELETE /users/:id` (delete) | 27,744 req/s | 5,655 req/s | 4.9× |
+
+### Why Dulak is faster
+
+**Reads (7–10×):** Laravel routes through kernel bootstrap → middleware
+stack → Eloquent ORM (query builder → model hydration → collection) →
+JSON serialization. Dulak uses Hono's zero-overhead router + raw prepared
+statements + Bun's native JSON — no ORM, no model hydration, no
+collection wrapping.
+
+Laravel's health check (6,237 req/s) and DB point read (6,391 req/s) are
+nearly identical — the database adds no measurable overhead because
+~7ms of framework overhead dwarfs the ~0.1ms SQLite query. In Dulak,
+the same query adds 0.2ms to a 0.76ms HTTP base — a visible 26%
+difference. The framework is the bottleneck, not the database.
+
+**DELETE (4.9×):** The fairest write comparison — no password hashing on
+either side. The gap is pure framework overhead: Eloquent model lookup +
+delete + event dispatch vs a single prepared statement.
+
+POST/PUT are excluded because Laravel's argon2id password hashing
+(~240ms/op) dominates request time, making throughput reflect hashing
+speed rather than framework overhead. Without hashing, Laravel writes
+would be ~5–6K req/s (extrapolated from DELETE), still 4–5× slower.
+
+### Laravel setup notes
+
+| Server | req/s (health) | Notes |
+| --- | ---: | --- |
+| `artisan serve` (single-worker) | ~500 | PHP dev server, not production |
+| RoadRunner (Octane, 4 workers) | ~8,400 | Crashed under c>5 with SQLite |
+| **FrankenPHP (Octane, 8 workers)** | **6,237** | Best stable result |
+
+FrankenPHP was the only PHP server that stayed up under concurrent load
+with SQLite. RoadRunner crashed repeatedly at concurrency >5 — likely
+SQLite WAL lock contention not handled gracefully. `artisan serve` is
+single-threaded and not representative of production.
+
+## Transactional writes: 1.3M inserts/s
+
+When inserts are batched inside a single `db.transaction()`, the
+per-commit fsync fires once at the end instead of per row:
+
+| Mode | writes/s | µs/row |
+| --- | ---: | ---: |
+| Autocommit (one fsync per row) | 94,813 | 10.5 |
+| **Single transaction** | **1,329,836** | **0.75** |
+
+That is **14× faster** — 1.3M inserts/s. Always batch bulk writes in a
+transaction; the `db.transaction()` helper is built for this.
+
+## SQLite vs Postgres & MariaDB on the same machine
+
+Postgres and MariaDB are full database servers — and they pay for that
+with latency that SQLite doesn't have. Measured on the **same MacBook
+Pro (M4)**, same schema, same operation mix (50K autocommit inserts, 50K
+inserts in one transaction, 50K point reads, SELECT all), direct access
+— no HTTP on either side:
+
+| Operation | SQLite (WAL+NORMAL) | Postgres 14.17 (default) | MariaDB 12.0.2 | SQLite faster |
+| --- | ---: | ---: | ---: | ---: |
+| Insert autocommit | 84,844 ops/s | 12,055 ops/s | 11,931 ops/s | **7.0× / 7.1×** |
+| Insert in 1 tx | 1,225,875 ops/s | 31,176 ops/s | 30,746 ops/s | **39× / 40×** |
+| Point read (PK) | 561,532 ops/s | 29,754 ops/s | 26,852 ops/s | **18.9× / 20.9×** |
+| SELECT all (50K rows) | 8.2ms | 22ms | 15ms | **2.7× / 1.8×** |
+
+Postgres was tuned as far as reasonable: `synchronous_commit = off`
+drops fsync per commit (the Postgres equivalent of SQLite's `NORMAL`
+tradeoff) — reads don't move, and even writes stay 3× behind. MariaDB
+was run with its default `innodb_flush_log_at_trx_commit = 1` (the
+durable default) and `sync_binlog = 1`; the numbers are essentially
+identical to Postgres — both server databases pay the same
+process-boundary and wire-protocol cost.
+
+The Postgres/MariaDB numbers also include a TCP round trip + wire
+protocol per query even on localhost. pgbench (the Postgres-native
+benchmark, server side, C client) confirms the same ceiling: **6,530
+tps** single connection, **9,470 tps** at 50 concurrent connections,
+~47K tps with `sync_commit=off` — still below SQLite's direct numbers,
+and that's before any HTTP layer on top.
+
+Same conclusion as the [blog post](/blog/why-sqlite-not-postgres/): on a
+single server, the in-process database wins on raw latency because there
+is no process boundary to cross. Postgres and MySQL/MariaDB earn their
+place when you need multiple servers — not when you need raw speed.
+
+## The tradeoff
+
+| Mode | Power-loss behavior | Writes/s |
+| --- | --- | ---: |
+| `NORMAL` | last WAL transactions may be lost; **DB never corrupts** | ~95K |
+| `FULL` | zero loss | ~3.5K |
+
+`NORMAL` is the right default for web apps. Switch to `FULL` only for
+data where losing the last few transactions is unacceptable (financial
+records, etc.). Numbers vary by hardware — re-run the matrix on your own
+machine before tuning further.
 
 ## Test environment
 
@@ -23,146 +216,15 @@ Methodology:
 - **Direct matrix:** 50K single-row inserts + 50K point reads per config,
   fresh DB file per config, `busy_timeout = 5000` fixed, only
   `journal_mode` / `synchronous` varied.
+- **SQLite vs server DBs:** identical schema and operation mix run on the
+  same machine within minutes of each other. SQLite via `bun:sqlite`
+  (in-process); Postgres 14.17 (Homebrew) via `pg` driver over localhost
+  TCP, default `postgresql.conf` (fsync on, `synchronous_commit = on`),
+  plus one run with `synchronous_commit = off`; MariaDB 12.0.2
+  (Homebrew) via `mysql2` driver over localhost TCP, default durable
+  settings (`innodb_flush_log_at_trx_commit = 1`, `sync_binlog = 1`).
+  `pgbench` numbers are the server-side baseline (C client, no HTTP, no
+  driver serialization).
 - **Full-stack:** Hono + `bun:sqlite`, concurrent load (50 workers), JSON
   responses, 5K–10K requests per endpoint. Same concurrency used for the
-  Laravel comparison below.
-
-## The settings
-
-```ts
-db.exec("PRAGMA journal_mode = WAL");
-db.exec("PRAGMA synchronous = NORMAL"); // the one that matters for writes
-db.exec("PRAGMA busy_timeout = 5000");
-db.exec("PRAGMA foreign_keys = ON");
-```
-
-## Benchmark: pragma matrix
-
-Direct `bun:sqlite` prepared statements (no HTTP), 50K single-row inserts +
-50K point reads, fresh DB per config:
-
-| Config | writes/s | reads/s |
-| --- | ---: | ---: |
-| `rollback journal` + `FULL` (SQLite default) | 3,508 | 244K |
-| **WAL + `NORMAL`** | **94,813** | **526K** |
-| WAL + `OFF` (unsafe) | 115,325 | 538K |
-
-- **`NORMAL` is ~27× faster for writes** than the default `FULL` — that is
-  the whole point. Reads more than double (+115%) because WAL eliminates
-  the rollback-journal lock that serialises readers.
-- `OFF` is another 22% on top but risks **database corruption** on power
-  loss — never use it for real data.
-- On HDD-based VPS hardware the write gap is even wider (~48×) because
-  `FULL`-mode fsync costs ~2.4ms per commit vs ~10µs on NVMe. The ratio
-  scales with disk latency; the conclusion is the same: `NORMAL` wins.
-
-## Why WAL alone isn't enough
-
-WAL fixes **read concurrency** (readers don't block the writer) but does
-**not** remove the per-commit fsync — that is `synchronous`'s job. With the
-SQLite default (`rollback journal` + `FULL`), every commit calls `fsync`
-(~10µs on NVMe, ~2.4ms on HDD), and because `bun:sqlite` is synchronous,
-commits serialize on the single event loop. `NORMAL` keeps WAL's crash
-consistency but skips the per-commit fsync → ~95K writes/s on NVMe.
-
-## Full-stack numbers
-
-Through a real HTTP server (Hono + `bun:sqlite`, concurrent load, JSON
-| Endpoint | req/s | p50 latency | p99 latency |
-| --- | ---: | ---: | ---: |
-| Point read (`GET /users/:id`) | 51,934 | 0.82ms | 2.89ms |
-| List 20 rows (`GET /users?limit=20`) | 32,222 | 1.45ms | 3.09ms |
-| Create (`POST /users`) | 19,614 | 1.82ms | 13.96ms |
-| Update (`PUT /users/:id`) | 25,337 | 0.62ms | 3.28ms |
-| Delete (`DELETE /users/:id`) | 27,744 | 1.41ms | 5.29ms |
-
-The no-DB health check (66K) is 26% faster than the DB point read (52K)
-— not 10× faster as you might expect. That's because HTTP overhead
-(connection handling, Hono routing, JSON serialization) costs ~15µs per
-request, while the SQLite query itself adds only ~0.2ms. The database is
-so fast that it's barely visible in the HTTP path.
-
-The gap between direct (95K) and HTTP (20K) writes is request handling —
-routing, JSON parsing, response serialization — which is ~5× the raw
-commit cost. Reads drop ~10× (526K → 52K) because the per-request HTTP
-overhead dominates a ~2µs query.
-
-For context, the TCP kernel ceiling on this machine is ~180K req/s — the
-point-read endpoint reaches 29% of that, with the rest being Hono routing
-+ JSON serialization + SQLite overhead. Numbers are median of 3 solo runs
-(no other server running during each test).
-
-## Dulak vs Laravel (FrankenPHP)
-
-Same machine, same SQLite (WAL + `NORMAL` + `busy_timeout = 5000`), same
-CRUD endpoints, same concurrency (c=50). Laravel 13.24 on FrankenPHP
-(8 workers) — the fastest production PHP server available for Laravel.
-Each server benchmarked solo (no other server running). Median of 3 runs.
-
-| Endpoint | Dulak (Hono+Bun) | Laravel (FrankenPHP) | Dulak faster |
-| --- | ---: | ---: | ---: |
-| `GET /health` (no DB) | 65,807 req/s | 6,237 req/s | 10.5× |
-| `GET /users/:id` (PK read) | 51,934 req/s | 6,391 req/s | 8.1× |
-| `GET /users?limit=20` (list) | 32,222 req/s | 4,734 req/s | 6.8× |
-| `DELETE /users/:id` (delete) | 27,744 req/s | 5,655 req/s | 4.9× |
-
-### Why the gap
-
-**Reads (7–10×):** Laravel routes through kernel bootstrap → middleware
-stack → Eloquent ORM (query builder → model hydration → collection) →
-JSON serialization. Dulak uses Hono's zero-overhead router + raw prepared
-statements + Bun's native JSON — no ORM, no model hydration, no collection
-wrapping.
-
-Notably, Laravel's health check (6,237 req/s) and DB point read (6,391
-req/s) are nearly identical — the database adds no measurable overhead.
-At ~7ms per request of framework overhead, the ~0.1ms SQLite query is
-invisible. In Dulak, the same query adds 0.2ms to a 0.76ms HTTP base,
-a visible 26% difference.
-
-**DELETE (4.9×):** The fairest write comparison — no password hashing on
-either side. The gap is pure framework overhead: Eloquent model lookup +
-delete + event dispatch vs a single prepared statement.
-
-POST/PUT are excluded from the comparison table because Laravel's
-argon2id password hashing (~240ms/op) dominates the request time, making
-throughput numbers reflect hashing speed rather than framework overhead.
-Without hashing, Laravel writes would be ~5–6K req/s (extrapolated from
-DELETE), still 4–5× slower than Dulak.
-
-### Laravel setup notes
-
-| Server | req/s (health) | Notes |
-| --- | ---: | --- |
-| `artisan serve` (single-worker) | ~500 | PHP dev server, not production |
-| RoadRunner (Octane, 4 workers) | ~8,400 | Crashed under c>5 with SQLite |
-| **FrankenPHP (Octane, 8 workers)** | **6,237** | Best stable result |
-FrankenPHP was the only PHP server that stayed up under concurrent load
-with SQLite. RoadRunner crashed repeatedly at concurrency >5 — likely
-SQLite WAL lock contention not handled gracefully. `artisan serve` is
-single-threaded and not representative of production.
-
-## Transactional writes
-
-When inserts are batched inside a single `db.transaction()`, the per-commit
-fsync fires once at the end instead of per row:
-
-| Mode | writes/s | µs/row |
-| --- | ---: | ---: |
-| Autocommit (one fsync per row) | 94,813 | 10.5 |
-| **Single transaction** | **1,329,836** | **0.75** |
-
-That is **14× faster** — 1.3M inserts/s. Always batch bulk writes in a
-transaction; the `db.transaction()` helper is built for this.
-
-## The tradeoff
-
-| Mode | Power-loss behavior | Writes/s |
-| --- | --- | ---: |
-| `NORMAL` | last WAL transactions may be lost; **DB never corrupts** | ~95K |
-| `FULL` | zero loss | ~3.5K |
-
-`NORMAL` is the right default for web apps. Switch to `FULL` only for
-data where losing the last few transactions is unacceptable (financial
-records, etc.). Numbers vary by hardware — re-run the matrix on your own
-machine before tuning further.
+  Laravel comparison.
