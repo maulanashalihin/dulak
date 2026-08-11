@@ -28,7 +28,7 @@ Steps:
    - PORT=<the port you chose>
    - NODE_ENV=production
    - APP_URL=https://your-domain.com (or http://SERVER_IP:<port> if no domain)
-   Leave the rest as-is (DATABASE_PATH is relative, works anywhere).
+   Leave the rest as-is (DATABASE_PATH is relative, works anywhere). The docker-compose.yml reads PORT from .env automatically — no need to edit the compose file.
 6. Run `docker compose up -d --build`.
 7. Wait for the container to be healthy (check with `docker compose ps`).
 8. If the port is not in UFW rules, allow it: sudo ufw allow <port>/tcp.
