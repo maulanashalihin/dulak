@@ -106,7 +106,9 @@ src/
    and `ui-anti-patterns.md`. Reuse tokens from `styles.css` and existing
    components; don't reach for AI-default aesthetics (beige, ghost cards,
    purple gradients, italic serif accents). New components add co-located
-   styles per rule 7.
+   styles per rule 7. Forms use `useForm` + `<form>` from `@inertiajs/svelte` —
+   see `.llm-wiki/wiki/concepts/concept-inertia-form-patterns.md` for the
+   decision rule and examples.
 
 8. **UI work follows the design system — never invents a parallel one.**
    Before creating or editing UI, read `.llm-wiki/wiki/concepts/ui-design-principles.md`
