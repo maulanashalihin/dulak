@@ -1,0 +1,206 @@
+---
+title: "Nginx is dead. Cloudflare killed it"
+description: "Nginx terminates TLS, proxies, compresses, rate-limits, and serves static files. Cloudflare does all five at the edge — and Dulak handles the rest in-process. You don't need Nginx anymore."
+date: 2026-08-09
+authors:
+  - maulana
+tags:
+  - deployment
+  - cloudflare
+  - nginx
+  - philosophy
+excerpt: "Nginx terminates TLS, proxies, compresses, rate-limits, and serves static files. Cloudflare does all five at the edge — and Dulak handles the rest in-process. You don't need Nginx anymore."
+---
+
+Every deployment guide for a web app has the same section. "Now install Nginx." Then a config file. Then Certbot. Then a cron job to renew the cert. Then `proxy_set_header` lines you copy-paste without reading. Then you debug why `X-Forwarded-For` is wrong and your rate limiter thinks every user is the same IP.
+
+Nginx has been the default reverse proxy for 25 years. It's good software. But if your domain is on Cloudflare — and in 2026, why wouldn't it be — you're installing Nginx to do five jobs that Cloudflare already does, for free, at 300+ edge locations worldwide.
+
+## The five jobs Nginx does
+
+When you put Nginx in front of a Node/Bun app, it does these things:
+
+1. **TLS termination** — HTTPS cert, renewal, cipher negotiation
+2. **Reverse proxy** — forward requests to the app port
+3. **Gzip compression** — shrink responses before they hit the wire
+4. **Rate limiting** — `limit_req_zone`, burst queues, 429s
+5. **Static file serving** — serve assets without hitting the app
+
+That's the Nginx config you maintain. Let's go through each one.
+
+## Job 1: TLS termination
+
+Nginx + Certbot:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    location / {
+        proxy_pass http://127.0.0.1:4000;
+    }
+}
+```
+
+```bash
+sudo certbot --nginx -d your-domain.com
+# plus a cron job to renew
+# plus cipher suite configuration
+# plus HSTS headers
+```
+
+Cloudflare: you click "Proxied" on your DNS record. TLS is terminated at the edge. The cert is issued, renewed, and rotated automatically. You pick "Flexible" or "Full" mode in the dashboard. That's it. No Certbot, no renewal cron, no cipher negotiation.
+
+## Job 2: Reverse proxy
+
+Nginx:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:4000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_http_version 1.1;
+}
+```
+
+Cloudflare: the edge proxies to your origin. Two options, neither requires a config file:
+
+- **Proxied DNS** — an A record with the orange cloud. Traffic flows through Cloudflare to your server on port 4000. One firewall rule restricts port 4000 to Cloudflare IPs only.
+- **Cloudflare Tunnel** — `cloudflared` connects outbound. No open ports, no firewall rules, no public IP needed. Your server is invisible to the internet.
+
+The `proxy_set_header` dance? Cloudflare passes `Host` and `X-Forwarded-For` through by default. If the Host header gets rewritten, one Origin Rule in the dashboard fixes it — no config file syntax to learn.
+
+## Job 3: Gzip compression
+
+Nginx:
+
+```nginx
+gzip on;
+gzip_types text/plain text/css application/javascript application/json;
+gzip_min_length 1024;
+```
+
+Cloudflare: compresses responses at the edge with **brotli or gzip**, automatically, based on the client's `Accept-Encoding`. You don't configure anything. It's on by default.
+
+But here's the thing — Dulak also compresses in-process. The `compress.ts` middleware gzips SSR HTML and asset bundles using `node:zlib`:
+
+```ts
+// Only /assets/* (js/css bundles) and SSR HTML are compressed —
+// API/JSON responses pass through untouched.
+if (!c.req.path.startsWith("/assets/") && !IS_HTML.test(type)) return;
+```
+
+So even without Cloudflare, Dulak handles compression. With Cloudflare, responses are double-optimized: the origin gzips, the edge can re-compress or serve as-is. No Nginx needed for either layer.
+
+## Job 4: Rate limiting
+
+Nginx:
+
+```nginx
+limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+location / {
+    limit_req zone=api burst=20;
+    proxy_pass http://127.0.0.1:4000;
+}
+```
+
+Dulak has its own rate limiter — in-memory, zero dependencies, in `rate-limit.ts`:
+
+```ts
+function clientKey(request: Request, server: BunServer | null): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0]!.trim();
+  const ip = server?.requestIP?.(request)?.address;
+  return ip ?? "local";
+}
+```
+
+Two layers: a global limiter (DDoS baseline, 200 req/min per IP) and a stricter one on auth endpoints (30 req/min, brute-force protection). Cloudflare sits in front with its own DDoS protection and rate limiting rules — so by the time traffic reaches Dulak, the volumetric attacks are already filtered. The in-app limiter handles the application-layer abuse that Cloudflare can't see (brute-force login attempts, etc).
+
+Nginx's `limit_req` sits awkwardly in the middle — it can't see application semantics, and it's redundant with Cloudflare for volumetric protection. Dulak's limiter sees the actual routes and can differentiate `/login` from `/dashboard`. Nginx can't.
+
+## Job 5: Static file serving
+
+Nginx:
+
+```nginx
+location /assets/ {
+    alias /var/www/dulak/dist/;
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+```
+
+Dulak serves its own assets. `Bun.serve` handles static files directly — the asset pipeline in `assets.ts` builds, fingerprints, and serves bundles with correct cache headers. No `alias` directive, no `root` path to keep in sync with your build output.
+
+And Cloudflare caches static assets at the edge automatically. The first request hits your origin; subsequent requests are served from the nearest Cloudflare location. You don't configure cache rules for fingerprinted assets — the `immutable` cache header does it for you.
+
+## What you actually deploy
+
+Without Nginx, the deployment is:
+
+```
+Internet → Cloudflare edge (TLS, DDoS, cache, brotli) → your-server:4000
+                                                            └→ Bun.serve (app + assets + gzip + rate limit)
+                                                                 └→ SQLite + uploads
+```
+
+One process. One port. No proxy config file. No cert renewal. No `nginx -t && systemctl reload nginx` after every config change.
+
+The VPS deployment is a systemd unit:
+
+```ini
+[Service]
+ExecStart=/home/dulak/.bun/bin/bun run src/index.ts
+Restart=always
+```
+
+Plus a DNS record with the orange cloud. That's the entire production setup. No Nginx package, no Nginx user, no Nginx logs to rotate, no Nginx security updates to track.
+
+With Cloudflare Tunnel, it's even simpler — no open ports, no firewall rules, no public IP. The tunnel connects outbound and Cloudflare routes traffic to it. Your server is a dark node that only talks to Cloudflare.
+
+## Fewer layers, fewer milliseconds
+
+Every hop in your stack adds latency. With Nginx in the middle, a request travels:
+
+```
+User → Cloudflare edge → Nginx (on your server) → Bun
+```
+
+That Nginx hop is a `proxy_pass` to `127.0.0.1:4000` — a TCP connection, header parsing, and a second process wake-up, all on the same machine. It's not a network round-trip across the country, but it's not free either: Nginx adds ~0.5-1ms per request on a typical VPS, plus memory for worker processes, plus context switches between Nginx and Bun.
+
+Remove Nginx and the path becomes:
+
+```
+User → Cloudflare edge → Bun
+```
+
+One fewer process. One fewer hop. One fewer allocation path. The request lands in Bun directly, and Bun handles TLS (if Full mode), routing, compression, and the app — all in one process. For a page that makes 5 API calls, that's 5× the per-request overhead removed. On a budget VPS where CPU is scarce, that's real.
+
+The deeper point: every layer you add is a layer that can break, misconfigure, or silently rewrite headers. Nginx rewriting `Host` or mangling `X-Forwarded-For` is a classic deployment bug. Cloudflare + Bun is two layers that talk directly. Fewer moving parts, fewer midnight debugging sessions.
+
+## The cert renewal cron you deleted
+
+Certbot installs a systemd timer that renews certs every 12 hours and reloads Nginx. If renewal fails — Let's Encrypt rate limit, expired account, DNS change — your site goes dark in 90 days. You won't notice until it does.
+
+Cloudflare's edge certs are managed by Cloudflare. You don't see them, you don't renew them, you don't reload anything. If you want an origin cert for Full mode, Cloudflare issues it from their CA for free, with a 15-year expiry. No cron, no timer, no 3am pager alert because Let's Encrypt had an outage.
+
+## When you still need Nginx
+
+Nginx isn't dead for everyone. It has legitimate use cases:
+
+- **You're not on Cloudflare** — some teams can't or won't use a third-party proxy. Nginx + Certbot is the self-hosted path. Dulak's [reverse proxy guide](/deployment/reverse-proxy/) covers it.
+- **You need complex routing** — multiple upstreams, weighted load balancing, path-based routing to different apps. Nginx is a real load balancer; Cloudflare's free tier isn't.
+- **You're serving huge static files directly** — if you're a CDN backend serving terabytes of video, Nginx's `sendfile` and `aio` are tuned for that. Dulak serves fingerprinted JS/CSS bundles, not media.
+- **Regulatory constraints** — some jurisdictions require all infrastructure to be self-hosted. Cloudflare's edge is outside your control.
+
+None of these apply to a typical Dulak deployment: a single-process app on a VPS, domain on Cloudflare, SQLite on disk. For that setup, Nginx is a dependency that duplicates work Cloudflare and Bun already do.
+
+## The short version
+
+**Nginx terminates TLS, proxies, compresses, rate-limits, and serves static files. Cloudflare does the first four at the edge. Dulak does the last three in-process. There's nothing left for Nginx to do.**
+
+You're maintaining a config file, a cert renewal cron, and a package to track — for a proxy that proxies to a proxy. Delete the middleman. Point Cloudflare at Bun and go home.
+
+Read the full Cloudflare setup in the [reverse proxy guide](/deployment/reverse-proxy/) — Option A1 (Proxied DNS + Origin Rule) is the recommended path.

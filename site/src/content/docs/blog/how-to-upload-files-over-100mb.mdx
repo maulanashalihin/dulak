@@ -1,0 +1,191 @@
+---
+title: "Your 2GB upload keeps failing. Here's the fix"
+description: "Files over 100MB fail on a single request — dropped connections, proxy limits, timeouts. The fix is resumable, chunked uploads via tus. Here's how to wire it: server endpoints, client upload, resume, and progress."
+date: 2026-08-08
+authors:
+  - maulana
+tags:
+  - uploads
+  - how-to
+excerpt: "Files over 100MB fail on a single request — dropped connections, proxy limits, timeouts. The fix is resumable, chunked uploads via tus. Here's how to wire it: server endpoints, client upload, resume, and progress."
+---
+
+A 2GB video upload over a plain multipart form will fail. Not maybe — it will fail, usually at 90%, and the user starts over. The reasons are structural: a dropped connection kills the whole request, proxies cap body sizes, and one long request can time out.
+
+The fix is chunking: split the file, upload piece by piece, track progress, resume where you left off. The [tus protocol](https://tus.io/protocols/resumable-upload) does exactly this, and Bun has a spec-compliant implementation you can use as-is.
+
+This tutorial walks through the whole thing — server, client, resume, progress — on Dulak.
+
+## Step 1: server — tus endpoints
+
+Dulak ships tus at `/uploads` out of the box: creation, resume (HEAD), chunked append (PATCH), termination, checksums. Auth and ownership are enforced on every endpoint. There is nothing to install — it's three flat modules, zero dependencies.
+
+```bash
+# already enabled — nothing to configure
+curl -X OPTIONS http://localhost:4000/uploads
+```
+
+The server returns tus capabilities. Uploads land in `UPLOAD_DIR` (default `./data/uploads`), with one SQLite row per upload tracking offset, length, and owner.
+
+**If you're not on Dulak:** any tus server works — `tus-node-server`, `tusd`, or a cloud variant. The client code below is protocol-standard and works against any of them.
+
+## Step 2: client — a zero-dependency upload
+
+Dulak's client doesn't use a tus library — the protocol is simple enough to drive with plain `fetch`, and the [profile avatar upload](https://github.com/maulanashalihin/dulak/blob/main/src/client/pages/Profile.tsx) does exactly that. Zero dependencies, consistent with the "no abstraction tax" philosophy.
+
+The pattern has three moves: **create** (POST), **resume** (HEAD), **append** (PATCH in a loop):
+
+```ts
+const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB per request
+
+/** tus `Upload-Metadata` values are standard base64. */
+function toBase64(s: string): string {
+  const bytes = new TextEncoder().encode(s);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
+async function createUpload(file: File): Promise<string> {
+  const res = await fetch("/uploads", {
+    method: "POST",
+    headers: {
+      "Tus-Resumable": "1.0.0",
+      "Upload-Length": String(file.size),
+      "Upload-Metadata": `filename ${toBase64(file.name)},filetype ${toBase64(file.type)}`,
+    },
+  });
+  if (!res.ok) throw new Error(`Create failed (HTTP ${res.status})`);
+  const location = res.headers.get("Location");
+  if (!location) throw new Error("Server did not return an upload URL");
+  return location.split("/").pop() ?? ""; // the upload id
+}
+
+async function getOffset(uploadId: string): Promise<number> {
+  const res = await fetch(`/uploads/${uploadId}`, {
+    method: "HEAD",
+    headers: { "Tus-Resumable": "1.0.0" },
+  });
+  if (!res.ok) return 0;
+  return Number(res.headers.get("Upload-Offset")) || 0;
+}
+
+async function runUpload(file: File) {
+  const uploadId = await createUpload(file);
+  let offset = await getOffset(uploadId); // 0 on a fresh upload
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  while (offset < bytes.byteLength) {
+    const end = Math.min(offset + CHUNK_SIZE, bytes.byteLength);
+    const res = await fetch(`/uploads/${uploadId}`, {
+      method: "PATCH",
+      headers: {
+        "Tus-Resumable": "1.0.0",
+        "Content-Type": "application/offset+octet-stream",
+        "Upload-Offset": String(offset),
+      },
+      body: bytes.slice(offset, end),
+    });
+    if (!res.ok) throw new Error(`Chunk failed (HTTP ${res.status})`);
+    offset = end;
+    console.log(`Uploaded ${Math.round((offset / bytes.byteLength) * 100)}%`);
+  }
+  return uploadId;
+}
+```
+
+That's the whole upload: create once, then PATCH chunks until the offset reaches the file length. Each PATCH is a small, proxy-safe request.
+
+### Why 5MB chunks?
+
+Two constraints meet here:
+
+- **Proxy limits.** [Cloudflare caps request bodies at 100MB](/uploads/tus/) — a single request over that is rejected at the edge. Chunks must stay well under it.
+- **Failure cost.** A dropped connection re-sends only the in-flight chunk. 5MB is small enough that the retry is cheap, large enough that HTTP overhead per chunk stays negligible.
+
+Anything from 1MB to 10MB works; 5MB is a sane default. (Dulak's avatar upload uses 256KB chunks — fine for small files, too many requests for a 1GB one.)
+
+<aside>
+**Prefer a library?** `tus-js-client` wraps all of this — same protocol, same server, `Upload` + `onProgress` callbacks. The code above is what Dulak actually ships; use the library if you'd rather not own the protocol.
+</aside>
+
+## Step 3: resume after interruption
+
+This is the whole point of tus. When the connection drops, the upload doesn't die — it stops, and you can continue. Two pieces make that work:
+
+**1. Remember the pending upload.** On creation, save the upload id — on the next page load, the UI offers "Resume upload" instead of starting over:
+
+```ts
+const PENDING_KEY = "dulak:avatar:upload";
+type PendingUpload = { id: string; name: string; size: number };
+
+// after createUpload() returns the id:
+localStorage.setItem(PENDING_KEY, JSON.stringify({ id: uploadId, name: file.name, size: file.size }));
+```
+
+**2. Resume from the saved id.** `getOffset()` re-reads the server's `Upload-Offset`, and the PATCH loop continues from there:
+
+```ts
+async function runUpload(uploadId: string, file: File) {
+  let offset = await getOffset(uploadId); // server says where we stopped
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  while (offset < bytes.byteLength) {
+    // ... PATCH loop, same as Step 2
+  }
+}
+
+// On file re-selection, if it matches the pending upload:
+const pending = JSON.parse(localStorage.getItem(PENDING_KEY) ?? "null");
+if (pending && pending.name === file.name) {
+  await runUpload(pending.id, file); // resume — no restart
+} else {
+  const id = await createUpload(file);
+  localStorage.setItem(PENDING_KEY, JSON.stringify({ id, name: file.name, size: file.size }));
+  await runUpload(id, file);
+}
+```
+
+The server is the source of truth for the offset — the client never guesses. A dropped connection at 90% means re-sending only the last 5MB chunk, not the whole file.
+
+## Step 4: progress that survives reloads
+
+The progress bar is easy; making it survive a refresh is the useful part. The offset comes from the server, so the bar snaps to the true position on resume:
+
+```ts
+// inside the PATCH loop:
+setProgress(Math.round((offset / bytes.byteLength) * 100));
+
+// on resume, getOffset() returns the real progress before the loop starts
+```
+
+Because the server tracks `Upload-Offset` in SQLite, a page reload doesn't lose the position — the HEAD request in `getOffset()` restores it. Clear `PENDING_KEY` when the upload completes and link the file (Dulak POSTs the upload id to `/profile/avatar`).
+
+## Step 5: verify with network throttling
+
+Test the resume path before shipping — it's the part that's easy to get wrong:
+
+1. Open DevTools → Network → throttling, pick "Slow 3G"
+2. Start uploading a 200MB file
+3. Kill the connection mid-upload (toggle to Offline)
+4. Re-enable the network, resume
+5. Confirm the upload continues from where it stopped, not from zero
+
+If it restarts, the server offset and the client's saved URL don't match — check that `uploadUrl` is being persisted and passed back correctly.
+
+## When you don't need any of this
+
+If your files are under ~100MB and the connection is reliable, a plain multipart form is simpler and correct:
+
+```ts
+const form = await c.req.formData();
+const file = form.get("file");
+await Bun.write(`${config.upload.dir}/${file.name}`, file);
+```
+
+Ten lines, no client library, no protocol. The [form data guide](/uploads/form-data/) covers it. Use tus only when the file is big enough that a failed upload costs real time — that's the ~100MB line.
+
+## The short version
+
+**Small files: form data. Files over ~100MB: tus.**
+
+Server: shipped in Dulak at `/uploads` — nothing to install. Client: three `fetch` calls — POST to create, HEAD to get the offset, PATCH in a loop — zero dependencies, exactly what Dulak's own avatar upload does. Resume: save the upload id, re-read the offset via HEAD. Progress: `bytesSent / bytesTotal` from the PATCH loop. Test with network throttling before you trust it. The [tus docs](/uploads/tus/) have the full protocol and configuration reference.

@@ -1,83 +1,193 @@
 ---
 const faqs: { q: string; a: string }[] = [
-  {
-    q: "Is Dulak a framework?",
-    a: "No — it is a boilerplate. A framework gives you primitives and you wire them; Dulak ships the wiring already done (auth, uploads, migrations, SSR, tests, Docker) and then gets out of your way. You fork it and own the code.",
-  },
-  {
-    q: "How is Dulak different from Next.js, Nuxt, or SvelteKit?",
-    a: "Those are meta-frameworks that couple a server model to one client framework (React, Vue, or Svelte) and leave auth, uploads, and persistence to you. Dulak is a single Bun process with Hono + bun:sqlite + Inertia v3, auth and uploads already wired, raw SQL instead of an ORM, and React, Svelte, or Vue as a swappable template. Pick a meta-framework for RSC or edge deploy; pick Dulak for a wired, ownable, single-runtime stack.",
-  },
-  {
-    q: "Why Bun and not Node?",
-    a: "One runtime for everything: Bun.serve is the HTTP server, bun:sqlite is the database, Bun.build is the bundler, bun test is the test runner. No separate language, package manager, web server, and database to wire together before your first running app.",
-  },
-  {
-    q: "Do I have to use React?",
-    a: "No. Dulak ships templates for React 19, Svelte 5, and Vue 3 — each with vanilla CSS or Tailwind CSS v4. The server side (Hono, SQL, auth) is identical across all of them.",
-  },
-  {
-    q: "Why no ORM?",
-    a: "bun:sqlite with prepared statements is synchronous, explicit, and zero-dependency. You see the exact SQL that runs. When 60 lines of your own code are enough, an ORM is a liability you upgrade, audit, and debug.",
-  },
-  {
-    q: "Is it production-ready?",
-    a: "It is production-shaped: CSRF, rate limiting, security headers, versioned migrations, graceful shutdown, multi-stage Docker, and CI are wired from day one. The business features are yours to build.",
-  },
+    {
+        q: "How is Dulak different from Next.js, Nuxt, or SvelteKit?",
+        a: "Those are meta-frameworks that couple a server model to one client framework (React, Vue, or Svelte) and leave auth, uploads, and persistence to you. Dulak is a single Bun process with Hono + bun:sqlite + Inertia v3, auth and uploads already wired, raw SQL instead of an ORM, and React, Svelte, or Vue as a swappable template. Pick a meta-framework for RSC or edge deploy; pick Dulak for a wired, ownable, single-runtime stack.",
+    },
+    {
+        q: "How is Dulak different from Laravel?",
+        a: "One runtime vs four. Dulak is Bun end to end — HTTP server, database, bundler, test runner, package manager. Laravel is still gluing together PHP, Composer, a web server, and a database driver in 2026 — plus a separate Node process if you want Inertia SSR. Dulak serves 52K reads/s and 95K writes/s on a single process; Laravel on FrankenPHP (8 workers) hits 6K — 8× slower on reads, 5× on writes. No ORM means no abstraction tax. Pick Dulak for TypeScript everywhere and one runtime; pick Laravel if four toolchains sounds like a feature, not a tax.",
+    },
+    {
+        q: "Why Bun and not Node?",
+        a: "One runtime for everything: Bun.serve is the HTTP server, bun:sqlite is the database, Bun.build is the bundler, bun test is the test runner. No separate language, package manager, web server, and database to wire together before your first running app.",
+    },
+    {
+        q: "Do I have to use React?",
+        a: "No. Dulak ships templates for React 19, Svelte 5, and Vue 3 — each with vanilla CSS or Tailwind CSS v4. The server side (Hono, SQL, auth) is identical across all of them.",
+    },
+    {
+        q: "Why no ORM?",
+        a: "ORMs were built to help humans avoid writing SQL. In 2026, AI generates correct, optimized raw SQL on demand — the human-friction problem ORMs solved is gone. What remains is the cost: an ORM is a dependency you upgrade, audit, and debug, and it adds a layer between you and the database that hides the actual query plan. bun:sqlite with prepared statements is synchronous, explicit, and zero-dependency. You see the exact SQL that runs, and the AI writing your next feature writes it at peak performance — no abstraction tax.",
+    },
+    {
+        q: "Why SQLite and not Postgres?",
+        a: "One file for the whole database: bun:sqlite is built into Bun, no server to install, no connection pool, no credentials. WAL mode serves 52K reads/s and 95K writes/s on a single process — enough for most apps. Back up by copying a file, or stream replicas to S3 with Litestream. When you outgrow it, Postgres is a deliberate swap point, not an emergency.",
+    },
+    {
+        q: "Is it production-ready?",
+        a: "Yes — every guardrail a deployed app needs is wired and tested, not scaffolded: argon2id passwords, DB-backed sessions (not JWT), CSRF origin checks, two-layer rate limiting (global DDoS baseline + auth brute-force), security headers (CSP, nosniff, frame denial), versioned migrations in transactions, gzip compression, graceful shutdown (SIGTERM), multi-stage Docker, and a 63-test E2E suite that boots the full app against an in-memory DB. The server side is not a demo — it is the same code path that runs in production. What is missing is your business logic, and that is the point: you start from a skeleton that already works, not one you have to harden.",
+    },
+    {
+        q: "Will this still work in 5–10 years?",
+        a: "Yes, and here is why: Dulak is a boilerplate you fork and own, not a framework that can be deprecated out from under you. The stack is chosen for longevity — Bun, Hono, SQLite, and Inertia are stable, pinned versions with no pending rewrites. SQLite is the most deployed database in the world and has maintained backward compatibility for decades. When a dependency does release a new major, it is a deliberate migration you schedule and test — not an emergency. And because there is no ORM, no SDK, no proprietary abstraction layer, the code you own is just TypeScript, SQL, and HTTP — readable and maintainable by any developer or AI agent, now and in 2036.",
+    },
 ];
 ---
 
 <section class="dl-faq">
-  <h2 class="dl-section-title">FAQ</h2>
-  <p class="dl-section-sub">The short version. For the long version, read the <a href="/comparisons/">comparison article</a>.</p>
-  <div class="dl-faq-list">
-    {faqs.map((f) => (
-      <details class="dl-faq-item">
-        <summary>{f.q}</summary>
-        <p>{f.a}</p>
-      </details>
-    ))}
-  </div>
+    <div class="dl-faq-cta">
+        <h2 class="dl-section-title">Start in one command.</h2>
+        <div class="dl-cta-cmd">bun create dulak@latest</div>
+        <div class="dl-cta-actions">
+            <a class="dl-cta-btn" href="/getting-started/introduction/"
+                >Get started</a
+            >
+            <a
+                class="dl-cta-btn dl-cta-btn-ghost"
+                href="https://github.com/maulanashalihin/dulak"
+                target="_blank"
+                rel="noreferrer">View on GitHub</a
+            >
+        </div>
+    </div>
+    <h2 class="dl-section-title">FAQ</h2>
+    <p class="dl-section-sub">
+        The short version. For the long version, read the <a
+            href="/comparisons/">comparison article</a
+        >.
+    </p>
+    <div class="dl-faq-list">
+        {
+            faqs.map((f) => (
+                <details class="dl-faq-item">
+                    <summary>{f.q}</summary>
+                    <p>{f.a}</p>
+                </details>
+            ))
+        }
+    </div>
 </section>
 
 <style>
-  .dl-faq { max-width: 760px; margin: 0 auto 4.5rem; padding: 0 1.5rem; }
-  .dl-section-title { font-size: 1.7rem; letter-spacing: -0.02em; text-align: center; }
-  .dl-section-sub { text-align: center; color: #8b95a5; margin: 0.4rem 0 2.2rem; }
-  .dl-section-sub a { color: #34d399; text-decoration: none; }
-  .dl-section-sub a:hover { text-decoration: underline; }
-  .dl-faq-list { display: flex; flex-direction: column; gap: 0.6rem; }
-  .dl-faq-item {
-    border: 1px solid #1f2937;
-    border-radius: 0.6rem;
-    background: #0f141a;
-    transition: border-color 0.2s ease;
-  }
-  .dl-faq-item[open] { border-color: #059669; }
-  .dl-faq-item summary {
-    cursor: pointer;
-    padding: 0.9rem 1.1rem;
-    font-weight: 600;
-    font-size: 0.95rem;
-    list-style: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .dl-faq-item summary::-webkit-details-marker { display: none; }
-  .dl-faq-item summary::after {
-    content: "+";
-    color: #34d399;
-    font-size: 1.2rem;
-    font-weight: 400;
-    transition: transform 0.2s ease;
-  }
-  .dl-faq-item[open] summary::after { transform: rotate(45deg); }
-  .dl-faq-item p {
-    margin: 0;
-    padding: 0 1.1rem 1rem;
-    font-size: 0.88rem;
-    line-height: 1.6;
-    color: #9aa4b2;
-  }
+    .dl-faq {
+        max-width: 760px;
+        margin: 0 auto 4.5rem;
+        padding: 0 1.5rem;
+    }
+    .dl-faq-cta {
+        text-align: center;
+        padding-bottom: 2.5rem;
+        margin-bottom: 2.5rem;
+        border-bottom: 1px solid #1f2937;
+    }
+    .dl-cta-cmd {
+        display: inline-block;
+        font-family: "SF Mono", "Fira Code", monospace;
+        font-size: 0.95rem;
+        color: #34d399;
+        background: #0f141a;
+        border: 1px solid #1f2937;
+        border-radius: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        margin: 1rem 0 1.5rem;
+    }
+    .dl-cta-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+    .dl-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.7rem 1.6rem;
+        border-radius: 0.55rem;
+        font-weight: 600;
+        font-size: 0.92rem;
+        text-decoration: none;
+        transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+    .dl-cta-btn:hover {
+        transform: translateY(-1px);
+    }
+    .dl-cta-btn:not(.dl-cta-btn-ghost) {
+        background: #047857;
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35);
+    }
+    .dl-cta-btn:not(.dl-cta-btn-ghost):hover {
+        box-shadow: 0 12px 32px rgba(5, 150, 105, 0.5);
+    }
+    .dl-cta-btn-ghost {
+        border: 1px solid #263041;
+        color: #d3dae4;
+        background: rgba(15, 17, 23, 0.6);
+    }
+    .dl-cta-btn-ghost:hover {
+        background: rgba(30, 41, 59, 0.8);
+    }
+    .dl-section-title {
+        font-size: 1.7rem;
+        letter-spacing: -0.02em;
+        text-align: center;
+    }
+    .dl-section-sub {
+        text-align: center;
+        color: #8b95a5;
+        margin: 0.4rem 0 2.2rem;
+    }
+    .dl-section-sub a {
+        color: #34d399;
+        text-decoration: none;
+    }
+    .dl-section-sub a:hover {
+        text-decoration: underline;
+    }
+    .dl-faq-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+    .dl-faq-item {
+        border: 1px solid #1f2937;
+        border-radius: 0.6rem;
+        background: #0f141a;
+        transition: border-color 0.2s ease;
+    }
+    .dl-faq-item[open] {
+        border-color: #059669;
+    }
+    .dl-faq-item summary {
+        cursor: pointer;
+        padding: 0.9rem 1.1rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .dl-faq-item summary::-webkit-details-marker {
+        display: none;
+    }
+    .dl-faq-item summary::after {
+        content: "+";
+        color: #34d399;
+        font-size: 1.2rem;
+        font-weight: 400;
+        transition: transform 0.2s ease;
+    }
+    .dl-faq-item[open] summary::after {
+        transform: rotate(45deg);
+    }
+    .dl-faq-item p {
+        margin: 0;
+        padding: 0 1.1rem 1rem;
+        font-size: 0.88rem;
+        line-height: 1.6;
+        color: #9aa4b2;
+    }
 </style>

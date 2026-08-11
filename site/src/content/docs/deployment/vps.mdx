@@ -3,11 +3,19 @@ title: Linux VPS (no Docker)
 description: Run Dulak on a bare Linux VPS with systemd and a reverse proxy.
 ---
 
-Deploy without Docker: Bun runs the TypeScript server directly, client
-assets are prebuilt, and a **systemd unit + reverse proxy** handle
-restarts, HTTPS, and traffic. If your domain is on Cloudflare, no reverse
-proxy software is needed on the VPS at all — Cloudflare is the proxy. This
-guide targets Ubuntu 22.04/24.04.
+Run Dulak directly on a Linux VPS — no Docker, no container overhead.
+Bun runs the TypeScript server, client assets are prebuilt, and systemd
+handles restarts. You'll need a [reverse proxy](/deployment/reverse-proxy/)
+for HTTPS (Cloudflare, Caddy, or Nginx). This guide targets Ubuntu
+22.04/24.04/26.04.
+
+## Prerequisites
+
+- **A Linux VPS** with root or sudo access (Ubuntu 22.04/24.04/26.04).
+- **SSH access** to the server.
+- **Git installed** on the server (`sudo apt install git` if missing).
+- **Your code on GitHub** — clone your app repo (replace `<your-repo-url>`
+  with your repo URL).
 
 ## Architecture
 
@@ -17,212 +25,202 @@ Internet → Cloudflare edge (TLS) → [tunnel | origin rule → VPS:4000]
                                           └→ SQLite + uploads in /opt/dulak/data
 ```
 
-## 1. Install Bun
+---
+
+## Phase 1 — First-time setup
+
+All commands run **on the server** via SSH. SSH in first:
 
 ```bash
-curl -fsSL https://bun.sh/install | bash   # installs to ~/.bun
+ssh root@your-server-ip
+```
+
+### 1.1 Install Bun
+
+```bash
+curl -fsSL https://bun.sh/install | bash
 source ~/.bashrc
-bun --version
+bun --version    # should print 1.3.x or higher
 ```
 
-## 2. Create the app user and directory
-
-Run the app as a dedicated user, not root:
+### 1.2 Get the code
 
 ```bash
-sudo useradd --system --create-home --shell /usr/sbin/nologin dulak
-sudo mkdir -p /opt/dulak/data
-sudo chown -R dulak:dulak /opt/dulak
-```
-
-## 3. Get the code
-
-```bash
+git clone <your-repo-url> /opt/dulak
 cd /opt/dulak
-sudo -u dulak git clone https://github.com/maulanashalihin/dulak.git .
 ```
 
-Or copy the app from your build machine — the server runs TS directly, so
-the whole repo (minus `.git`) works.
+The `/opt/dulak` path is just an example — name it after your app.
+Adjust the path in the commands and systemd unit below to match.
 
-## 4. Install dependencies and build client assets
+Or copy the app from your build machine — the server runs TS directly,
+so the whole repo (minus `.git`) works. The `data/` directory is created
+automatically on first startup.
+
+### 1.3 Install dependencies and build
 
 ```bash
-sudo -u dulak bash -c 'cd /opt/dulak && bun install'
-sudo -u dulak bash -c 'cd /opt/dulak && bun run build'   # client assets → dist/
+bun install
+bun run build
 ```
 
-## 5. Environment
+### 1.4 Environment
 
 Create `/opt/dulak/.env`:
 
-```env
+```bash
+cat > /opt/dulak/.env << 'EOF'
 PORT=4000
 NODE_ENV=production
 APP_URL=https://your-domain.com
 DATABASE_PATH=/opt/dulak/data/app.sqlite
 MAIL_DRIVER=resend
 RESEND_API_KEY=...
-# plus Google OAuth, rate limits, upload limits — see Configuration
+EOF
 ```
 
-`UPLOAD_DIR` defaults to `./data/uploads` — keep it inside `/opt/dulak/data`
-so it survives deploys and is easy to back up.
+Adjust the values for your deployment — see
+[Configuration](/deployment/configuration/) for the full env table.
+`UPLOAD_DIR` defaults to `./data/uploads` — keep it inside
+`/opt/dulak/data` so it survives deploys and is easy to back up.
 
-## 6. systemd unit
+### 1.5 systemd unit
 
-`/etc/systemd/system/dulak.service`:
+Create `/etc/systemd/system/dulak.service`:
 
-```ini
+```bash
+sudo tee /etc/systemd/system/dulak.service << 'EOF'
 [Unit]
 Description=Dulak app
 After=network.target
 
 [Service]
 Type=simple
-User=dulak
 WorkingDirectory=/opt/dulak
 EnvironmentFile=/opt/dulak/.env
-ExecStart=/home/dulak/.bun/bin/bun run src/index.ts
+ExecStart=%h/.bun/bin/bun run src/index.ts
 Restart=always
 RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
+EOF
 ```
 
-The app handles SIGTERM gracefully (drains in-flight requests, closes the
-DB), so `systemctl restart` is safe mid-traffic.
+Enable and start:
 
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now dulak
-sudo systemctl status dulak
-curl http://127.0.0.1:4000/health   # {"status":"ok",...}
 ```
 
-## 7. Reverse proxy
-
-### Option A — Cloudflare (recommended, nothing to install)
-
-Your domain is on Cloudflare, so the edge handles TLS and proxying; the VPS
-only runs Bun. Two ways:
-
-**A1. Proxied DNS + origin rule** (no extra software):
-
-1. DNS: A record `your-domain.com` → VPS IP, **proxied** (orange cloud).
-2. Dashboard → **Rules → Origin Rules** → create a rule for
-   `your-domain.com` that rewrites the **Host header** to
-   `your-domain.com` (so the app sees the real host for redirects).
-3. SSL/TLS mode: **Full** (edge→origin over HTTPS with a Cloudflare Origin
-   CA cert) or **Flexible** (edge→origin HTTP) — Flexible is fine when the
-   origin port is firewalled to Cloudflare IPs only (see §8).
-
-**A2. Cloudflare Tunnel** (zero open ports — nothing to install except
-`cloudflared`):
+### 1.6 Verify
 
 ```bash
-# on the VPS
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
-chmod +x /usr/local/bin/cloudflared
-cloudflared tunnel login          # one-time browser auth
-cloudflared tunnel create dulak
-# run the tunnel as a service pointing at 127.0.0.1:4000
-cloudflared service install
+sudo systemctl is-active dulak          # → active
+curl http://127.0.0.1:4000/health       # → {"status":"ok","uptime":...}
 ```
 
-Dashboard → **Zero Trust → Networks → Tunnels** → add a public hostname
-`your-domain.com` → service `http://127.0.0.1:4000`. No firewall rules
-needed — the tunnel connects outbound.
+If either check fails, see [Troubleshooting](#troubleshooting) below.
 
-> **`X-Forwarded-For` matters.** Both routes put Cloudflare in front, and
-> the rate limiter keys by `X-Forwarded-For`/`CF-Connecting-IP` first —
-> only run behind a proxy that sets it, or every client shares the "local"
-> bucket.
+### 1.7 Reverse proxy and firewall
 
-### Option B — Caddy on the VPS (no Cloudflare)
+Dulak does not terminate TLS — that is the proxy's job. Set up
+Cloudflare, Caddy, or Nginx in front of `127.0.0.1:4000`:
 
-`/etc/caddy/Caddyfile`:
+→ **[Reverse proxy guide](/deployment/reverse-proxy/)**
 
-```
-your-domain.com {
- reverse_proxy 127.0.0.1:4000
-}
-```
+---
 
-```bash
-sudo systemctl enable --now caddy
-```
+## Phase 2 — Routine updates
 
-### Option C — Nginx + Certbot (no Cloudflare)
-
-`/etc/nginx/sites-available/dulak`:
-
-```nginx
-server {
- listen 80;
- server_name your-domain.com;
- location / {
-  proxy_pass http://127.0.0.1:4000;
-  proxy_set_header Host $host;
-  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-  proxy_http_version 1.1;
- }
-}
-```
-
-```bash
-sudo ln -s /etc/nginx/sites-available/dulak /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d your-domain.com
-```
-
-## 8. Firewall
-
-### Cloudflare route (A1 — origin rule)
-
-Only Cloudflare IPs may reach the app port:
-
-```bash
-sudo ufw allow OpenSSH
-# https://www.cloudflare.com/ips/ — keep this list updated
-sudo ufw allow from 173.245.48.0/20 to any port 4000
-sudo ufw allow from 103.21.244.0/22 to any port 4000
-# ...add all Cloudflare IP ranges...
-sudo ufw enable
-```
-
-Or bind the app to `127.0.0.1` only (`HOST=127.0.0.1`) and use **A2
-(tunnel)** — no inbound ports at all.
-
-### No Cloudflare (options B/C)
-
-```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw enable
-```
-
-Port 4000 must NOT be exposed publicly — only 80/443 reach the app.
-
-## 9. Updates
+After you push code to GitHub, SSH to the server and run:
 
 ```bash
 cd /opt/dulak
-sudo -u dulak git pull
-sudo -u dulak bun install
-sudo -u dulak bun run build
+git pull
+bun install
+bun run build
 sudo systemctl restart dulak
+curl http://127.0.0.1:4000/health       # → {"status":"ok",...}
 ```
+
+That's it — 5 commands, all on the server. The app handles SIGTERM
+gracefully (drains in-flight requests, closes the DB), so
+`systemctl restart` is safe mid-traffic.
+
+---
+
+## Troubleshooting
+
+### Service won't start
+
+```bash
+sudo journalctl -u dulak -n 30 --no-pager
+```
+
+Common causes:
+
+- **`Invalid configuration: ...`** — a required env var is missing or
+  invalid. Check `/opt/dulak/.env` against
+  [Configuration](/deployment/configuration/). The error message names
+  the exact var.
+- **`bun: not found`** — the systemd unit points to
+  `%h/.bun/bin/bun` but Bun is installed elsewhere.
+  Check the path: `which bun`, and update
+  `ExecStart` in the unit file.
+- **`EADDRINUSE: Port 4000`** — another process is using port 4000. Find
+  it: `ss -tlnp | grep 4000`. Kill it or change `PORT` in `.env`.
+
+### Health check returns non-200
+
+```bash
+sudo systemctl status dulak              # check if active
+sudo journalctl -u dulak -f              # live tail for errors
+curl -v http://127.0.0.1:4000/health     # verbose response
+```
+
+If the service is active but `/health` returns 500, the database may be
+locked or the DB file is missing. Check:
+
+```bash
+ls -la /opt/dulak/data/app.sqlite        # file exists?
+sqlite3 /opt/dulak/data/app.sqlite 'PRAGMA integrity_check;'
+```
+
+### Port not reachable from outside
+
+The app binds to `0.0.0.0:4000` by default. If you can't reach it:
+
+- **Firewall blocking:** `sudo ufw status` — if UFW is active, allow the
+  port (or better, set up the [reverse proxy](/deployment/reverse-proxy/)
+  and only expose 80/443).
+- **App bound to localhost:** if you set `HOST=127.0.0.1`, only local
+  processes can reach it. This is correct behind a reverse proxy — the
+  proxy connects locally, the port is not public.
+- **Cloudflare timeout:** check that your DNS record points to the right
+  IP and the proxy status is **Proxied** (orange cloud). See
+  [Reverse proxy → Cloudflare](/deployment/reverse-proxy/#option-a--cloudflare-recommended-nothing-to-install).
+
+### Permission denied on data directory
+
+```bash
+sudo chown -R $USER:$USER /opt/dulak/data
+sudo chmod 755 /opt/dulak/data
+```
+
+The data directory must be owned by your user — SQLite needs write access
+to create the `-wal` and `-shm` files alongside the database.
+
+---
 
 ## Operational notes
 
-- **Single instance only.** SQLite is single-writer and the rate limiter is
-  in-memory — this guide runs one process. Horizontal scaling is a
+- **Single instance only.** SQLite is single-writer and the rate limiter
+  is in-memory — this guide runs one process. Horizontal scaling is a
   deliberate swap point (external session/upload stores, Redis limiter).
-- **Logs**: `journalctl -u dulak -f`.
-- **Backup**: `data/app.sqlite` + `data/uploads` (the uploads directory).
-- **Single binary alternative**: `bun build --compile` produces a standalone
-  executable with the same runtime — swap the `ExecStart` for the binary
-  and prebuild `dist/` on the build machine.
+- **Logs:** `journalctl -u dulak -f`.
+- **Backup:** `data/app.sqlite` + `data/uploads` (the uploads directory).
+- **Single binary alternative:** `bun build --compile` produces a
+  standalone executable with the same runtime — swap the `ExecStart` for
+  the binary and prebuild `dist/` on the build machine.

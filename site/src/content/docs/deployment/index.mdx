@@ -1,0 +1,130 @@
+---
+title: Deployment
+description: Pick your deployment path — Docker, bare VPS with systemd, or let an AI agent do it for you.
+---
+
+Dulak runs on Bun — no Node.js, no build step on the server (Bun runs
+TypeScript directly). Pick **one** path:
+
+## Deploy with an AI agent (easiest)
+
+Don't want to touch a terminal? Hand the deployment to an AI coding
+agent. Copy-paste a prompt, the agent SSHes in, installs everything,
+and starts the app. Works with omp.sh, Claude Code, Cursor, or any
+agent that can run shell commands.
+
+→ **[AI agent deployment guide](/deployment/ai-agent/)**
+
+## Docker (recommended for most)
+
+One command, everything containerized:
+
+```bash
+docker compose up -d --build
+```
+
+Multi-stage image, persistent SQLite volume, healthcheck built in. If you
+have Docker on your server, start here.
+
+→ **[Docker guide](/deployment/docker/)**
+
+## Bare VPS (no Docker)
+
+Bun + systemd + reverse proxy. More control, fewer moving parts, but
+~6 manual steps for first-time setup.
+
+→ **[Linux VPS guide](/deployment/vps/)**
+
+## Docker vs. bare VPS — which one?
+
+| | Docker | Bare VPS (systemd) |
+|---|---|---|
+| **First-time setup** | `docker compose up -d --build` (1 command after clone) | ~6 steps: install bun, create user, clone, .env, systemd unit, start |
+| **Routine update** | `git pull && docker compose up -d --build` | `git pull && bun install && bun run build && systemctl restart dulak` |
+| **Downtime on update** | ~1.8s (container swap) | ~1s (process restart) |
+| **Install on server** | [Docker](https://docs.docker.com/engine/install/) + Docker Compose | [Bun](https://bun.sh/docs/install) (curl one-liner) |
+| **Isolation** | Containerized (filesystem, network, process) | Runs directly on host |
+| **Memory overhead** | ~97 MB (container runtime) | ~50 MB |
+| **Throughput** | ~7,500 req/s | ~9,000 req/s |
+| **Best for** | Most users — simplest setup, reproducible environment | Users who want minimal overhead, already comfortable with Linux |
+
+Both paths serve the same app on port 4000 and need a
+[reverse proxy](#after-either-path-reverse-proxy) for HTTPS. For a
+single-process Bun + SQLite app, systemd is faster and lighter —
+Docker's benefits (isolation, reproducibility) kick in when
+orchestrating multiple services. See the
+[benchmark below](#benchmark-systemd-vs-docker) for details.
+
+---
+
+## Benchmark: systemd vs. Docker
+
+We benchmarked both paths on the same server (Ubuntu 24.04, 6 cores,
+11 GB RAM) using `wrk` — 30 seconds, 200 connections, 4 threads.
+
+### Results
+
+| Endpoint | systemd (req/s) | Docker (req/s) | Difference |
+|---|---|---|---|
+| `/health` (lightweight JSON) | 8,648 | 7,922 | systemd 9% faster |
+| `/login` (full SSR render) | 9,000 | 7,555 | systemd 19% faster |
+
+### Latency (average)
+
+| Endpoint | systemd | Docker |
+|---|---|---|
+| `/health` | 27.07 ms | 26.88 ms |
+| `/login` | 23.69 ms | 29.51 ms |
+
+### Resource usage
+
+| Metric | systemd | Docker |
+|---|---|---|
+| Memory (RSS) | ~50 MB | ~97 MB |
+| Peak memory | 84.9 MB | 135 MB |
+| Processes | 13 | 13 + container runtime |
+
+### Why systemd is faster
+
+Docker routes every request through its userland proxy
+(`docker-proxy` → container network namespace), adding one network
+hop. For a fast app like Dulak (~8,000–9,000 req/s), this proxy
+overhead is a visible percentage. systemd binds directly to the host
+port — no intermediary.
+
+Docker also uses ~2× more memory because of the container runtime and
+namespace overhead. For a single-process app with SQLite (no
+horizontal scaling), this is pure overhead with no benefit.
+
+### When to pick Docker anyway
+
+- **You need isolation** — the app runs alongside other services and
+  you want filesystem/process isolation.
+- **You want reproducible environments** — the same image runs on any
+  server with Docker, no "works on my machine".
+- **You're orchestrating multiple containers** — Docker Compose with
+  databases, queues, etc.
+
+For a single-process Bun + SQLite app like Dulak, systemd is the
+lighter, faster, simpler choice. Docker's benefits kick in when you
+have multiple services to orchestrate.
+
+---
+
+## After either path: reverse proxy
+
+Your app is running on port 4000, but it speaks plain HTTP — no
+encryption. Before users can visit `https://your-domain.com` (with the
+lock icon), you need a reverse proxy in front to handle TLS
+(HTTPS certificates) and route traffic to port 4000. If your domain is
+on Cloudflare, that's the proxy — nothing to install. Otherwise, Caddy
+or Nginx both work.
+
+→ **[Reverse proxy guide](/deployment/reverse-proxy/)**
+
+## Configuration
+
+Env vars, fail-fast validation, and the full `.env` reference table.
+
+→ **[Configuration](/deployment/configuration/)**
+

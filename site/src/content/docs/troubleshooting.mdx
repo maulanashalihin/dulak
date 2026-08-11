@@ -37,7 +37,10 @@ The CSS is built into `dist/`. If `/assets/*` returns 404, run
 error: Failed to start server. Is port 4000 in use?
 ```
 
-Set a different `PORT` in `.env` (or stop the other process).
+In development, Dulak auto-increments to the next free port (4001, 4002, …)
+so this error only appears in **production**, where a busy port fails fast
+rather than silently shifting. Set a different `PORT` in `.env` or stop the
+other process.
 
 ## JSON responses never arrive / navigation hangs
 

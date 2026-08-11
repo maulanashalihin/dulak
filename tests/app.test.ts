@@ -11,8 +11,9 @@ let app: Awaited<ReturnType<typeof import("../src/server/app")["createApp"]>>;
 beforeAll(async () => {
 	// Must be set before any app module is imported (config/db read env at import).
 	process.env.DATABASE_PATH = ":memory:";
-	process.env.NODE_ENV = "test";
+	process.env.APP_URL = "http://localhost:3000";
 	process.env.RATE_LIMIT_AUTH_MAX = "1000";
+	process.env.RATE_LIMIT_GLOBAL_MAX = "10000";
 	const { createApp } = await import("../src/server/app");
 	app = createApp({ version: "test-version", js: "app.js", css: "app.css" });
 });

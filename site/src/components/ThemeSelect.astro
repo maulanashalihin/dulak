@@ -1,0 +1,45 @@
+---
+import Default from "@astrojs/starlight/components/ThemeSelect.astro";
+---
+
+<div>
+	<a href="/getting-started/introduction/">Docs</a>
+	<a href="/blog/">Notes</a>
+</div>
+
+<Default><slot /></Default>
+
+<style>
+	div {
+		align-items: center;
+		display: none;
+		gap: 1.25rem;
+		min-inline-size: 0;
+	}
+
+	@media (min-width: 50rem) {
+		:global(.header > .right-group) {
+			min-inline-size: 0;
+		}
+
+		div {
+			display: flex;
+		}
+	}
+
+	a {
+		color: var(--sl-color-text);
+		font-size: 0.875rem;
+		font-weight: 500;
+		min-inline-size: 0;
+		overflow: hidden;
+		text-decoration: none;
+		text-overflow: ellipsis;
+		transition: color 0.2s ease;
+		white-space: nowrap;
+	}
+
+	a:hover {
+		color: var(--sl-color-text-accent);
+	}
+</style>

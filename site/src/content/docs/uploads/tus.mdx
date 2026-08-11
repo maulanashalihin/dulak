@@ -1,11 +1,44 @@
 ---
 title: tus resumable uploads
-description: The tus protocol v1 implementation, server and client.
+description: tus protocol v1 for big files — resumable, chunked uploads that survive dropped connections.
 ---
 
-Uploads use the [tus protocol v1](https://tus.io/protocols/resumable-upload)
-at `/uploads` — resumable, chunked uploads with SQLite state and on-disk
-storage. The profile avatar upload demonstrates it end to end.
+Large uploads — anything over ~100MB — fail all the time. A dropped
+connection at 90%, a proxy timeout, a memory limit on the server, a
+browser that gives up after 10 minutes. Plain
+[form data](/uploads/form-data/) can't recover from any of these: the
+whole upload starts over from zero.
+
+There's also a hard ceiling you can't configure away: **Cloudflare's
+proxy caps request bodies at 100MB** (200MB on Enterprise). Behind a
+Cloudflare proxy, a single request over that limit is rejected before
+it reaches your server — no matter how the server is configured. The
+only way around it is to never send the whole file in one request.
+
+tus solves both problems. The [tus protocol v1](https://tus.io/protocols/resumable-upload)
+at `/uploads` breaks a big file into chunks and tracks the progress in
+SQLite. Each PATCH is a small request — easily under the proxy limit —
+so a 1GB file uploads as thousands of small, proxy-safe requests. When
+a connection drops, the client asks the server where it stopped and
+continues from there — no restart, no lost progress.
+
+If your uploads are small (under ~100MB) and the connection is
+reliable, use [form data](/uploads/form-data/) instead — it's simpler
+and has no protocol overhead. tus is for when big files are the point.
+
+## Protocol coverage
+
+Core protocol + five extensions, all spec-compliant:
+
+- **Core**: OPTIONS (capabilities), POST (creation → 201 + `Location`),
+  HEAD (`Upload-Offset`/`Upload-Length`), PATCH (`application/offset+octet-stream`,
+  415/409/413 error codes)
+- **creation** / **creation-with-upload**: `Upload-Metadata` (base64
+  key-value pairs), initial chunk on POST
+- **termination**: DELETE → 204, file + row removed
+- **expiration**: `Upload-Expires` + background sweep
+- **checksum**: `Upload-Checksum` (sha1/256/384/512/md5, 460 on mismatch)
+- `X-HTTP-Method-Override` hook for clients without PATCH/DELETE
 
 ## Protocol coverage
 

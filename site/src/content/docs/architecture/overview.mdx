@@ -5,9 +5,9 @@ description: How the pieces fit together.
 
 ```
 src/
-├── index.ts                # entry: build assets (dev), Bun.serve, graceful shutdown
+├── index.ts                # entry: build assets (dev), dynamic port (dev), Bun.serve, graceful shutdown
 ├── server/
-│   ├── app.ts              # composition: middleware order, onError, notFound, routes
+│   ├── app.ts              # composition: logging, CSRF, secureHeaders, rate limit, onError, routes
 │   ├── config.ts           # validated env config (fails fast at startup)
 │   ├── db.ts               # bun:sqlite: connection + ALL prepared statements
 │   ├── migrations.ts       # SQL migration runner

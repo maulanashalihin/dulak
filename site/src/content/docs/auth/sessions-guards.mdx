@@ -47,7 +47,15 @@ mismatched host get 403.
 
 ## Rate limiting
 
-Auth endpoints are rate-limited by an in-memory fixed-window limiter keyed by
-`X-Forwarded-For`/peer IP (Bun's `server.requestIP` via `c.env`). Configure
-via `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW`. Swap the store for
-Redis behind the same hook signature when scaling horizontally.
+Two layers of in-memory fixed-window rate limiting, both keyed by
+`X-Forwarded-For`/peer IP (Bun's `server.requestIP` via `c.env`):
+
+1. **Global** (`app.ts`) — DDoS baseline on all routes, excludes `/health`,
+   `/assets/*`, and `/.well-known/*`. Configure via
+   `RATE_LIMIT_GLOBAL_MAX` / `RATE_LIMIT_GLOBAL_WINDOW` (default 200/60s).
+2. **Auth** (`auth.routes.ts`) — stricter layer on auth endpoints
+   (brute-force protection). Configure via `RATE_LIMIT_AUTH_MAX` /
+   `RATE_LIMIT_AUTH_WINDOW` (default 30/60s).
+
+Swap the store for Redis behind the same hook signature when scaling
+horizontally.

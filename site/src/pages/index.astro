@@ -4,6 +4,7 @@ import Hero from "../components/Hero.astro";
 import StatsStrip from "../components/StatsStrip.astro";
 import BenchPreview from "../components/BenchPreview.astro";
 import FeatureGrid from "../components/FeatureGrid.astro";
+import WhyDulak from "../components/WhyDulak.astro";
 import TemplateShowcase from "../components/TemplateShowcase.astro";
 import Faq from "../components/Faq.astro";
 ---
@@ -12,6 +13,11 @@ import Faq from "../components/Faq.astro";
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
+    <title>Dulak — A full-stack starter that actually works</title>
+    <meta property="og:title" content="Dulak — A full-stack starter that actually works" />
+    <meta property="og:description" content="Hono + bun:sqlite + Inertia v3 (in-process SSR) on Bun. Auth, uploads, migrations, tests, Docker — wired end to end." />
+    <meta name="twitter:title" content="Dulak — A full-stack starter that actually works" />
+    <meta name="twitter:description" content="Hono + bun:sqlite + Inertia v3 (in-process SSR) on Bun. Auth, uploads, migrations, tests, Docker — wired end to end." />
     <meta name="description" content="Deliberately boring full-stack boilerplate — Hono + bun:sqlite + Inertia v3 (in-process SSR) on Bun." />
     <meta property="og:image" content="/og-image.webp" />
     <meta property="og:type" content="website" />
@@ -27,6 +33,7 @@ import Faq from "../components/Faq.astro";
       </a>
       <nav class="dl-nav-links">
         <a href="/getting-started/introduction/">Docs</a>
+        <a href="/blog/">Notes</a>
         <a href="https://github.com/maulanashalihin/dulak" target="_blank" rel="noreferrer">GitHub</a>
       </nav>
     </header>
@@ -36,13 +43,39 @@ import Faq from "../components/Faq.astro";
       <StatsStrip />
       <BenchPreview />
       <FeatureGrid />
+      <WhyDulak />
       <TemplateShowcase />
       <Faq />
     </main>
 
     <footer class="dl-footer">
-      <span>Dulak — the Banjar word for <em>bored</em>.</span>
-      <a href="/getting-started/introduction/">Read the docs</a>
+      <div class="dl-footer-grid">
+        <div class="dl-footer-brand">
+          <div class="dl-footer-logo">
+            <img src="/favicon.svg" alt="" width="20" height="20" />
+            <span>Dulak</span>
+          </div>
+          <p>A deliberately boring full-stack boilerplate. Bun, Hono, SQLite, Inertia — one runtime, wired end to end.</p>
+        </div>
+        <div class="dl-footer-col">
+          <h4>Docs</h4>
+          <a href="/getting-started/introduction/">Getting Started</a>
+          <a href="/architecture/overview/">Architecture</a>
+          <a href="/deployment/docker/">Deployment</a>
+          <a href="/database/schema-migrations/">Database</a>
+        </div>
+        <div class="dl-footer-col">
+          <h4>More</h4>
+          <a href="/comparisons/">Comparisons</a>
+          <a href="/philosophy/">Philosophy</a>
+          <a href="/blog/">Notes</a>
+          <a href="https://github.com/maulanashalihin/dulak" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </div>
+      <div class="dl-footer-bottom">
+        <span>Dulak — the Banjar word for <em>bored</em>.</span>
+        <span>MIT License</span>
+      </div>
     </footer>
   </body>
 </html>
