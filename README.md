@@ -115,7 +115,7 @@ v4 with the same auth, roles, SSR, and test suite.
   (the CSP blocks external images), so avatars always load from our origin.
 - **Roles**: `user` / `admin`, `requireRole('admin')` guard, `/admin` page
   with paginated user list.
-- **Rate limiting** on auth endpoints (in-memory fixed window, per IP).
+- **Rate limiting**: global per-IP limit on all routes (DDoS baseline, excludes `/health` and `/assets/*`) plus a stricter layer on auth endpoints (brute-force protection). In-memory fixed window, configurable via env.
 - **Inertia v3**: full SSR on first load, SPA navigation after, asset-version
   negotiation (409 + reload), partial reloads, flash messages, shared props.
 - **Resumable uploads**: tus protocol v1 at `/uploads` (creation,
@@ -132,7 +132,7 @@ v4 with the same auth, roles, SSR, and test suite.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `PORT` | `4000` | |
+| `PORT` | `4000` | In dev, auto-increments to the next free port if busy (prod fails fast) |
 | `APP_URL` | `http://localhost:4000` | Absolute base URL (email links, OAuth redirects) |
 | `DATABASE_PATH` | `./data/app.sqlite` | |
 | `SSR` | `true` | `false` ships an empty shell — client renders from scratch (no hydrate) |
@@ -142,7 +142,8 @@ v4 with the same auth, roles, SSR, and test suite.
 | `MAILTRAP_API_TOKEN` | — | required when `MAIL_DRIVER=mailtrap` |
 | `MAILTRAP_INBOX_ID` | — | use the sandbox endpoint when set |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | enable Google OAuth (both or none) |
-| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `30` / `60` | requests per window on auth endpoints |
+| `RATE_LIMIT_GLOBAL_MAX` / `RATE_LIMIT_GLOBAL_WINDOW` | `200` / `60` | per-IP requests per window on all routes (excludes `/health`, `/assets/*`) |
+| `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_AUTH_WINDOW` | `30` / `60` | stricter per-IP limit on auth endpoints (brute-force protection) |
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
 | `TUS_MAX_SIZE` | `0` | max upload size in bytes (`0` = unlimited) |
 | `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL in seconds (`0` = no expiry) |
@@ -175,7 +176,7 @@ below so new code stays structurally consistent.
 src/
 ├── index.ts                # entry: build assets (dev), Bun.serve, graceful shutdown
 ├── server/
-│   ├── app.ts              # composition: logging, CSRF, secureHeaders, onError, routes
+│   ├── app.ts              # composition: logging, CSRF, secureHeaders, rate limit, onError, routes
 │   ├── config.ts           # validated env config (fails fast)
 │   ├── db.ts               # bun:sqlite: connection, prepared statements
 │   ├── migrations.ts       # SQL migration runner
@@ -215,10 +216,10 @@ src/
 ## How the pieces fit
 
 - **Request lifecycle**: `requestLogger` (correlation id) → `checkOrigin`
-  (CSRF) → `secureHeaders` → inertia session resolve → guards + handler →
-  Inertia render (SSR HTML for browsers, JSON for `X-Inertia` XHR) →
-  `onError` (422 validation with friendly field messages, 500) / `notFound`
-  (404 Inertia page).
+  (CSRF) → `secureHeaders` → inertia session resolve → global rate limit →
+  guards + handler → Inertia render (SSR HTML for browsers, JSON for
+  `X-Inertia` XHR) → `onError` (422 validation with friendly field
+  messages, 500) / `notFound` (404 Inertia page).
 - **Auth**: argon2id via `Bun.password`; 256-bit random session tokens in
   SQLite; cookies httpOnly/`SameSite=Lax`/Secure-in-prod. Logout deletes the
   session row server-side. `passwordHash` never leaves the server.
@@ -226,9 +227,11 @@ src/
   `requireRole('admin')` (non-admins redirect to `/dashboard`). They return a
   Response to short-circuit the chain, or call `next()`.
 - **Rate limiting** is an in-memory fixed-window limiter keyed by
-  `X-Forwarded-For`/peer IP (Bun's `server.requestIP` via `c.env`), applied
-  to all auth endpoints. Swap the store for Redis behind the same hook
-  signature when scaling horizontally.
+  `X-Forwarded-For`/peer IP (Bun's `server.requestIP` via `c.env`). Two
+  layers: a global limiter in `app.ts` (DDoS baseline, excludes `/health`
+  and `/assets/*`) and a stricter one on auth routes (brute-force). Swap
+  the store for Redis behind the same hook signature when scaling
+  horizontally.
 - **Inertia v3 protocol** (`inertia.ts`): full HTML with SSR markup +
   `data-page` JSON for browser visits; JSON page payloads for XHR;
   `409 + X-Inertia-Location` on asset-version mismatch; partial reloads via

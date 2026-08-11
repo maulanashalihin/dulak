@@ -13,45 +13,10 @@
  * here is Hono-specific beyond the type names.
  */
 import type { Page } from "@inertiajs/core";
+import { renderPage } from "../client/ssr";
 import type { FlashData, SharedPageProps } from "../shared/types";
 import { config } from "./config";
 import { clearFlash } from "./auth";
-
-/**
- * Lazy-loaded SSR renderer. dist/ssr.js is built by buildClientAssets()
- * with the framework plugin; a static import of src/client/ssr.ts would fail
- * at module load (its .vue/.svelte imports need the plugin), and a literal
- * import of dist/ssr.js would fail to typecheck on a fresh clone (dist/ is
- * gitignored). The variable specifier keeps tsc from resolving it while Bun
- * loads the real path at runtime.
- */
-type RenderPage = (page: Page) => Promise<{ head: string[]; body: string }>;
-const SSR_RENDERER = "../../dist/ssr.js";
-// Cache key appended to the import specifier so a rebuild (which overwrites
-// dist/ssr.js on disk) can bust Bun's module cache and load the fresh module.
-// tsc cannot resolve an interpolated specifier, which is exactly why the
-// original code used a non-literal const — the interpolation preserves that.
-let ssrCacheKey = 0;
-let renderPageFn: RenderPage | null = null;
-async function renderPage(page: Page): Promise<{ head: string[]; body: string }> {
-	if (!renderPageFn) {
-		const mod = (await import(
-			`${SSR_RENDERER}?v=${ssrCacheKey}`
-		)) as { renderPage: RenderPage };
-		renderPageFn = mod.renderPage;
-	}
-	return renderPageFn(page);
-}
-
-/**
- * Dev-only: drop the cached SSR module so the next render picks up a freshly
- * built dist/ssr.js. Called by the client watcher after rebuilding client
- * assets; a no-op in production (the watcher is never started there).
- */
-export function invalidateSsrRenderer(): void {
-	renderPageFn = null;
-	ssrCacheKey++;
-}
 
 export interface InertiaAssets {
 	/** Asset version used for cache busting + Inertia version negotiation. */
@@ -190,7 +155,7 @@ export class Inertia {
 	 * Non-SSR body: the Inertia v3 page payload inlined as JSON in a
 	 * `<script data-page>` tag, plus an empty mount point. Mirrors the wire
 	 * format `buildSSRBody` produces but omits `data-server-rendered` and the
-	 * rendered HTML, so the client does a plain mount (no hydrate).
+	 * rendered HTML, so the client does a plain `createRoot` render.
 	 */
 	private clientBody(page: Page): string {
 		const json = JSON.stringify(page).replace(/\//g, "\\/");
