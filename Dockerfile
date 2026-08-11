@@ -7,10 +7,8 @@ COPY . .
 RUN bun run build
 
 FROM oven/bun:1.3-alpine
-# The runtime stage has no curl (it exists only in the build stage) —
-# install it here or the docker-compose healthcheck (`curl -f /health`)
-# fails with "command not found" and the container reads unhealthy.
-RUN apk add --no-cache curl
+# curl: docker-compose healthcheck. su-exec: drop privileges in entrypoint.
+RUN apk add --no-cache curl su-exec
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json bun.lock ./
@@ -19,6 +17,13 @@ COPY --from=build /app/dist ./dist
 COPY src ./src
 COPY migrations ./migrations
 COPY scripts ./scripts
+COPY docker-entrypoint.sh /usr/local/bin/dulak-entrypoint.sh
+RUN chmod +x /usr/local/bin/dulak-entrypoint.sh
+# /app/data is the SQLite + uploads volume (bind-mounted in compose).
+# Pre-create with bun ownership; the entrypoint re-fixes after the mount.
+RUN mkdir -p /app/data && chown -R bun:bun /app
 EXPOSE 4000
-# bun runs TS directly; dist/assets are prebuilt in the build stage.
+# Container starts as root so the entrypoint can fix bind-mount ownership,
+# then drops to the non-root bun user (UID 1000) before exec'ing the app.
+ENTRYPOINT ["/usr/local/bin/dulak-entrypoint.sh"]
 CMD ["bun", "run", "src/index.ts"]
