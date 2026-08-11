@@ -9,6 +9,10 @@
 #   your-domain.com      → your domain (or "none" if no domain yet)
 #   /opt/dulak           → where to install on the server (or keep as-is)
 #   APP_PORT             → pick a port (e.g. 4000, 8084, 9090)
+#
+# Security: the container starts as root only to fix the ./data bind-mount
+# ownership, then drops to a non-root user (bun, UID 1000) before the app
+# starts. No manual permission setup needed — the entrypoint handles it.
 
 Deploy my Dulak app on my VPS using Docker. Here are the details:
 
@@ -33,6 +37,8 @@ Steps:
 7. Wait for the container to be healthy (check with `docker compose ps`).
 8. If the port is not in UFW rules, allow it: sudo ufw allow <port>/tcp.
 9. Verify: curl http://localhost:<port>/health should return 200.
+   Also confirm the app runs as non-root: docker compose exec app id
+   should output uid=1000(bun), NOT uid=0(root).
 10. Save these three lines to a file called `deploy.env` in my local
     project root (NOT on the server) and add it to .gitignore.
     Use the actual values from above (not the placeholders):
