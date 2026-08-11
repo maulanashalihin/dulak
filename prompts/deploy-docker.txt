@@ -1,6 +1,6 @@
 # First deploy — Docker
 #
-# Edit the four placeholders below, then paste this entire file
+# Edit the five placeholders below, then paste this entire file
 # to your AI agent (omp.sh, Claude Code, Cursor, etc.)
 #
 # Placeholders to replace:
@@ -8,6 +8,7 @@
 #   YOUR_USER/YOUR_REPO  → your GitHub repo (e.g. maulanashalihin/dulak)
 #   your-domain.com      → your domain (or "none" if no domain yet)
 #   /opt/dulak           → where to install on the server (or keep as-is)
+#   APP_PORT             → pick a port (e.g. 4000, 8084, 9090)
 
 Deploy my Dulak app on my VPS using Docker. Here are the details:
 
@@ -15,31 +16,36 @@ Deploy my Dulak app on my VPS using Docker. Here are the details:
 - GitHub repo: https://github.com/YOUR_USER/YOUR_REPO.git
 - Domain: your-domain.com (or "none" if no domain yet)
 - Install path: /opt/dulak
+- App port: APP_PORT
 
 Steps:
 1. SSH into the server.
 2. Install Docker and Docker Compose if not already installed.
-3. Clone the repo to the install path.
-4. Copy .env.example to .env and change these three lines:
-   - PORT=4000
+3. Check if the app port is already in use (ss -tlnp | grep APP_PORT).
+   If it is, pick the next available port and use that instead.
+4. Clone the repo to the install path.
+5. Copy .env.example to .env and change these three lines:
+   - PORT=<the port you chose>
    - NODE_ENV=production
-   - APP_URL=https://your-domain.com (or http://SERVER_IP:4000 if no domain)
+   - APP_URL=https://your-domain.com (or http://SERVER_IP:<port> if no domain)
    Leave the rest as-is (DATABASE_PATH is relative, works anywhere).
-5. Run `docker compose up -d --build`.
-6. Wait for the container to be healthy (check with `docker compose ps`).
-7. Verify: curl http://localhost:4000/health should return 200.
-8. Save these two lines to a file called `deploy.env` in my local
-   project root (NOT on the server) and add it to .gitignore.
-   Use the actual SSH and path values from above (not the placeholders):
-   ```
-   DEPLOY_SSH=<the USER@SERVER_IP from above>
-   DEPLOY_PATH=<the install path from above>
-   ```
-9. Tell me the status and any issues.
+6. Run `docker compose up -d --build`.
+7. Wait for the container to be healthy (check with `docker compose ps`).
+8. If the port is not in UFW rules, allow it: sudo ufw allow <port>/tcp.
+9. Verify: curl http://localhost:<port>/health should return 200.
+10. Save these three lines to a file called `deploy.env` in my local
+    project root (NOT on the server) and add it to .gitignore.
+    Use the actual values from above (not the placeholders):
+    ```
+    DEPLOY_SSH=<the USER@SERVER_IP from above>
+    DEPLOY_PATH=<the install path from above>
+    DEPLOY_PORT=<the port you chose in step 3>
+    ```
+11. Tell me the status, the port used, and any issues.
 
-# After the agent finishes, your app is live on port 4000 inside a
+# After the agent finishes, your app is live on the chosen port inside a
 # container. For HTTPS, use the same reverse proxy prompt as the
 # systemd path:
 #
 #   Now set up a reverse proxy for HTTPS. Use Caddy in front of
-#   port 4000, with automatic TLS for your-domain.com.
+#   the app port, with automatic TLS for your-domain.com.
