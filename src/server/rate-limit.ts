@@ -1,8 +1,8 @@
 /**
  * Minimal in-memory fixed-window rate limiter — zero dependencies.
- * Registered on the auth routes; Hono middleware MUST call `next()` to
- * continue the chain (unlike Elysia beforeHandle, where returning undefined
- * continued).
+ * Two layers: a global limiter in app.ts (DDoS baseline, excludes /health
+ * and /assets/*) and a stricter one on auth routes (brute-force protection).
+ * Hono middleware MUST call `next()` to continue the chain.
  *
  * Notes:
  *  - Per-process memory; fine for a single instance. For horizontal scaling
@@ -21,6 +21,15 @@ import type { AppEnv } from "./inertia-middleware";
 export interface RateLimitOptions {
 	max: number;
 	windowSeconds: number;
+	/**
+	 * When set, only paths in this list are counted/enforced. Required for
+	 * limiters mounted on Hono sub-apps: `app.route("/", subApp)` runs the
+	 * sub-app's `app.use()` middleware for EVERY path under the mount point,
+	 * so without a path filter an "auth" limiter also throttles unrelated
+	 * pages (/, /dashboard, …). Verified bug 2026-08-10 — 30 page loads per
+	 * minute per IP returned 429 site-wide.
+	 */
+	paths?: string[];
 }
 
 interface Bucket {
@@ -39,10 +48,15 @@ function clientKey(request: Request, server: BunServer | null): string {
 	return ip ?? "local";
 }
 
-export function rateLimit({ max, windowSeconds }: RateLimitOptions) {
+export function rateLimit(opts: RateLimitOptions) {
 	const buckets = new Map<string, Bucket>();
 
 	return async (c: Context<AppEnv>, next: Next) => {
+		// Path filter — only enforce for the configured paths (see RateLimitOptions).
+		if (opts.paths) {
+			const pathname = new URL(c.req.url).pathname;
+			if (!opts.paths.includes(pathname)) return next();
+		}
 		const now = Date.now();
 		const key = clientKey(
 			c.req.raw,
@@ -60,13 +74,13 @@ export function rateLimit({ max, windowSeconds }: RateLimitOptions) {
 		if (!bucket || bucket.resetAt <= now) {
 			buckets.set(key, {
 				count: 1,
-				resetAt: now + windowSeconds * 1000,
+				resetAt: now + opts.windowSeconds * 1000,
 			});
 			return next();
 		}
 
 		bucket.count += 1;
-		if (bucket.count > max) {
+		if (bucket.count > opts.max) {
 			return new Response("Too many attempts. Please try again later.", {
 				status: 429,
 				headers: {

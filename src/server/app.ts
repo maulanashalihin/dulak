@@ -1,6 +1,6 @@
 /**
  * App composition: logging → CSRF origin check → security headers →
- * compression → inertia session → routes → error/not-found handlers.
+ * compression → inertia session → global rate limit → routes → error/not-found handlers.
  * Middleware runs in registration order — global middleware must precede
  * the routes they cover.
  */
@@ -9,6 +9,8 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
 import { compress } from "./compress";
+import { config } from "./config";
+import { rateLimit } from "./rate-limit";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { serveAsset } from "./assets";
 import { pingDb, toPublicUser } from "./db";
@@ -114,6 +116,22 @@ export function createApp(assets: InertiaAssets) {
 		}),
 	);
 	app.use(inertiaMiddleware(assets));
+	// Global rate limit (DDoS baseline) — applied to all routes except
+	// /health (orchestrator probes), /assets/* (bulk browser fetches), and
+	// /.well-known/* (DevTools probes). Auth endpoints get a stricter layer
+	// on top (see auth.routes.ts). The limiter is instantiated once so its
+	// bucket map persists across requests.
+	const globalLimiter = rateLimit({
+		max: config.rateLimit.globalMax,
+		windowSeconds: config.rateLimit.globalWindow,
+	});
+	const EXEMPT_PREFIXES = ["/assets/", "/.well-known/"] as const;
+	app.use((c, next) => {
+		const pathname = safeUrl(c.req.url).pathname;
+		if (pathname === "/health" || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p)))
+			return next();
+		return globalLimiter(c, next);
+	});
 
 	app.onError(async (err, c) => {
 		logError(c, err);
