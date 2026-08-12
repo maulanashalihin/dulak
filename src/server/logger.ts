@@ -1,15 +1,15 @@
 /**
- * Request logging + correlation id.
+ * Structured request logging (JSON lines) + correlation id.
  *
- * Log lines are batched: the per-request cost is one string push into an
- * in-memory buffer — no syscall on the hot path (console.log per request is
- * a write syscall each, and can block the event loop under backpressure).
- * A timer flushes the buffer to stdout every FLUSH_INTERVAL_MS, and the
- * 'exit' handler drains synchronously so shutdown never loses lines.
+ * Each log line is a JSON object written to stdout — parseable by Loki,
+ * ELK, Datadog, or any log aggregator without regex. Lines are batched:
+ * the per-request cost is one string push into an in-memory buffer (no
+ * syscall on the hot path). A timer flushes every FLUSH_INTERVAL_MS, and
+ * the 'exit' handler drains synchronously so shutdown never loses lines.
  * Errors are written immediately to stderr — never batched.
  *
- * /health and /assets/* still get the x-request-id header but produce no
- * log line (infrastructure noise, not user traffic).
+ * /health, /metrics, and /assets/* still get the x-request-id header but
+ * produce no log line (infrastructure noise, not user traffic).
  */
 import { randomBytes } from "node:crypto";
 import { writeSync } from "node:fs";
@@ -18,7 +18,7 @@ import type { AppEnv } from "./inertia-middleware";
 import { safeUrl } from "./url";
 
 const FLUSH_INTERVAL_MS = 50;
-const SILENT_PATHS: RegExp[] = [/^\/health$/, /^\/assets\//];
+const SILENT_PATHS = [/^\/health$/, /^\/metrics$/, /^\/assets\//];
 
 let buffer: string[] = [];
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -53,11 +53,19 @@ export const requestLogger = async (c: Context<AppEnv>, next: Next) => {
 
 	const result = await next();
 
-	const durationMs = (performance.now() - start).toFixed(1);
+	const durationMs = Number((performance.now() - start).toFixed(1));
 	c.res.headers.set("x-request-id", requestId);
 	if (!SILENT_PATHS.some((re) => re.test(pathname))) {
 		buffer.push(
-			`[req:${requestId}] ${method} ${pathname} -> ${c.res.status} (${durationMs}ms)`,
+			JSON.stringify({
+				ts: new Date().toISOString(),
+				level: c.res.status >= 500 ? "error" : c.res.status >= 400 ? "warn" : "info",
+				requestId,
+				method,
+				path: pathname,
+				status: c.res.status,
+				durationMs,
+			}),
 		);
 		schedule();
 	}
@@ -67,8 +75,14 @@ export const requestLogger = async (c: Context<AppEnv>, next: Next) => {
 export function logError(c: Context<AppEnv>, error: unknown): void {
 	const { pathname } = safeUrl(c.req.url);
 	const requestId = c.get("requestId") || "-";
-	console.error(
-		`[req:${requestId}] ${c.req.method} ${pathname} FAILED:`,
-		error,
-	);
+	const line = JSON.stringify({
+		ts: new Date().toISOString(),
+		level: "error",
+		requestId,
+		method: c.req.method,
+		path: pathname,
+		error: error instanceof Error ? error.message : String(error),
+		stack: error instanceof Error ? error.stack : undefined,
+	});
+	writeSync(2, `${line}\n`); // fd 2 = stderr — immediate, never batched
 }
