@@ -18,6 +18,7 @@ src/
 │   ├── mailer.ts           # mail drivers: log / resend / mailtrap
 │   ├── rate-limit.ts       # in-memory fixed-window rate limiter
 │   ├── logger.ts           # batched request logging + x-request-id
+│   ├── metrics.ts          # in-memory Prometheus/OpenMetrics counters + histograms
 │   ├── compress.ts         # gzip compression (assets + SSR HTML only)
 │   ├── security.ts         # CSRF origin check (headers via hono/secure-headers)
 │   ├── assets.ts           # Bun.build pipeline + manifest + static serving
