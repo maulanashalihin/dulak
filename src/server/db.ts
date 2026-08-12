@@ -18,6 +18,7 @@ export interface UserRow {
 	role: Role;
 	googleId: string | null;
 	avatarUrl: string | null;
+	emailVerified: number; // 0 or 1 (SQLite boolean)
 	createdAt: string;
 }
 
@@ -36,7 +37,7 @@ export interface PasswordResetRow {
 }
 
 /** The user shape that may leave the server (never includes passwordHash). */
-export type PublicUser = Omit<UserRow, "passwordHash" | "googleId">;
+export type PublicUser = Omit<UserRow, "passwordHash" | "googleId" | "emailVerified"> & { emailVerified: boolean };
 
 export const toPublicUser = (row: UserRow): PublicUser => ({
 	id: row.id,
@@ -44,9 +45,9 @@ export const toPublicUser = (row: UserRow): PublicUser => ({
 	email: row.email,
 	role: row.role,
 	avatarUrl: row.avatarUrl,
+	emailVerified: row.emailVerified === 1,
 	createdAt: row.createdAt,
 });
-
 if (config.dbPath !== ":memory:") mkdirSync(dirname(config.dbPath), { recursive: true });
 
 export const db = new Database(config.dbPath, { create: true });
@@ -87,13 +88,13 @@ export const createGoogleUser = db.query<
 	`INSERT INTO users (name, email, password_hash, google_id, avatar_url) VALUES (?, ?, '', ?, ?) RETURNING id`,
 );
 export const findUserByEmail = db.query<UserRow, [string]>(
-	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, created_at AS createdAt FROM users WHERE email = ?`,
+	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, email_verified AS emailVerified, created_at AS createdAt FROM users WHERE email = ?`,
 );
 export const findUserById = db.query<UserRow, [number]>(
-	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, created_at AS createdAt FROM users WHERE id = ?`,
+	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, email_verified AS emailVerified, created_at AS createdAt FROM users WHERE id = ?`,
 );
 export const findUserByGoogleId = db.query<UserRow, [string]>(
-	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, created_at AS createdAt FROM users WHERE google_id = ?`,
+	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, email_verified AS emailVerified, created_at AS createdAt FROM users WHERE google_id = ?`,
 );
 export const linkGoogleAccount = db.query<null, [string, number]>(
 	`UPDATE users SET google_id = ? WHERE id = ?`,
@@ -111,10 +112,10 @@ export const countUsers = db.query<{ n: number }, []>(
 	`SELECT COUNT(*) AS n FROM users`,
 );
 export const listUsers = db.query<UserRow, [number, number]>(
-	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, created_at AS createdAt FROM users ORDER BY id DESC LIMIT ? OFFSET ?`,
+	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, email_verified AS emailVerified, created_at AS createdAt FROM users ORDER BY id DESC LIMIT ? OFFSET ?`,
 );
 export const recentUsers = db.query<UserRow, [number]>(
-	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, created_at AS createdAt FROM users ORDER BY id DESC LIMIT ?`,
+	`SELECT id, name, email, password_hash AS passwordHash, role, google_id AS googleId, avatar_url AS avatarUrl, email_verified AS emailVerified, created_at AS createdAt FROM users ORDER BY id DESC LIMIT ?`,
 );
 
 // ---------------------------------------------------------------------------
@@ -151,6 +152,34 @@ export const deletePasswordResetsByEmail = db.query<null, [string]>(
 	`DELETE FROM password_resets WHERE email = ?`,
 );
 
+// ---------------------------------------------------------------------------
+// Email verification
+// ---------------------------------------------------------------------------
+
+export interface EmailVerificationRow {
+	tokenHash: string;
+	userId: number;
+	expiresAt: string;
+}
+
+export const insertEmailVerification = db.query<
+	null,
+	[string, number, string]
+>(
+	`INSERT INTO email_verifications (token_hash, user_id, expires_at) VALUES (?, ?, ?)`,
+);
+export const findEmailVerification = db.query<EmailVerificationRow, [string]>(
+	`SELECT token_hash AS tokenHash, user_id AS userId, expires_at AS expiresAt FROM email_verifications WHERE token_hash = ?`,
+);
+export const deleteEmailVerification = db.query<null, [string]>(
+	`DELETE FROM email_verifications WHERE token_hash = ?`,
+);
+export const deleteUserEmailVerifications = db.query<null, [number]>(
+	`DELETE FROM email_verifications WHERE user_id = ?`,
+);
+export const verifyUserEmail = db.query<null, [number]>(
+	`UPDATE users SET email_verified = 1 WHERE id = ?`,
+);
 // ---------------------------------------------------------------------------
 // Uploads (tus)
 // ---------------------------------------------------------------------------

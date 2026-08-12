@@ -71,6 +71,7 @@ function inertiaFromContext(
 			user: row ? toPublicUser(row) : null,
 			flash: readFlash(sessionToken),
 			sessionToken,
+			cspNonce: c.get("cspNonce") ?? "",
 		},
 		assets,
 	);
@@ -90,32 +91,35 @@ export function createApp(assets: InertiaAssets) {
 			xFrameOptions: "DENY",
 			referrerPolicy: "strict-origin-when-cross-origin",
 			permissionsPolicy: { camera: [], microphone: [], geolocation: [] },
-			// script-src/style-src 'unsafe-inline': Inertia embeds the page
-			// payload as an inline <script type="application/json"> plus the
-			// theme-boot script, and the progress bar injects inline styles.
-			// For /uploads responses the content is attacker-controlled bytes
-			// (served with a client-declared content-type) — script-src 'none'
-			// blocks inline/external script execution there (stored-XSS guard;
-			// a sandbox CSP can't be set per-path through secureHeaders).
-			contentSecurityPolicy: {
-				defaultSrc: ["'self'"],
-				scriptSrc: [
-					(c) =>
-						UPLOADS_RE.test(safeUrl(c.req.url).pathname)
-							? "'none'"
-							: "'self' 'unsafe-inline'",
-				],
-				styleSrc: ["'self'", "'unsafe-inline'"],
-				imgSrc: ["'self'", "data:"],
-				fontSrc: ["'self'"],
-				connectSrc: ["'self'"],
-				frameAncestors: ["'none'"],
-				baseUri: ["'self'"],
-				formAction: ["'self'"],
-			},
+			// CSP is set per-request below (needs the per-request nonce from
+			// inertiaMiddleware) — not here, where it would be static.
 		}),
 	);
 	app.use(inertiaMiddleware(assets));
+	// Per-request CSP with nonce — must run after inertiaMiddleware (which
+	// generates the nonce). Inline scripts (theme boot, page payload) and
+	// inline styles (Inertia progress bar) carry the nonce; 'unsafe-inline'
+	// is no longer needed. /uploads responses get script-src 'none' (stored-XSS
+	// guard: content is attacker-controlled bytes with client-declared content-type).
+	app.use(async (c, next) => {
+		await next();
+		const nonce = c.get("cspNonce");
+		const isUploads = UPLOADS_RE.test(safeUrl(c.req.url).pathname);
+		const csp = [
+			`default-src 'self'`,
+			isUploads
+				? `script-src 'none'`
+				: `script-src 'self' 'nonce-${nonce}'`,
+			`style-src 'self' 'nonce-${nonce}'`,
+			`img-src 'self' data:`,
+			`font-src 'self'`,
+			`connect-src 'self'`,
+			`frame-ancestors 'none'`,
+			`base-uri 'self'`,
+			`form-action 'self'`,
+		].join("; ");
+		c.res.headers.set("content-security-policy", csp);
+	});
 	// Global rate limit (DDoS baseline) — applied to all routes except
 	// /health (orchestrator probes), /assets/* (bulk browser fetches), and
 	// /.well-known/* (DevTools probes). Auth endpoints get a stricter layer
