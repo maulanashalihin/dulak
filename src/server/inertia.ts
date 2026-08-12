@@ -22,7 +22,7 @@ import { clearFlash } from "./auth";
 // once and caches normally.
 let ssrRenderer: typeof import("../client/ssr") | null = null;
 async function getRenderer() {
-	if (!ssrRenderer) ssrRenderer = await import("../client/ssr");
+	if (!ssrRenderer) ssrRenderer = await import("../../dist/ssr.js");
 	return ssrRenderer;
 }
 
