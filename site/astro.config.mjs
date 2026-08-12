@@ -65,6 +65,7 @@ export default defineConfig({
 							label: "Request lifecycle",
 							slug: "architecture/request-lifecycle",
 						},
+						{ label: "Inertia adapter", slug: "architecture/inertia" },
 						{ label: "Rate limiting", slug: "architecture/rate-limiting" },
 						{ label: "Mailer", slug: "architecture/mailer" },
 					],
@@ -75,6 +76,7 @@ export default defineConfig({
 						{ label: "Sessions & guards", slug: "auth/sessions-guards" },
 						{ label: "Google OAuth", slug: "auth/google-oauth" },
 						{ label: "Password reset", slug: "auth/password-reset" },
+						{ label: "Email verification", slug: "auth/email-verification" },
 					],
 				},
 				{
