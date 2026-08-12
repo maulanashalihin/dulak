@@ -9,6 +9,7 @@ import { Hono } from "hono";
 import {
 	clearPasswordResets,
 	clearSessionCookie,
+	createEmailVerification,
 	createPasswordReset,
 	createSession,
 	deleteSessionByToken,
@@ -17,6 +18,7 @@ import {
 	requireAuth,
 	setFlash,
 	setSessionCookie,
+	verifyEmailToken,
 	verifyPassword,
 	verifyPasswordReset,
 } from "../auth";
@@ -26,7 +28,6 @@ import type { AppEnv } from "../inertia-middleware";
 import { sendMail } from "../mailer";
 import { rateLimit } from "../rate-limit";
 import { validateJson } from "../validation";
-
 // `additionalProperties: false` keeps the strict-by-default behavior Elysia's
 // TypeBox wrapper had (plain @sinclair/typebox allows extra props).
 const registerBody = t.Object(
@@ -67,6 +68,8 @@ type ResetPasswordBody = Static<typeof resetPasswordBody>;
 const LOGIN_NOTICES: Record<string, string> = {
 	password_reset: "Your password has been updated. Please sign in.",
 	google_failed: "Google sign-in failed. Please try again or use email.",
+	email_verified: "Your email has been verified. Please sign in.",
+	invalid_verification: "This verification link is invalid or has expired.",
 };
 
 /**
@@ -140,6 +143,17 @@ export const authRoutes = () => {
 		if (c.var.sessionToken) deleteSessionByToken(c.var.sessionToken);
 		const session = createSession(user.id);
 		setSessionCookie(c, session.token, session.expiresAt);
+		// Send verification email (best-effort — don't block registration).
+		const token = createEmailVerification(user.id);
+		const link = `${config.appUrl}/verify-email?token=${token}`;
+		await sendMail({
+			to: body.email,
+			subject: "Verify your email",
+			text: `Welcome to Dulak!\n\nPlease verify your email address:\n${link}\n\nThis link expires in 24 hours.`,
+			html: `<p>Welcome to Dulak!</p><p><a href="${link}">Verify your email</a></p><p>This link expires in 24 hours.</p>`,
+		}).catch((err) =>
+			console.error("[mail] failed to send verification email:", err),
+		);
 		return page.redirect("/dashboard");
 	});
 
@@ -205,6 +219,15 @@ export const authRoutes = () => {
 		updateUserPassword.run(passwordHash, user.id);
 		clearPasswordResets(user.email);
 		return page.redirect("/login?notice=password_reset");
+	});
+	// GET /verify-email?token=... — verify email address, redirect to login.
+	app.get("/verify-email", (c) => {
+		const token = c.req.query("token") ?? "";
+		const userId = verifyEmailToken(token);
+		if (!userId) {
+			return c.var.inertia.redirect("/login?notice=invalid_verification");
+		}
+		return c.var.inertia.redirect("/login?notice=email_verified");
 	});
 
 	return app;
