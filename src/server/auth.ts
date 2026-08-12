@@ -11,15 +11,20 @@ import type { Context, Next } from "hono";
 import { generateCookie } from "hono/cookie";
 import type { FlashData, Role } from "../shared/types";
 import {
+	deleteEmailVerification,
 	deleteOtherSessions,
 	deletePasswordResetsByEmail,
 	deleteSession,
+	deleteUserEmailVerifications,
+	findEmailVerification,
 	findPasswordReset,
 	findSession,
 	findUserById,
+	insertEmailVerification,
 	insertPasswordReset,
 	insertSession,
 	updateSessionFlash,
+	verifyUserEmail,
 	type UserRow,
 } from "./db";
 import type { AppEnv } from "./inertia-middleware";
@@ -29,6 +34,7 @@ import { safeUrl } from "./url";
 export const SESSION_COOKIE = "session";
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 export const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+export const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const isProd = process.env.NODE_ENV === "production";
 
 // ---------------------------------------------------------------------------
@@ -141,6 +147,35 @@ export function clearPasswordResets(email: string): void {
 	deletePasswordResetsByEmail.run(email);
 }
 
+// ---------------------------------------------------------------------------
+// Email verification tokens (hashed at rest; the raw token goes in the email)
+// ---------------------------------------------------------------------------
+
+/** Create a verification token for `userId` and return the raw token to email out. */
+export function createEmailVerification(userId: number): string {
+	const token = randomBytes(32).toString("hex");
+	deleteUserEmailVerifications.run(userId);
+	insertEmailVerification.run(
+		hashToken(token),
+		userId,
+		new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS).toISOString(),
+	);
+	return token;
+}
+
+/** Verify a raw email verification token. Returns the user id on success
+ *  (and consumes the token + marks the user verified), or null on failure. */
+export function verifyEmailToken(token: string): number | null {
+	const row = findEmailVerification.get(hashToken(token));
+	if (!row) return null;
+	if (Date.now() > new Date(row.expiresAt).getTime()) {
+		deleteEmailVerification.run(hashToken(token));
+		return null;
+	}
+	verifyUserEmail.run(row.userId);
+	deleteUserEmailVerifications.run(row.userId);
+	return row.userId;
+}
 // ---------------------------------------------------------------------------
 // Cookies (hono/cookie helpers — set on the Hono context)
 //
