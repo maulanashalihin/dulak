@@ -65,6 +65,8 @@ export default defineConfig({
 							label: "Request lifecycle",
 							slug: "architecture/request-lifecycle",
 						},
+						{ label: "Rate limiting", slug: "architecture/rate-limiting" },
+						{ label: "Mailer", slug: "architecture/mailer" },
 					],
 				},
 				{
