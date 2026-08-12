@@ -57,5 +57,5 @@ Two layers of in-memory fixed-window rate limiting, both keyed by
    (brute-force protection). Configure via `RATE_LIMIT_AUTH_MAX` /
    `RATE_LIMIT_AUTH_WINDOW` (default 30/60s).
 
-Swap the store for Redis behind the same hook signature when scaling
-horizontally.
+See [Rate limiting](/architecture/rate-limiting/) for the full design —
+client identification, memory management, and the sub-app path filter bug.

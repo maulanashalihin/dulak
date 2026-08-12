@@ -1,0 +1,87 @@
+---
+title: Rate limiting
+description: Two-layer fixed-window rate limiter — DDoS baseline and brute-force protection.
+---
+
+Dulak ships a hand-rolled, zero-dependency rate limiter (`src/server/rate-limit.ts`).
+It uses an in-memory fixed-window algorithm: each client IP gets a bucket with a
+count and a reset timestamp. When the count exceeds `max` within the window, the
+request gets a `429 Too Many Requests` with a `Retry-After` header.
+
+## Two layers
+
+```mermaid
+flowchart LR
+  Request --> Global["Global limiter<br/>200 req / 60s / IP"]
+  Global -->|pass| Routes
+  Global -->|429| Blocked["Too many requests"]
+  Routes --> AuthRoutes["Auth routes<br/>30 req / 60s / IP"]
+  AuthRoutes -->|429| Blocked
+  AuthRoutes -->|pass| Handler
+```
+
+1. **Global** (`app.ts`) — DDoS baseline on all routes. Exempts `/health`,
+   `/metrics`, `/assets/*`, and `/.well-known/*` (infrastructure probes and
+   bulk asset fetches). Configure via `RATE_LIMIT_GLOBAL_MAX` /
+   `RATE_LIMIT_GLOBAL_WINDOW` (default 200/60s).
+
+2. **Auth** (`auth.routes.ts`) — stricter layer on auth endpoints
+   (brute-force protection). Configure via `RATE_LIMIT_AUTH_MAX` /
+   `RATE_LIMIT_AUTH_WINDOW` (default 30/60s). Applied to `/login`,
+   `/register`, `/forgot-password`, `/reset-password`, `/logout`.
+
+Both layers are independent — a client hitting `/login` 31 times in 60s
+trips the auth limiter even if the global limiter hasn't fired.
+
+## Client identification
+
+The limiter keys on the client IP, resolved in this order:
+
+1. `X-Forwarded-For` first entry (trust this **only** behind a proxy that
+   sets it — Cloudflare, Caddy, Nginx).
+2. Peer IP from Bun's `server.requestIP(request)` (via `c.env`).
+3. `"local"` fallback (e.g. in tests where no server is available).
+
+## Memory management
+
+Buckets are stored in a `Map` keyed by IP. To prevent unbounded growth, the
+map is pruned opportunistically when it exceeds 10,000 entries — expired
+buckets (whose window has elapsed) are deleted. This is not a periodic
+sweep; it runs inline on the request that crosses the threshold.
+
+## The sub-app path filter bug
+
+Hono's `app.route("/", subApp)` runs the sub-app's `app.use()` middleware
+for **every** path under the mount point — not just the paths the sub-app
+defines. Without a `paths` filter, an auth limiter mounted on
+`authRoutes()` would also throttle `/`, `/dashboard`, and every other
+route (verified bug: 30 page loads per minute per IP returned 429
+site-wide).
+
+The fix is the `paths` option in `RateLimitOptions`:
+
+```ts
+app.use(
+  rateLimit({
+    max: config.rateLimit.authMax,
+    windowSeconds: config.rateLimit.authWindow,
+    paths: ["/login", "/register", "/forgot-password", "/reset-password", "/logout"],
+  }),
+);
+```
+
+The limiter checks `paths` before counting — if the request path isn't in
+the list, it calls `next()` immediately.
+
+## Why not hono-rate-limiter?
+
+`hono-rate-limiter`'s key generator leans on `hono/conninfo`, whose ESM
+build is an empty stub in Hono 4.13. The hand-rolled version keeps the
+exact same semantics (peer IP via `c.env`) with zero dependencies.
+
+## Scaling horizontally
+
+The limiter is per-process. For multiple instances behind a load balancer,
+swap the in-memory `Map` for a shared store (Redis) behind the same
+`rateLimit(opts)` hook signature — the middleware contract doesn't change,
+only the bucket store does.
