@@ -17,6 +17,7 @@ import { pingDb, toPublicUser } from "./db";
 import { Inertia, type InertiaAssets } from "./inertia";
 import { inertiaMiddleware, type AppEnv } from "./inertia-middleware";
 import { logError, requestLogger } from "./logger";
+import { recordRequest, renderMetrics } from "./metrics";
 import { authRoutes, VALIDATION_MESSAGES } from "./routes/auth.routes";
 import { googleOauthRoutes } from "./routes/google-oauth.routes";
 import { pageRoutes } from "./routes/pages.routes";
@@ -120,11 +121,26 @@ export function createApp(assets: InertiaAssets) {
 		].join("; ");
 		c.res.headers.set("content-security-policy", csp);
 	});
+	// Metrics recording — after next() so we know the final status + duration.
+	// /metrics itself is excluded (scrape should not count as user traffic).
+	app.use(async (c, next) => {
+		const start = performance.now();
+		await next();
+		const pathname = safeUrl(c.req.url).pathname;
+		if (pathname !== "/metrics") {
+			recordRequest(
+				c.req.method,
+				pathname,
+				c.res.status,
+				(performance.now() - start) / 1000,
+			);
+		}
+	});
 	// Global rate limit (DDoS baseline) — applied to all routes except
-	// /health (orchestrator probes), /assets/* (bulk browser fetches), and
-	// /.well-known/* (DevTools probes). Auth endpoints get a stricter layer
-	// on top (see auth.routes.ts). The limiter is instantiated once so its
-	// bucket map persists across requests.
+	// /health, /metrics (orchestrator/Prometheus probes), /assets/* (bulk
+	// browser fetches), and /.well-known/* (DevTools probes). Auth endpoints
+	// get a stricter layer on top (see auth.routes.ts). The limiter is
+	// instantiated once so its bucket map persists across requests.
 	const globalLimiter = rateLimit({
 		max: config.rateLimit.globalMax,
 		windowSeconds: config.rateLimit.globalWindow,
@@ -132,7 +148,11 @@ export function createApp(assets: InertiaAssets) {
 	const EXEMPT_PREFIXES = ["/assets/", "/.well-known/"] as const;
 	app.use((c, next) => {
 		const pathname = safeUrl(c.req.url).pathname;
-		if (pathname === "/health" || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p)))
+		if (
+			pathname === "/health" ||
+			pathname === "/metrics" ||
+			EXEMPT_PREFIXES.some((p) => pathname.startsWith(p))
+		)
 			return next();
 		return globalLimiter(c, next);
 	});
@@ -183,6 +203,15 @@ export function createApp(assets: InertiaAssets) {
 		pingDb.get();
 		return c.json({ status: "ok", uptime: process.uptime() });
 	});
+	// Prometheus/OpenMetrics scrape endpoint — no auth (orchestrator-visible
+	// like /health). Counters are in-memory; the gauge (active_sessions) is
+	// queried lazily on scrape.
+	app.get("/metrics", (c) =>
+		c.text(renderMetrics(), 200, {
+			"content-type": "text/plain; version=0.0.4; charset=utf-8",
+		}),
+	);
+
 	// Hono's tail wildcard produces no named param — derive the relative
 	// path from c.req.path (see uploads.routes.ts for the same pattern).
 	app.get("/assets/*", (c) => {
