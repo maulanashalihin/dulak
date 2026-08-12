@@ -8,6 +8,6 @@ deploy.env
 data/uploads/
 .playwright-mcp/
 *.png
-src/client/.tailwind.css
+.tailwind.css
 
 .llm-wiki/meta/
