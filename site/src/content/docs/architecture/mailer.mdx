@@ -1,0 +1,88 @@
+---
+title: Mailer
+description: Swappable mail drivers — log, Resend, Mailtrap — with zero dependencies.
+---
+
+Dulak sends two kinds of email: password reset links and email verification
+links. Both flow through a single `sendMail()` function in
+`src/server/mailer.ts` with a swappable driver selected by `MAIL_DRIVER`.
+
+## Drivers
+
+| Driver | Use case | Config |
+| --- | --- | --- |
+| `log` | Development and tests | None — prints to console, records in `sentMails` |
+| `resend` | Production | `RESEND_API_KEY` |
+| `mailtrap` | Staging / QA | `MAILTRAP_API_TOKEN`, optional `MAILTRAP_INBOX_ID` for sandbox |
+
+### log
+
+Prints a formatted box to the console and pushes the message into the
+`sentMails` array. Tests assert against `sentMails` to verify the right
+email was sent with the right content — no SMTP server needed.
+
+```text
+┌─ mail (log driver) ────────────────────────────
+│ to:      user@example.com
+│ subject: Reset your password
+│ <p><a href="...">Reset password</a></p>
+└────────────────────────────────────────────────
+```
+
+### resend
+
+Calls `https://api.resend.com/emails` with a `Bearer` token. The `from`
+address comes from `MAIL_FROM`. HTML is sent if provided, otherwise the
+plain-text body.
+
+### mailtrap
+
+Calls Mailtrap's send API. When `MAILTRAP_INBOX_ID` is set, uses the
+sandbox endpoint (`sandbox.api.mailtrap.io`) — useful for staging where
+you want to inspect emails without sending real mail. Without the inbox
+ID, uses the production send endpoint (`send.api.mailtrap.io`).
+
+## Zero dependencies
+
+All three drivers use plain `fetch` — no SDK, no SMTP client. The
+`postJson` helper sends the request and throws on non-2xx with the
+provider's error body (truncated to 200 chars) so failures are
+debuggable:
+
+```ts
+async function postJson(url: string, token: string, body: unknown): Promise<void> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Mail provider error ${res.status}: ${detail.slice(0, 200)}`);
+  }
+}
+```
+
+## Where mail is sent
+
+| Route | Email | Trigger |
+| --- | --- | --- |
+| `POST /forgot-password` | Password reset link | User submits their email |
+| `POST /register` | Email verification link | New account created |
+
+Both are best-effort: if the mail provider fails, the error is caught by
+`app.onError` and the user sees a 500 — but the account or reset token is
+already created. This is deliberate: a mail outage should not block
+registration or password reset, and the token is valid for its full TTL
+(60 minutes for reset, 24 hours for verification) so the user can retry
+the email flow once the provider recovers.
+
+## Adding a driver
+
+1. Add the driver name to the `MailDriver` type in `config.ts`.
+2. Add a validation check (if the driver requires a key, fail fast when
+   it's missing — same pattern as `RESEND_API_KEY`).
+3. Add a `case` in `sendMail()` that calls `postJson` (or your provider's
+   API).
+4. Add the env vars to `.env.example` and the
+   [Configuration](/deployment/configuration/) table.
