@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .svelte-css-cache/
+.tailwind.css
 .env
 deploy.env
 *.sqlite
