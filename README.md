@@ -147,6 +147,7 @@ v4 with the same auth, roles, SSR, and test suite.
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
 | `TUS_MAX_SIZE` | `0` | max upload size in bytes (`0` = unlimited) |
 | `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL in seconds (`0` = no expiry) |
+| `METRICS_TOKEN` | — | bearer token for `/metrics`; if unset, `/metrics` is restricted to loopback only |
 
 Invalid/incomplete config fails fast at startup with a clear message
 (`src/server/config.ts`).

@@ -418,6 +418,53 @@ describe("infrastructure", () => {
 		expect((await res.json()).status).toBe("ok");
 	});
 
+	it("serves /metrics from loopback when METRICS_TOKEN is unset", async () => {
+		const res = await call("/metrics");
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toContain("text/plain");
+	});
+
+	it("rejects /metrics without a Bearer token when METRICS_TOKEN is set", async () => {
+		const { config } = await import("../src/server/config");
+		const saved = config.metricsToken;
+		config.metricsToken = "secret-metrics-token";
+		try {
+			const res = await call("/metrics");
+			expect(res.status).toBe(401);
+		} finally {
+			config.metricsToken = saved;
+		}
+	});
+
+	it("rejects /metrics with a wrong Bearer token", async () => {
+		const { config } = await import("../src/server/config");
+		const saved = config.metricsToken;
+		config.metricsToken = "secret-metrics-token";
+		try {
+			const res = await call("/metrics", {
+				headers: { authorization: "Bearer wrong-token" },
+			});
+			expect(res.status).toBe(401);
+		} finally {
+			config.metricsToken = saved;
+		}
+	});
+
+	it("serves /metrics with the correct Bearer token", async () => {
+		const { config } = await import("../src/server/config");
+		const saved = config.metricsToken;
+		config.metricsToken = "secret-metrics-token";
+		try {
+			const res = await call("/metrics", {
+				headers: { authorization: "Bearer secret-metrics-token" },
+			});
+			expect(res.status).toBe(200);
+			expect(await res.text()).toContain("http_requests_total");
+		} finally {
+			config.metricsToken = saved;
+		}
+	});
+
 	it("serves built asset files from /assets/*", async () => {
 		const { mkdirSync, rmSync, writeFileSync } = await import("node:fs");
 		mkdirSync("dist/assets", { recursive: true });
