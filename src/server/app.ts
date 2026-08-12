@@ -16,6 +16,7 @@ import { serveAsset } from "./assets";
 import { pingDb, toPublicUser } from "./db";
 import { Inertia, type InertiaAssets } from "./inertia";
 import { inertiaMiddleware, type AppEnv } from "./inertia-middleware";
+import type { Server } from "bun";
 import { logError, requestLogger } from "./logger";
 import { recordRequest, renderMetrics } from "./metrics";
 import { authRoutes, VALIDATION_MESSAGES } from "./routes/auth.routes";
@@ -203,14 +204,28 @@ export function createApp(assets: InertiaAssets) {
 		pingDb.get();
 		return c.json({ status: "ok", uptime: process.uptime() });
 	});
-	// Prometheus/OpenMetrics scrape endpoint — no auth (orchestrator-visible
-	// like /health). Counters are in-memory; the gauge (active_sessions) is
-	// queried lazily on scrape.
-	app.get("/metrics", (c) =>
-		c.text(renderMetrics(), 200, {
+	// Prometheus/OpenMetrics scrape endpoint. Protected: if METRICS_TOKEN
+	// is set, requires `Authorization: Bearer <token>`; otherwise restricted
+	// to loopback only (Prometheus scrapes locally in single-server deploys).
+	// Counters are in-memory; the gauge (active_sessions) is queried lazily.
+	app.get("/metrics", (c) => {
+		const token = config.metricsToken;
+		if (token) {
+			const auth = c.req.header("authorization") ?? "";
+			if (auth !== `Bearer ${token}`) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+		} else {
+			const server = c.env as unknown as Server<any> | undefined;
+			const ip = server?.requestIP?.(c.req.raw)?.address ?? "local";
+			if (ip !== "127.0.0.1" && ip !== "::1" && ip !== "local") {
+				return new Response("Forbidden", { status: 403 });
+			}
+		}
+		return c.text(renderMetrics(), 200, {
 			"content-type": "text/plain; version=0.0.4; charset=utf-8",
-		}),
-	);
+		});
+	});
 
 	// Hono's tail wildcard produces no named param — derive the relative
 	// path from c.req.path (see uploads.routes.ts for the same pattern).
