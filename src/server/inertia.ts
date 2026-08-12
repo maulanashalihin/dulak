@@ -13,10 +13,24 @@
  * here is Hono-specific beyond the type names.
  */
 import type { Page } from "@inertiajs/core";
-import { renderPage } from "../client/ssr";
 import type { FlashData, SharedPageProps } from "../shared/types";
 import { config } from "./config";
 import { clearFlash } from "./auth";
+
+// Dynamic import of the SSR renderer — allows dev hot-reload to invalidate
+// Bun's module cache (see client-watcher.ts). In production this resolves
+// once and caches normally.
+let ssrRenderer: typeof import("../client/ssr") | null = null;
+async function getRenderer() {
+	if (!ssrRenderer) ssrRenderer = await import("../client/ssr");
+	return ssrRenderer;
+}
+
+/** Invalidate the cached SSR renderer so the next render re-imports the
+ *  freshly built module. Called by client-watcher.ts after a dev rebuild. */
+export function invalidateSsrRenderer(): void {
+	ssrRenderer = null;
+}
 
 export interface InertiaAssets {
 	/** Asset version used for cache busting + Inertia version negotiation. */
@@ -143,6 +157,7 @@ export class Inertia {
 		let head: string[] = [];
 		let body: string;
 		if (config.ssr && !this.c.user) {
+			const { renderPage } = await getRenderer();
 			const rendered = await renderPage(page);
 			head = rendered.head;
 			body = rendered.body;
