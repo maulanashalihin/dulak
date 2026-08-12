@@ -15,20 +15,19 @@ asset version mismatch, and partial reloads.
 
 ## Request flow
 
-```mermaid
-flowchart TD
-  Browser -->|GET /login full page| Adapter
-  Browser -->|X-Inertia: true XHR| Adapter
-  Adapter -->|X-Inertia-Version matches?| Check{match?}
-  Check -->|yes| JSON["JSON page payload"]
-  Check -->|no| Reload409["409 + X-Inertia-Location"]
-  Adapter -->|browser visit| SSR{SSR enabled<br/>and guest?}
-  SSR -->|yes| Render["renderToString<br/>full HTML + data-server-rendered"]
-  SSR -->|no| Shell["empty shell + JSON<br/>client renders from scratch"]
-  Render --> Browser
-  Shell --> Browser
-  JSON --> Browser
-  Reload409 -->|full reload| Browser
+```
+Browser ──► GET /login (full page) ──► Adapter
+Browser ──► X-Inertia: true (XHR) ───► Adapter
+
+Adapter ──► X-Inertia-Version matches?
+              │
+              ├─ yes ──► JSON page payload ──► Browser
+              └─ no  ──► 409 + X-Inertia-Location ──► full reload ──► Browser
+
+Adapter ──► browser visit ──► SSR enabled and guest?
+              │
+              ├─ yes ──► renderToString → full HTML + data-server-rendered ──► Browser
+              └─ no  ──► empty shell + JSON (client renders from scratch) ──► Browser
 ```
 
 ### Browser visit (full page)
@@ -63,14 +62,15 @@ below.
 
 ## SSR: in-process, not a sidecar
 
-```mermaid
-flowchart LR
-  subgraph "Bun process"
-    Hono --> InertiaAdapter
-    InertiaAdapter -->|dynamic import| dist/ssr.js
-    dist/ssr.js -->|renderToString| HTML
-  end
-  HTML --> Browser
+```
+┌─ Bun process ──────────────────────────────┐
+│  Hono ──► InertiaAdapter                    │
+│             │                               │
+│             └─ dynamic import ──► dist/ssr.js
+│                                      │       │
+│                                      └─ renderToString ──► HTML
+└──────────────────────────────────────────────┘
+  HTML ──► Browser
 ```
 
 There is no separate SSR server. `ssr.ts` (or `ssr.tsx` on React) is
