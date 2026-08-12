@@ -20,9 +20,14 @@ import { clearFlash } from "./auth";
 // Dynamic import of the SSR renderer — allows dev hot-reload to invalidate
 // Bun's module cache (see client-watcher.ts). In production this resolves
 // once and caches normally.
-let ssrRenderer: typeof import("../client/ssr") | null = null;
-async function getRenderer() {
-	if (!ssrRenderer) ssrRenderer = await import("../../dist/ssr.js");
+type SsrRenderer = typeof import("../client/ssr");
+let ssrRenderer: SsrRenderer | null = null;
+async function getRenderer(): Promise<SsrRenderer> {
+	// dist/ssr.js is a Bun.build output (no .d.ts); types come from the
+	// source import above. The runtime must load the bundle because Bun's
+	// runtime cannot resolve the `svelte`/`vue` export condition from source.
+	// @ts-expect-error — no declaration file for dist/ssr.js
+	if (!ssrRenderer) ssrRenderer = (await import("../../dist/ssr.js")) as SsrRenderer;
 	return ssrRenderer;
 }
 
