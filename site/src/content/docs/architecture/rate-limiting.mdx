@@ -10,14 +10,15 @@ request gets a `429 Too Many Requests` with a `Retry-After` header.
 
 ## Two layers
 
-```mermaid
-flowchart LR
-  Request --> Global["Global limiter<br/>200 req / 60s / IP"]
-  Global -->|pass| Routes
-  Global -->|429| Blocked["Too many requests"]
-  Routes --> AuthRoutes["Auth routes<br/>30 req / 60s / IP"]
-  AuthRoutes -->|429| Blocked
-  AuthRoutes -->|pass| Handler
+```
+Request ──► Global limiter (200 req / 60s / IP)
+              │
+              ├─ pass ──► Routes ──► Auth routes (30 req / 60s / IP)
+              │                          │
+              │                          ├─ pass ──► Handler
+              │                          └─ 429 ──► Too many requests
+              │
+              └─ 429 ──► Too many requests
 ```
 
 1. **Global** (`app.ts`) — DDoS baseline on all routes. Exempts `/health`,
