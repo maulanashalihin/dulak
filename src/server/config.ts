@@ -81,4 +81,8 @@ export const config = {
 		authMax: Number(pick(process.env.RATE_LIMIT_AUTH_MAX, "30")),
 		authWindow: Number(pick(process.env.RATE_LIMIT_AUTH_WINDOW, "60")),
 	},
+	/** Optional bearer token for /metrics. If set, scrape endpoints must
+	 *  send `Authorization: Bearer <token>`. If unset, /metrics is restricted
+	 *  to loopback only (Prometheus scrapes locally in single-server deploys). */
+	metricsToken: process.env.METRICS_TOKEN ?? "",
 };
