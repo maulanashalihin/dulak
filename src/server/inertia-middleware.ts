@@ -7,10 +7,15 @@
  * re-registered per route instance), Hono middleware attached with
  * `app.use()` runs for every request — including unmatched routes — so the
  * not-found/error handlers can rely on `c.var.inertia` being populated.
+ *
+ * A per-request CSP nonce is generated here and passed to the Inertia
+ * adapter so inline scripts/styles can be nonce-tagged, allowing a
+ * strict CSP without 'unsafe-inline'.
  */
 import type { Next } from "hono";
 import type { Context } from "hono";
 import { getCookie } from "hono/cookie";
+import { randomBytes } from "node:crypto";
 import type { FlashData, User } from "../shared/types";
 import { readFlash, resolveUser, SESSION_COOKIE } from "./auth";
 import { toPublicUser } from "./db";
@@ -24,6 +29,8 @@ export interface AppEnv {
 		sessionToken: string | null;
 		inertia: Inertia;
 		requestId: string;
+		/** Per-request CSP nonce (base64, 18 chars). */
+		cspNonce: string;
 	};
 }
 
@@ -34,9 +41,11 @@ export const inertiaMiddleware =
 		const row = resolveUser(sessionToken);
 		const user = row ? toPublicUser(row) : null;
 		const flash = readFlash(sessionToken);
+		const cspNonce = randomBytes(16).toString("base64");
 		c.set("user", user);
 		c.set("flash", flash);
 		c.set("sessionToken", sessionToken);
+		c.set("cspNonce", cspNonce);
 		c.set(
 			"inertia",
 			new Inertia(
@@ -46,6 +55,7 @@ export const inertiaMiddleware =
 					user,
 					flash,
 					sessionToken,
+					cspNonce,
 				},
 				assets,
 			),
