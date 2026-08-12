@@ -23,6 +23,7 @@ and fails fast with a clear message. Never read `process.env` elsewhere.
 | `UPLOAD_DIR` | `./data/uploads` | tus upload bytes on disk |
 | `TUS_MAX_SIZE` | `0` | max upload size (`0` = unlimited) |
 | `TUS_EXPIRATION_SECONDS` | `0` | unfinished upload TTL (`0` = no expiry) |
+| `METRICS_TOKEN` | — | bearer token for `/metrics`; if unset, `/metrics` is restricted to loopback only |
 
 Copy `.env.example` → `.env` and adjust. Invalid or incomplete config aborts
 startup with a specific message (e.g. `MAIL_DRIVER=resend requires
