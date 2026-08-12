@@ -10,14 +10,17 @@ consumed.
 
 ## Flow
 
-```mermaid
-flowchart LR
-  Register -->|createEmailVerification| Token["256-bit token<br/>hashed at rest"]
-  Token -->|sendMail| Email["Verify your email"]
-  Email -->|click link| Verify["GET /verify-email?token=..."]
-  Verify -->|verifyEmailToken| Check{valid?}
-  Check -->|yes| Verified["email_verified=1<br/>redirect /login?notice=email_verified"]
-  Check -->|no| Invalid["redirect /login?notice=invalid_verification"]
+```
+Register ──► createEmailVerification ──► 256-bit token (hashed at rest)
+                                             │
+                                             └─ sendMail ──► "Verify your email"
+                                                                │
+                                                                └─ click link ──► GET /verify-email?token=...
+                                                                                     │
+                                                                                     └─ verifyEmailToken
+                                                                                          │
+                                                                                          ├─ valid ──► email_verified=1 ──► redirect /login?notice=email_verified
+                                                                                          └─ invalid ──► redirect /login?notice=invalid_verification
 ```
 
 1. **`POST /register`** — after creating the account and setting the
