@@ -37,15 +37,18 @@ src/
 │   ├── rate-limit.ts       # in-memory fixed-window rate limiter
 │   ├── logger.ts           # batched request logging + x-request-id
 │   ├── compress.ts         # gzip compression (node:zlib, not CompressionStream)
-│   ├── security.ts         # CSRF origin check (headers via hono/secure-headers)
+│   ├── cache.ts            # CDN cache middleware: cacheablePublic + noStore
+│   ├── security.ts         # CSRF origin check + hardening headers (hono/secure-headers)
+│   ├── metrics.ts          # in-memory Prometheus metrics + /metrics endpoint
 │   ├── url.ts              # defensive request-URL parsing
 │   ├── assets.ts           # Bun.build pipeline + manifest + static serving
 │   ├── tus-protocol.ts     # tus v1 protocol constants & helpers
 │   ├── tus-storage.ts      # tus upload bytes on disk
 │   └── routes/
+│       ├── api.routes.ts          # /api/session (user identity for public pages)
 │       ├── auth.routes.ts         # /login /register /logout /forgot-password /reset-password (GET+POST)
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
-│       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
+│       ├── pages.routes.ts        # app-shell pages: / (public cacheable), /dashboard, /admin
 │       ├── profile.routes.ts      # /profile page + /profile/avatar
 │       └── uploads.routes.ts      # /uploads* (tus protocol)
 ├── client/                 # React + Inertia (pages/, components/, styles.css)
@@ -117,6 +120,54 @@ src/
   via `app.route('/', <feature>Routes())` in `app.ts`. Route factories take
   no arguments — the Inertia adapter is a global middleware on the app, not
   per-route state.
+
+
+## CDN cache pattern (public vs auth pages)
+
+The app distinguishes **public pages** (cacheable at the Cloudflare edge)
+from **auth pages** (private, never cached). This is the core optimisation
+that lets a single Bun process serve high traffic — CF absorbs 90%+ of
+reads.
+
+### Public pages
+
+- Rendered with `{ public: true }` in the Inertia adapter: `auth.user` and
+  `flash` are omitted from the page props, so the HTML is identical for
+  all visitors.
+- Wrapped in `cacheablePublic(sMaxAge, swr)` middleware → sets
+  `Cache-Control: public, s-maxage=N, stale-while-revalidate=M` on 200
+  HTML responses (Inertia XHR excluded).
+- SSR runs even for logged-in users (the HTML is user-agnostic).
+- User identity is fetched client-side via `GET /api/session` after
+  hydration — see `src/client/session.ts` (`useSession()` hook).
+- Example: `/` (Home page).
+
+### Auth pages
+
+- Rendered normally (with `auth.user` in Inertia props).
+- No `Cache-Control` header set (browser default = no caching). Add
+  `noStore` middleware explicitly if needed.
+- SSR is skipped for logged-in users (no SEO benefit; ship empty shell).
+- User identity comes from Inertia props directly — no `/api/session`
+  fetch needed.
+- Example: `/dashboard`, `/admin`, `/profile`, `/login`, `/register`.
+
+### SPA cache-key separation
+
+Inertia XHR navigations carry `X-Inertia: true` and are excluded from the
+public cache header. The client also appends `?_spa=1` to XHR URLs (see
+`app.tsx`) so Cloudflare caches JSON and HTML under separate cache keys.
+After navigation, the param is stripped from the address bar.
+
+### When to use which pattern
+
+Use **public** (`{ public: true }` + `cacheablePublic`) for any page that
+should be cacheable: landing, content, search, about. The page must not
+rely on `auth.user` for its initial render — use `useSession()` instead.
+
+Use **auth** (default Inertia props) for any page behind `requireAuth` or
+`requireRole`: dashboard, admin, profile, settings. These pages are
+private and always receive user data via Inertia props.
 
 ## Hono integration notes (do not "fix")
 

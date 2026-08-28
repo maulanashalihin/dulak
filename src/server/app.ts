@@ -22,6 +22,7 @@ import { recordRequest, renderMetrics } from "./metrics";
 import { authRoutes, VALIDATION_MESSAGES } from "./routes/auth.routes";
 import { googleOauthRoutes } from "./routes/google-oauth.routes";
 import { pageRoutes } from "./routes/pages.routes";
+import { apiRoutes } from "./routes/api.routes";
 import {
 	profileRoutes,
 	PROFILE_VALIDATION_MESSAGES,
@@ -238,6 +239,7 @@ export function createApp(assets: InertiaAssets) {
 	app.get("/.well-known/*", () => new Response(null, { status: 404 }));
 
 	app.route("/uploads", uploadsRoutes());
+	app.route("/", apiRoutes());
 	app.route("/", authRoutes());
 	app.route("/", googleOauthRoutes());
 	app.route("/", pageRoutes());

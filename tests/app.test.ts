@@ -90,10 +90,13 @@ async function registerUser(
 }
 
 describe("auth basics", () => {
-	it("redirects guests from / to /login", async () => {
+	it("renders / as a public page for guests (CDN-cacheable)", async () => {
 		const res = await call("/");
-		expect(res.status).toBe(302);
-		expect(new URL(res.headers.get("location")!).pathname).toBe("/login");
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toContain("text/html");
+		// Public pages get CDN cache headers (not private/no-store)
+		expect(res.headers.get("cache-control")).toContain("public");
+		expect(res.headers.get("cache-control")).toContain("s-maxage");
 	});
 
 	it("registers a user, creates a session cookie", async () => {
@@ -193,6 +196,25 @@ describe("auth basics", () => {
 
 		const after = await call("/dashboard", { headers: { cookie } });
 		expect(after.status).toBe(302); // stale cookie no longer authenticates
+	});
+
+	it("GET /api/session returns user for authenticated request", async () => {
+		const cookie = await registerUser("session-api@example.com");
+		const res = await call("/api/session", { headers: { cookie } });
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toContain("application/json");
+		expect(res.headers.get("cache-control")).toBe("private, no-store");
+		const body = await res.json();
+		expect(body.user).not.toBeNull();
+		expect(body.user.email).toBe("session-api@example.com");
+	});
+
+	it("GET /api/session returns null user for guest", async () => {
+		const res = await call("/api/session");
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body.user).toBeNull();
+		expect(res.headers.get("cache-control")).toBe("private, no-store");
 	});
 });
 
