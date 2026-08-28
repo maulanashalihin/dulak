@@ -6,6 +6,7 @@ import type { Component, DefineComponent } from "vue";
 import Admin from "./pages/Admin.vue";
 import Dashboard from "./pages/Dashboard.vue";
 import ForgotPassword from "./pages/ForgotPassword.vue";
+import Home from "./pages/Home.vue";
 import Login from "./pages/Login.vue";
 import NotFound from "./pages/NotFound.vue";
 import Profile from "./pages/Profile.vue";
@@ -20,6 +21,7 @@ export const pages: Record<string, PageModule> = {
 	"./pages/Admin.vue": { default: Admin },
 	"./pages/Dashboard.vue": { default: Dashboard },
 	"./pages/ForgotPassword.vue": { default: ForgotPassword },
+	"./pages/Home.vue": { default: Home },
 	"./pages/Login.vue": { default: Login },
 	"./pages/NotFound.vue": { default: NotFound },
 	"./pages/Profile.vue": { default: Profile },
