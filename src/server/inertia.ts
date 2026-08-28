@@ -83,11 +83,15 @@ export class Inertia {
 		return !header || header === this.assets.version;
 	}
 
-	/** Build the v3 page payload for `component`, applying partial reloads. */
+	/** Build the v3 page payload for `component`, applying partial reloads.
+	 *  When `isPublic` is true, `auth.user` and `flash` are omitted from the
+	 *  payload so the rendered HTML is identical for all visitors (CDN-cacheable).
+	 *  The client fetches user identity separately via `GET /api/session`. */
 	page(
 		component: string,
 		props: Record<string, unknown> = {},
 		errors?: Record<string, string>,
+		isPublic = false,
 	): Page {
 		let pageProps = props;
 		if (this.c.headers["x-inertia-partial-component"] === component) {
@@ -105,17 +109,19 @@ export class Inertia {
 			}
 		}
 		const { errors: flashErrors, ...flash } = this.c.flash;
-		return {
+		const sharedProps: Record<string, unknown> = {
+			...pageProps,
+			errors: errors ?? flashErrors ?? {},
+		};
+		if (!isPublic) sharedProps.auth = { user: this.c.user };
+		const pageObj: Record<string, unknown> = {
 			component,
-			props: {
-				...pageProps,
-				auth: { user: this.c.user },
-				errors: errors ?? flashErrors ?? {},
-			} as unknown as Page["props"], // core types `errors` as Errors & ErrorBag (intersection)
+			props: sharedProps as unknown as Page["props"],
 			url: this.currentUrl,
 			version: this.assets.version,
-			flash,
-		} as Page;
+		};
+		if (!isPublic) pageObj.flash = flash;
+	return pageObj as unknown as Page;
 	}
 
 	/**
@@ -126,30 +132,35 @@ export class Inertia {
 	 * pages are behind an auth wall (no SEO benefit) and the client hydrates
 	 * and replaces server HTML anyway, so SSR is pure waste — ship the empty
 	 * shell instead. Consumes the one-shot flash after building the payload.
+	 *
+	 * When `options.public` is true, the page payload omits `auth.user` and
+	 * `flash` (see `page()`), SSR runs even for logged-in users (the HTML is
+	 * user-agnostic), and flash is not consumed here — the client fetches
+	 * user identity + flash via `GET /api/session` instead.
 	 */
 	async render(
 		component: string,
 		props: Record<string, unknown> = {},
-		options: { status?: number } = {},
+		options: { status?: number; public?: boolean } = {},
 	): Promise<Response> {
-		const page = this.page(component, props);
+		const page = this.page(component, props, undefined, options.public);
 
 		if (this.isXhr) {
 			if (!this.versionMatches) return this.locationVisit();
-			clearFlash(this.c.sessionToken);
+			if (!options.public) clearFlash(this.c.sessionToken);
 			return this.json(page, options.status ?? 200);
 		}
 
 		let head: string[] = [];
 		let body: string;
-		if (config.ssr && !this.c.user) {
+		if (config.ssr && (options.public || !this.c.user)) {
 			const rendered = await renderPage(page);
 			head = rendered.head;
 			body = rendered.body;
 		} else {
 			body = this.clientBody(page);
 		}
-		clearFlash(this.c.sessionToken);
+		if (!options.public) clearFlash(this.c.sessionToken);
 		return this.html(head, body, options.status ?? 200);
 	}
 	/**

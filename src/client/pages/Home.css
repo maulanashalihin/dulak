@@ -1,0 +1,37 @@
+.home {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 2rem;
+}
+
+.home-container {
+  text-align: center;
+  max-width: 28rem;
+}
+
+.home-brand {
+  justify-content: center;
+  margin-bottom: 2rem;
+  font-size: 1.25rem;
+  color: var(--primary);
+}
+
+.home-container h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.home-sub {
+  color: var(--muted);
+  margin-bottom: 2rem;
+}
+
+.home-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}

@@ -6,6 +6,7 @@
  */
 import type { ComponentType } from "react";
 import Admin from "./pages/Admin";
+import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import ForgotPassword from "./pages/ForgotPassword";
 import Login from "./pages/Login";
@@ -19,6 +20,7 @@ type PageModule = { default: ComponentType<any> };
 
 export const pages: Record<string, PageModule> = {
 	"./pages/Admin.tsx": { default: Admin },
+	"./pages/Home.tsx": { default: Home },
 	"./pages/Dashboard.tsx": { default: Dashboard },
 	"./pages/ForgotPassword.tsx": { default: ForgotPassword },
 	"./pages/Login.tsx": { default: Login },
