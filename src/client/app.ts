@@ -2,14 +2,46 @@
  * Client entry. Bootstraps Inertia v3 + Svelte 5.
  * When the page was server-rendered (data-server-rendered attribute) we
  * hydrate; otherwise we do a plain client mount.
+ *
+ * On boot, fetches user identity via `GET /api/session` — decoupled from
+ * Inertia page props so public page HTML stays identical for all visitors
+ * (CDN-cacheable). Public page components read user state from the session
+ * store (`session`), not from Inertia props.
+ *
+ * SPA cache-key separation: Inertia XHR navigations get `?_spa=1` appended
+ * so Cloudflare caches the JSON response under a separate key from the
+ * HTML. After navigation, the param is stripped from the address bar so
+ * reloads/bookmarks hit the HTML cache.
  */
-import { createInertiaApp } from "@inertiajs/svelte";
+import { createInertiaApp, router } from "@inertiajs/svelte";
 import { mount, hydrate } from "svelte";
 import "./styles.css";
 import { notFoundPage, pages } from "./pages";
+import { loadSession } from "./session";
 
 const resolve = (name: string) =>
 	pages[`./pages/${name}.svelte`] ?? notFoundPage;
+
+// Fetch user session once on boot — decoupled from Inertia page props so
+// public page HTML stays identical for all visitors (CDN-cacheable).
+void loadSession();
+
+// CDN cache strategy: add ?_spa=1 to SPA navigations so Cloudflare caches
+// the JSON response separately from the HTML (different cache key). After
+// navigation, strip the param from the address bar so reloads/bookmarks
+// hit the HTML cache, not the JSON cache.
+router.on("before", (event) => {
+	const url = new URL(event.detail.visit.url);
+	url.searchParams.set("_spa", "1");
+	event.detail.visit.url = url;
+});
+router.on("success", () => {
+	const url = new URL(window.location.href);
+	if (url.searchParams.has("_spa")) {
+		url.searchParams.delete("_spa");
+		window.history.replaceState(window.history.state, "", url.toString());
+	}
+});
 
 createInertiaApp({
 	id: "app",

@@ -8,6 +8,7 @@ import type { Component } from "svelte";
 import Admin from "./pages/Admin.svelte";
 import Dashboard from "./pages/Dashboard.svelte";
 import ForgotPassword from "./pages/ForgotPassword.svelte";
+import Home from "./pages/Home.svelte";
 import Login from "./pages/Login.svelte";
 import NotFound from "./pages/NotFound.svelte";
 import Profile from "./pages/Profile.svelte";
@@ -20,6 +21,7 @@ export const pages: Record<string, PageModule> = {
 	"./pages/Admin.svelte": { default: Admin },
 	"./pages/Dashboard.svelte": { default: Dashboard },
 	"./pages/ForgotPassword.svelte": { default: ForgotPassword },
+	"./pages/Home.svelte": { default: Home },
 	"./pages/Login.svelte": { default: Login },
 	"./pages/NotFound.svelte": { default: NotFound },
 	"./pages/Profile.svelte": { default: Profile },
