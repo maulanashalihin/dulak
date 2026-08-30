@@ -1,9 +1,18 @@
 /**
  * Profile routes at /profile — page render, avatar uploads, profile info and
- * password changes. Avatar bytes travel through the tus protocol at /uploads
- * (see uploads.routes.ts), then are linked to the user by upload id here.
+ * password changes.
+ *
+ * Two upload protocols coexist in this boilerplate:
+ *  - Regular upload (multipart/form-data) — for files ≤ 100 MB. Avatar
+ *    uploads use this path: the image is decoded, resized and re-encoded to
+ *    WebP with Bun.image (Bun 1.4) before being stored, so avatars are always
+ *    small, raster, and served from our own origin.
+ *  - tus protocol at /uploads (see uploads.routes.ts) — resumable chunked
+ *    uploads for files > 100 MB where a plain multipart request would be
+ *    unreliable.
  */
 import { Type as t, type Static } from "@sinclair/typebox";
+import { Image } from "bun";
 import { Hono } from "hono";
 import {
 	deleteOtherSessionsByToken,
@@ -13,20 +22,18 @@ import {
 	verifyPassword,
 } from "../auth";
 import {
-	findUpload,
 	findUserByEmail,
 	findUserById,
+	insertUpload,
 	updateUserAvatar,
 	updateUserPassword,
 	updateUserProfile,
 } from "../db";
+import { generateUploadId } from "../tus-protocol";
+import { uploadPath, writeBytes } from "../tus-storage";
 import type { AppEnv } from "../inertia-middleware";
 import { validateJson } from "../validation";
 
-const avatarBody = t.Object(
-	{ uploadId: t.String({ minLength: 1 }) },
-	{ additionalProperties: false },
-);
 const infoBody = t.Object(
 	{
 		name: t.String({ minLength: 2, maxLength: 80 }),
@@ -43,7 +50,6 @@ const passwordBody = t.Object(
 	{ additionalProperties: false },
 );
 
-type AvatarBody = Static<typeof avatarBody>;
 type InfoBody = Static<typeof infoBody>;
 type PasswordBody = Static<typeof passwordBody>;
 
@@ -59,34 +65,63 @@ export const profileRoutes = () => {
 
 	app.get("/profile", requireAuth, (c) => c.var.inertia.render("Profile", {}));
 
-	app.post("/profile/avatar", requireAuth, validateJson(avatarBody), (c) => {
+	app.post("/profile/avatar", requireAuth, async (c) => {
 		const user = c.var.user;
 		if (!user) return new Response("Unauthorized", { status: 401 });
-		const body = c.req.valid("json") as AvatarBody;
-		const upload = findUpload.get(body.uploadId);
-		if (!upload || upload.userId !== user.id) {
-			return new Response("Upload not found", { status: 404 });
-		}
-		if (upload.offset < upload.uploadLength) {
-			return new Response("Upload is not complete", { status: 400 });
-		}
-		let filetype = "";
+
+		let form: FormData;
 		try {
-			const meta = JSON.parse(upload.metadata) as Record<string, string>;
-			filetype = typeof meta.filetype === "string" ? meta.filetype : "";
+			form = await c.req.formData();
 		} catch {
-			/* metadata may be empty or malformed */
+			return new Response("Malformed multipart request", { status: 400 });
 		}
-		// Raster-only: SVG can carry inline scripts — even with the
-		// per-path script-src 'none' on /uploads, keeping avatars raster
-		// avoids serving attacker-controlled scripts from our origin.
+		const file = form.get("avatar");
+		if (!(file instanceof Blob)) {
+			return new Response("No file uploaded", { status: 422 });
+		}
+
+		// Raster-only: SVG can carry inline scripts — keeping avatars raster
+		// avoids serving attacker-controlled scripts from our origin. Bun.image
+		// sniffs the real format from bytes (ignoring Content-Type), so a
+		// mismatched declared type is caught at decode below.
 		const AVATAR_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
-		if (!AVATAR_TYPES.includes(filetype)) {
-			return new Response("Only image uploads can be used as an avatar", {
+		if (!AVATAR_TYPES.includes(file.type)) {
+			return new Response("Only PNG, JPEG, GIF, or WebP images are allowed", {
 				status: 422,
 			});
 		}
-		updateUserAvatar.run(`/uploads/${upload.id}`, user.id);
+		// 10 MB raw cap — the stored WebP is far smaller after resize.
+		if (file.size > 10 * 1024 * 1024) {
+			return new Response("Avatar image must be under 10 MB", { status: 413 });
+		}
+
+		// Decode → resize → re-encode to WebP with Bun.image (Bun 1.4).
+		// fit:"inside" preserves aspect ratio within 256×256; autoOrient
+		// applies EXIF rotation for phone photos.
+		let out: Uint8Array;
+		try {
+			const bytes = new Uint8Array(await file.arrayBuffer());
+			out = await new Image(bytes, {
+				maxPixels: 4096 * 4096,
+				autoOrient: true,
+			})
+				.resize(256, 256, { fit: "inside" })
+				.webp({ quality: 80 })
+				.bytes();
+		} catch {
+			return new Response("Could not decode the image", { status: 422 });
+		}
+		const id = generateUploadId();
+		await writeBytes(id, out);
+		insertUpload.run(
+			id,
+			out.byteLength,
+			JSON.stringify({ filetype: "image/webp" }),
+			user.id,
+			uploadPath(id),
+			null,
+		);
+		updateUserAvatar.run(`/uploads/${id}`, user.id);
 		return new Response(null, { status: 204 });
 	});
 

@@ -1,26 +1,9 @@
 import { Head, router, useForm, usePage } from "@inertiajs/react";
 import type { FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Layout from "../components/Layout";
 import Field from "../components/Field";
 import "./Profile.css";
-
-const CHUNK_SIZE = 256 * 1024;
-
-/** tus `Upload-Metadata` values are standard base64. */
-function toBase64(s: string): string {
-	const bytes = new TextEncoder().encode(s);
-	let bin = "";
-	for (const b of bytes) bin += String.fromCharCode(b);
-	return btoa(bin);
-}
-
-function statusMessage(res: Response): string {
-	return `Request failed (HTTP ${res.status})`;
-}
-
-type PendingUpload = { id: string; name: string; size: number };
-const PENDING_KEY = "dulak:avatar:upload";
 
 function formatDate(iso: string): string {
 	return new Date(iso).toLocaleDateString(undefined, {
@@ -42,113 +25,43 @@ export default function Profile() {
 	});
 	const inputRef = useRef<HTMLInputElement>(null);
 
-	const [pending, setPending] = useState<PendingUpload | null>(null);
+	const [selectedName, setSelectedName] = useState<string | null>(null);
 	const [phase, setPhase] = useState<"idle" | "uploading" | "done" | "error">(
 		"idle",
 	);
 	const [progress, setProgress] = useState(0);
 	const [message, setMessage] = useState<string | null>(null);
 
-	// Pick up an interrupted upload after a refresh (offset is re-read via HEAD).
-	useEffect(() => {
-		try {
-			const raw = localStorage.getItem(PENDING_KEY);
-			if (raw) setPending(JSON.parse(raw) as PendingUpload);
-		} catch {
-			/* ignore */
-		}
-	}, []);
-
-	useEffect(() => {
-		if (pending) localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
-		else localStorage.removeItem(PENDING_KEY);
-	}, [pending]);
-
-	/** Upload (or resume) `file` against upload id `id` ('' = create a new one). */
-	async function runUpload(id: string, file: File) {
+	function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		e.target.value = "";
+		if (!file) return;
+		setSelectedName(file.name);
 		setPhase("uploading");
 		setMessage(null);
 		setProgress(0);
-
-		let uploadId = id;
-		if (!uploadId) {
-			const create = await fetch("/uploads", {
-				method: "POST",
-				headers: {
-					"Tus-Resumable": "1.0.0",
-					"Upload-Length": String(file.size),
-					"Upload-Metadata": `filename ${toBase64(file.name)},filetype ${toBase64(file.type)}`,
-				},
-			});
-			if (!create.ok) {
+		const fd = new FormData();
+		fd.append("avatar", file);
+		const xhr = new XMLHttpRequest();
+		xhr.upload.onprogress = (ev) => {
+			if (ev.lengthComputable)
+				setProgress(Math.round((ev.loaded / ev.total) * 100));
+		};
+		xhr.onload = () => {
+			if (xhr.status === 204) {
+				setPhase("done");
+				router.reload();
+			} else {
 				setPhase("error");
-				setMessage(statusMessage(create));
-				return;
+				setMessage(`Request failed (HTTP ${xhr.status})`);
 			}
-			const location = create.headers.get("Location");
-			if (!location) {
-				setPhase("error");
-				setMessage("Server did not return an upload URL");
-				return;
-			}
-			uploadId = location.split("/").pop() ?? "";
-			setPending({ id: uploadId, name: file.name, size: file.size });
-		}
-
-		// Reconcile the offset with the server so an interrupted upload resumes.
-		const head = await fetch(`/uploads/${uploadId}`, {
-			method: "HEAD",
-			headers: { "Tus-Resumable": "1.0.0" },
-		});
-		let offset = 0;
-		if (head.ok) {
-			const h = head.headers.get("Upload-Offset");
-			offset = h ? Number(h) || 0 : 0;
-		}
-
-		const bytes = new Uint8Array(await file.arrayBuffer());
-		while (offset < bytes.byteLength) {
-			const end = Math.min(offset + CHUNK_SIZE, bytes.byteLength);
-			const res = await fetch(`/uploads/${uploadId}`, {
-				method: "PATCH",
-				headers: {
-					"Tus-Resumable": "1.0.0",
-					"Content-Type": "application/offset+octet-stream",
-					"Upload-Offset": String(offset),
-				},
-				body: bytes.slice(offset, end),
-			});
-			if (!res.ok) {
-				setPhase("error");
-				setMessage(statusMessage(res));
-				return;
-			}
-			offset = end;
-			setProgress(Math.round((offset / bytes.byteLength) * 100));
-		}
-
-		const link = await fetch("/profile/avatar", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ uploadId }),
-		});
-		if (!link.ok) {
+		};
+		xhr.onerror = () => {
 			setPhase("error");
-			setMessage(statusMessage(link));
-			return;
-		}
-		setPending(null);
-		setPhase("done");
-		router.reload(); // refresh shared props so the header avatar updates
-	}
-
-	function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-		const file = e.target.files?.[0];
-		e.target.value = ""; // allow re-selecting the same file
-		if (!file) return;
-		// Same file as the interrupted upload? Resume it. Otherwise start fresh.
-		if (pending && pending.name === file.name) void runUpload(pending.id, file);
-		else void runUpload("", file);
+			setMessage("Network error");
+		};
+		xhr.open("POST", "/profile/avatar");
+		xhr.send(fd);
 	}
 
 	const submitInfo = (e: FormEvent) => {
@@ -203,7 +116,7 @@ export default function Profile() {
 							<input
 								ref={inputRef}
 								type="file"
-								accept="image/*"
+								accept="image/png,image/jpeg,image/gif,image/webp"
 								hidden
 								onChange={onFile}
 							/>
@@ -213,20 +126,13 @@ export default function Profile() {
 								disabled={phase === "uploading"}
 								onClick={() => inputRef.current?.click()}
 							>
-								{phase === "uploading"
-									? "Uploading…"
-									: pending
-										? "Resume upload"
-										: "Change avatar"}
+								{phase === "uploading" ? "Uploading…" : "Change avatar"}
 							</button>
-							{pending ? (
-								<span className="upload-file">
-									{pending.name} ({Math.max(1, Math.round(pending.size / 1024))}{" "}
-									KB)
-								</span>
+							{selectedName ? (
+								<span className="upload-file">{selectedName}</span>
 							) : null}
 							{message ? <p className="upload-error">{message}</p> : null}
-							{phase === "uploading" || (pending && phase === "idle") ? (
+							{phase === "uploading" ? (
 								<div
 									className="progress"
 									role="progressbar"
