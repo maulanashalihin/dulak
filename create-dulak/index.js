@@ -75,6 +75,7 @@ const CLEANUP = [
 	"data",
 	"dashboard-light.png",
 	".env",
+	".github", // CI workflows + dependabot are Dulak-repo-specific, not for scaffolds
 ];
 
 function help() {
