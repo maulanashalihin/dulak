@@ -4,7 +4,7 @@ The Banjar word for *bored* — a deliberately boring full-stack starter.
 
 [![CI](https://github.com/maulanashalihin/dulak/actions/workflows/ci.yml/badge.svg)](https://github.com/maulanashalihin/dulak/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Bun](https://img.shields.io/badge/runtime-Bun_1.3-black?logo=bun&logoColor=white)](https://bun.sh)
+[![Bun](https://img.shields.io/badge/runtime-Bun_1.4-black?logo=bun&logoColor=white)](https://bun.sh)
 
 A production-shaped, full-stack boilerplate: **Hono** (HTTP) + **bun:sqlite**
 (database) + **Inertia v3 / React 19** (server-driven UI with in-process SSR),
@@ -57,7 +57,7 @@ choice favors the next maintainer — human or AI agent — over cleverness:
   a deliberate swap point. The product is yours to add by following the
   conventions.
 - **Boring versions, current versions.** Hono 4.x (stable, runtime-agnostic),
-  Bun 1.3. Upgrades are deliberate decisions, not defaults.
+  Bun 1.4+. Upgrades are deliberate decisions, not defaults.
 - **Correctness over cleverness.** Synchronous, explicitly typed,
   parameterized queries, fail-fast config, documented decisions (see
   "Notes / decisions" below). If a piece can't be explained in one sentence,
@@ -298,7 +298,7 @@ teardown finalize the next file's prepared statements.
 docker compose up -d --build
 ```
 
-- Multi-stage `Dockerfile` (`oven/bun:1.3-alpine`): assets prebuilt in the
+- Multi-stage `Dockerfile` (`oven/bun:1.4-alpine`): assets prebuilt in the
   build stage, production deps only at runtime. The app process runs as a
   non-root user (`bun`, UID 1000) — the entrypoint fixes the `./data`
   bind-mount ownership, then drops privileges before exec'ing Bun.
@@ -330,6 +330,9 @@ in `src/server/assets.ts` (no PostCSS), outputting `src/client/.tailwind.css`
 which is imported before `styles.css` in `app.ts`.
 
 ## Notes / decisions
+- **Bun 1.4+ required** — avatar upload uses `Bun.Image` (decode, resize,
+  re-encode to WebP), which is only available in Bun 1.4+. The `bun`
+  engine constraint in `package.json` enforces this.
 
 - **Hono integration gotchas handled**: Hono converts HEAD requests to GET
   (body stripped, headers kept) while `c.req.method` still reports "HEAD" —
