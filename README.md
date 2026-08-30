@@ -4,7 +4,7 @@ The Banjar word for *bored* — a deliberately boring full-stack starter.
 
 [![CI](https://github.com/maulanashalihin/dulak/actions/workflows/ci.yml/badge.svg)](https://github.com/maulanashalihin/dulak/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Bun](https://img.shields.io/badge/runtime-Bun_1.3-black?logo=bun&logoColor=white)](https://bun.sh)
+[![Bun](https://img.shields.io/badge/runtime-Bun_1.4-black?logo=bun&logoColor=white)](https://bun.sh)
 [![Website](https://img.shields.io/badge/website-dulak.pages.dev-059669?style=flat&logo=astro&logoColor=white&labelColor=%230d1117)](https://dulak.pages.dev)
 [![npm](https://img.shields.io/npm/v/create-dulak?color=%23059669&label=create-dulak)](https://www.npmjs.com/package/create-dulak)
 
@@ -84,7 +84,7 @@ it, and not be afraid of breaking it.
 - **Boring versions, pinned, not chased.** A starter gets forked and
   maintained for years — its dependencies decide how much forced
   maintenance lands on the fork owner. "Current" does not mean "always
-  the latest": Dulak pins specific stable versions (Hono 4.x, Bun 1.3,
+  the latest": Dulak pins specific stable versions (Hono 4.x, Bun 1.4+,
   Inertia v3) and upgrades only when there is a concrete reason. A pinned
   version is a resting point, not a moving target that drags every fork
   into an upgrade cycle.
@@ -97,6 +97,7 @@ it, and not be afraid of breaking it.
   - **A new major must prove itself.** It ships when there is a concrete
     reason (security, ecosystem, maintenance), not because it is the
     newest thing.
+
 
 - **Correctness over cleverness.** Synchronous, explicitly typed,
   parameterized queries; fail-fast configuration; deterministic tests
@@ -350,7 +351,7 @@ teardown finalize the next file's prepared statements.
 docker compose up -d --build
 ```
 
-- Multi-stage `Dockerfile` (`oven/bun:1.3-alpine`): assets prebuilt in the
+- Multi-stage `Dockerfile` (`oven/bun:1.4-alpine`): assets prebuilt in the
   build stage, production deps only at runtime. The app process runs as a
   non-root user (`bun`, UID 1000) — the entrypoint fixes the `./data`
   bind-mount ownership, then drops privileges before exec'ing Bun.
@@ -378,6 +379,9 @@ bridge cleanly. See the
 [Tailwind v4 setup guide](.llm-wiki/wiki/concepts/tailwind-v4-setup.md).
 
 ## Notes / decisions
+- **Bun 1.4+ required** — avatar upload uses `Bun.Image` (decode, resize,
+  re-encode to WebP), which is only available in Bun 1.4+. The `bun`
+  engine constraint in `package.json` enforces this.
 
 - **Hono integration gotchas handled**: Hono converts HEAD requests to GET
   (body stripped, headers kept) while `c.req.method` still reports "HEAD" —
