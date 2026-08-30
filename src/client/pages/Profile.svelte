@@ -237,7 +237,7 @@
                 aria-valuemin={0}
                 aria-valuemax={100}
               >
-                <div class="progress-bar" style={`width: ${progress}%`}></div>
+                <div class="progress-bar" style:width={`${progress}%`}></div>
               </div>
             {/if}
             {#if phase === 'done'}
