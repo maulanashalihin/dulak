@@ -6,10 +6,6 @@
   const page = usePage()
   const user = $derived(page.props.auth.user)
 
-  const CHUNK_SIZE = 256 * 1024
-  const PENDING_KEY = 'dulak:avatar:upload'
-
-  type PendingUpload = { id: string; name: string; size: number }
   type Phase = 'idle' | 'uploading' | 'done' | 'error'
 
   let info = $state(useForm({ name: '', email: '' }))
@@ -19,10 +15,10 @@
     passwordConfirmation: '',
   }))
   let inputRef = $state<HTMLInputElement | null>(null)
-  let pending = $state<PendingUpload | null>(null)
   let phase = $state<Phase>('idle')
   let progress = $state(0)
   let message = $state<string | null>(null)
+  let selectedName = $state<string | null>(null)
 
   // Initialize form defaults from user once available.
   $effect(() => {
@@ -30,33 +26,6 @@
       info = useForm({ name: user.name, email: user.email })
     }
   })
-
-  // Pick up an interrupted upload after a refresh.
-  $effect(() => {
-    try {
-      const raw = localStorage.getItem(PENDING_KEY)
-      if (raw) pending = JSON.parse(raw) as PendingUpload
-    } catch {
-      /* ignore */
-    }
-  })
-
-  // Persist pending upload state.
-  $effect(() => {
-    if (pending) localStorage.setItem(PENDING_KEY, JSON.stringify(pending))
-    else localStorage.removeItem(PENDING_KEY)
-  })
-
-  function toBase64(s: string): string {
-    const bytes = new TextEncoder().encode(s)
-    let bin = ''
-    for (const b of bytes) bin += String.fromCharCode(b)
-    return btoa(bin)
-  }
-
-  function statusMessage(res: Response): string {
-    return `Request failed (HTTP ${res.status})`
-  }
 
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString(undefined, {
@@ -66,91 +35,45 @@
     })
   }
 
-  /** Upload (or resume) `file` against upload id `id` ('' = create a new one). */
-  async function runUpload(id: string, file: File) {
-    phase = 'uploading'
-    message = null
-    progress = 0
-
-    let uploadId = id
-    if (!uploadId) {
-      const create = await fetch('/uploads', {
-        method: 'POST',
-        headers: {
-          'Tus-Resumable': '1.0.0',
-          'Upload-Length': String(file.size),
-          'Upload-Metadata': `filename ${toBase64(file.name)},filetype ${toBase64(file.type)}`,
-        },
-      })
-      if (!create.ok) {
-        phase = 'error'
-        message = statusMessage(create)
-        return
-      }
-      const location = create.headers.get('Location')
-      if (!location) {
-        phase = 'error'
-        message = 'Server did not return an upload URL'
-        return
-      }
-      uploadId = location.split('/').pop() ?? ''
-      pending = { id: uploadId, name: file.name, size: file.size }
-    }
-
-    // Reconcile the offset with the server so an interrupted upload resumes.
-    const head = await fetch(`/uploads/${uploadId}`, {
-      method: 'HEAD',
-      headers: { 'Tus-Resumable': '1.0.0' },
-    })
-    let offset = 0
-    if (head.ok) {
-      const h = head.headers.get('Upload-Offset')
-      offset = h ? Number(h) || 0 : 0
-    }
-
-    const bytes = new Uint8Array(await file.arrayBuffer())
-    while (offset < bytes.byteLength) {
-      const end = Math.min(offset + CHUNK_SIZE, bytes.byteLength)
-      const res = await fetch(`/uploads/${uploadId}`, {
-        method: 'PATCH',
-        headers: {
-          'Tus-Resumable': '1.0.0',
-          'Content-Type': 'application/offset+octet-stream',
-          'Upload-Offset': String(offset),
-        },
-        body: bytes.slice(offset, end),
-      })
-      if (!res.ok) {
-        phase = 'error'
-        message = statusMessage(res)
-        return
-      }
-      offset = end
-      progress = Math.round((offset / bytes.byteLength) * 100)
-    }
-
-    const link = await fetch('/profile/avatar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uploadId }),
-    })
-    if (!link.ok) {
-      phase = 'error'
-      message = statusMessage(link)
-      return
-    }
-    pending = null
-    phase = 'done'
-    router.reload()
-  }
-
+  /** Upload an avatar via regular multipart form-data. Files ≤ 100 MB use
+   *  this path; the tus protocol at /uploads is reserved for larger
+   *  resumable uploads. The server decodes, resizes and re-encodes the
+   *  image to WebP with Bun.image before storing it. */
   function onFile(e: Event) {
     const target = e.target as HTMLInputElement
     const file = target.files?.[0]
     target.value = '' // allow re-selecting the same file
     if (!file) return
-    if (pending && pending.name === file.name) void runUpload(pending.id, file)
-    else void runUpload('', file)
+
+    phase = 'uploading'
+    message = null
+    progress = 0
+    selectedName = file.name
+
+    const fd = new FormData()
+    fd.append('avatar', file)
+
+    const xhr = new XMLHttpRequest()
+    xhr.upload.onprogress = (ev) => {
+      if (ev.lengthComputable)
+        progress = Math.round((ev.loaded / ev.total) * 100)
+    }
+    xhr.onload = () => {
+      if (xhr.status === 204) {
+        phase = 'done'
+        selectedName = null
+        router.reload()
+      } else {
+        phase = 'error'
+        message = `Request failed (HTTP ${xhr.status})`
+      }
+    }
+    xhr.onerror = () => {
+      phase = 'error'
+      message = 'Network error'
+    }
+    xhr.open('POST', '/profile/avatar')
+    xhr.send(fd)
   }
 
   function submitInfo(e: SubmitEvent) {
@@ -220,7 +143,7 @@
             <input
               bind:this={inputRef}
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/gif,image/webp"
               hidden
               onchange={onFile}
             />
@@ -230,21 +153,15 @@
               disabled={phase === 'uploading'}
               onclick={() => inputRef?.click()}
             >
-              {phase === 'uploading'
-                ? 'Uploading…'
-                : pending
-                  ? 'Resume upload'
-                  : 'Change avatar'}
+              {phase === 'uploading' ? 'Uploading…' : 'Change avatar'}
             </button>
-            {#if pending}
-              <span class="text-muted text-sm">
-                {pending.name} ({Math.max(1, Math.round(pending.size / 1024))} KB)
-              </span>
+            {#if selectedName}
+              <span class="text-muted text-sm">{selectedName}</span>
             {/if}
             {#if message}
               <p class="text-[#b91c1c] text-sm m-0">{message}</p>
             {/if}
-            {#if phase === 'uploading' || (pending && phase === 'idle')}
+            {#if phase === 'uploading'}
               <div
                 class="mt-4 h-2 rounded-full bg-border overflow-hidden"
                 role="progressbar"
