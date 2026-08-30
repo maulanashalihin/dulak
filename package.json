@@ -19,7 +19,7 @@
     "url": "https://github.com/maulanashalihin/dulak.git"
   },
   "engines": {
-    "bun": ">=1.3.0"
+    "bun": ">=1.4.0"
   },
   "private": false,
   "type": "module",
