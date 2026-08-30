@@ -453,42 +453,18 @@ describe("tus 404 paths", () => {
 
 describe("profile page & avatar upload", () => {
 	let cookie: string;
-	let otherCookie: string;
-	const PNG = new Uint8Array([
-		0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01, 0x02, 0x03,
-	]);
+	// A real 1×1 RGBA PNG — Bun.image decodes the actual format from bytes,
+	// so the avatar handler needs a valid image (not just magic bytes).
+	const PNG = new Uint8Array(
+		Buffer.from(
+			"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+			"base64",
+		),
+	);
 
 	beforeAll(async () => {
 		cookie = await registerUser("avatar-owner@example.com");
-		otherCookie = await registerUser("avatar-other@example.com");
 	});
-
-	async function uploadImage(
-		uploaderCookie: string,
-		filetype: string,
-	): Promise<string> {
-		const create = await tus("/uploads", {
-			method: "POST",
-			headers: {
-				"Upload-Length": String(PNG.byteLength),
-				"Upload-Metadata": `filename ${Buffer.from("avatar.png").toString("base64")},filetype ${Buffer.from(filetype).toString("base64")}`,
-			},
-			cookie: uploaderCookie,
-		});
-		expect(create.status).toBe(201);
-		const id = (create.headers.get("Location") ?? "").replace("/uploads/", "");
-		const res = await tus(`/uploads/${id}`, {
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/offset+octet-stream",
-				"Upload-Offset": "0",
-			},
-			body: PNG,
-			cookie: uploaderCookie,
-		});
-		expect(res.status).toBe(204);
-		return id;
-	}
 
 	it("redirects guests away from /profile", async () => {
 		const res = await tus("/profile");
@@ -506,17 +482,17 @@ describe("profile page & avatar upload", () => {
 		expect(data.component).toBe("Profile");
 	});
 
-	it("links a completed image upload as the avatar", async () => {
-		const id = await uploadImage(cookie, "image/png");
+	it("uploads an avatar via multipart and re-encodes it to WebP", async () => {
+		const fd = new FormData();
+		fd.append("avatar", new Blob([PNG], { type: "image/png" }));
 		const res = await tus("/profile/avatar", {
 			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ uploadId: id }),
+			body: fd,
 			cookie,
 		});
 		expect(res.status).toBe(204);
 
-		// Shared props expose the new avatar to the client.
+		// Shared props expose the new avatar URL.
 		const dash = await tus("/dashboard", {
 			headers: { "x-inertia": "true" },
 			cookie,
@@ -524,37 +500,44 @@ describe("profile page & avatar upload", () => {
 		const page = (await dash.json()) as {
 			props: { auth: { user: { avatarUrl: string | null } } };
 		};
-		expect(page.props.auth.user.avatarUrl).toBe(`/uploads/${id}`);
+		const avatarUrl = page.props.auth.user.avatarUrl;
+		expect(avatarUrl?.startsWith("/uploads/")).toBe(true);
 
-		// The stored bytes are served back with the declared content type.
-		const file = await tus(`/uploads/${id}`, { method: "GET", cookie });
+		// The stored bytes are served back as WebP (re-encoded by Bun.image),
+		// not the original PNG.
+		const file = await tus(avatarUrl!, { method: "GET", cookie });
 		expect(file.status).toBe(200);
-		expect(file.headers.get("content-type")).toBe("image/png");
-		expect(new Uint8Array(await file.arrayBuffer())).toEqual(PNG);
+		expect(file.headers.get("content-type")).toBe("image/webp");
+		expect((await file.arrayBuffer()).byteLength).toBeGreaterThan(0);
 	});
 
 	it("rejects non-image uploads as avatars", async () => {
-		const id = await uploadImage(cookie, "text/plain");
+		const fd = new FormData();
+		fd.append(
+			"avatar",
+			new Blob([new Uint8Array([1, 2, 3])], { type: "text/plain" }),
+		);
 		const res = await tus("/profile/avatar", {
 			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ uploadId: id }),
+			body: fd,
 			cookie,
 		});
 		expect(res.status).toBe(422);
 	});
 
 	it("rejects SVG uploads as avatars (stored-XSS guard)", async () => {
-		const id = await uploadImage(cookie, "image/svg+xml");
+		const fd = new FormData();
+		fd.append(
+			"avatar",
+			new Blob([new Uint8Array([1, 2, 3])], { type: "image/svg+xml" }),
+		);
 		const res = await tus("/profile/avatar", {
 			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ uploadId: id }),
+			body: fd,
 			cookie,
 		});
 		expect(res.status).toBe(422);
 	});
-
 	it("serves upload bytes with script-src 'none' (no script execution)", async () => {
 		const create = await tus("/uploads", {
 			method: "POST",
@@ -582,33 +565,6 @@ describe("profile page & avatar upload", () => {
 		const csp = res.headers.get("content-security-policy") ?? "";
 		const scriptSrc = csp.match(/script-src ([^;]+)/)?.[1] ?? "";
 		expect(scriptSrc).toBe("'none'");
-	});
-
-	it("rejects linking someone else's upload", async () => {
-		const id = await uploadImage(cookie, "image/png");
-		const res = await tus("/profile/avatar", {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ uploadId: id }),
-			cookie: otherCookie,
-		});
-		expect(res.status).toBe(404);
-	});
-
-	it("rejects linking an incomplete upload", async () => {
-		const create = await tus("/uploads", {
-			method: "POST",
-			headers: { "Upload-Length": String(PNG.byteLength) },
-			cookie,
-		});
-		const id = (create.headers.get("Location") ?? "").replace("/uploads/", "");
-		const res = await tus("/profile/avatar", {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ uploadId: id }),
-			cookie,
-		});
-		expect(res.status).toBe(400);
 	});
 });
 

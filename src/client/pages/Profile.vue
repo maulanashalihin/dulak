@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import Layout from "../components/Layout.vue";
 import Field from "../components/Field.vue";
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
-const CHUNK_SIZE = 256 * 1024;
-const PENDING_KEY = "dulak:avatar:upload";
-
-type PendingUpload = { id: string; name: string; size: number };
 type Phase = "idle" | "uploading" | "done" | "error";
 
 // Forms are seeded from the user once (available at setup via initialPage).
@@ -28,33 +24,10 @@ const pass = ref(
 	}),
 );
 const inputRef = ref<HTMLInputElement | null>(null);
-const pending = ref<PendingUpload | null>(null);
+const selectedName = ref<string | null>(null);
 const phase = ref<Phase>("idle");
 const progress = ref(0);
 const message = ref<string | null>(null);
-
-// Pick up an interrupted upload after a refresh; persist state changes.
-try {
-	const raw = localStorage.getItem(PENDING_KEY);
-	if (raw) pending.value = JSON.parse(raw) as PendingUpload;
-} catch {
-	/* ignore */
-}
-watch(pending, (p) => {
-	if (p) localStorage.setItem(PENDING_KEY, JSON.stringify(p));
-	else localStorage.removeItem(PENDING_KEY);
-});
-
-function toBase64(s: string): string {
-	const bytes = new TextEncoder().encode(s);
-	let bin = "";
-	for (const b of bytes) bin += String.fromCharCode(b);
-	return btoa(bin);
-}
-
-function statusMessage(res: Response): string {
-	return `Request failed (HTTP ${res.status})`;
-}
 
 function formatDate(iso: string): string {
 	return new Date(iso).toLocaleDateString(undefined, {
@@ -64,94 +37,45 @@ function formatDate(iso: string): string {
 	});
 }
 
-/** Upload (or resume) `file` against upload id `id` ('' = create a new one). */
-async function runUpload(id: string, file: File) {
-	phase.value = "uploading";
-	message.value = null;
-	progress.value = 0;
-
-	let uploadId = id;
-	if (!uploadId) {
-		const create = await fetch("/uploads", {
-			method: "POST",
-			headers: {
-				"Tus-Resumable": "1.0.0",
-				"Upload-Length": String(file.size),
-				"Upload-Metadata": `filename ${toBase64(file.name)},filetype ${toBase64(file.type)}`,
-			},
-		});
-		if (!create.ok) {
-			phase.value = "error";
-			message.value = statusMessage(create);
-			return;
-		}
-		const location = create.headers.get("Location");
-		if (!location) {
-			phase.value = "error";
-			message.value = "Server did not return an upload URL";
-			return;
-		}
-		uploadId = location.split("/").pop() ?? "";
-		pending.value = { id: uploadId, name: file.name, size: file.size };
-	}
-
-	// Reconcile the offset with the server so an interrupted upload resumes.
-	const head = await fetch(`/uploads/${uploadId}`, {
-		method: "HEAD",
-		headers: { "Tus-Resumable": "1.0.0" },
-	});
-	let offset = 0;
-	if (head.ok) {
-		const h = head.headers.get("Upload-Offset");
-		offset = h ? Number(h) || 0 : 0;
-	}
-
-	const bytes = new Uint8Array(await file.arrayBuffer());
-	while (offset < bytes.byteLength) {
-		const end = Math.min(offset + CHUNK_SIZE, bytes.byteLength);
-		const res = await fetch(`/uploads/${uploadId}`, {
-			method: "PATCH",
-			headers: {
-				"Tus-Resumable": "1.0.0",
-				"Content-Type": "application/offset+octet-stream",
-				"Upload-Offset": String(offset),
-			},
-			body: bytes.slice(offset, end),
-		});
-		if (!res.ok) {
-			phase.value = "error";
-			message.value = statusMessage(res);
-			return;
-		}
-		offset = end;
-		progress.value = Math.round((offset / bytes.byteLength) * 100);
-	}
-
-	const link = await fetch("/profile/avatar", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ uploadId }),
-	});
-	if (!link.ok) {
-		phase.value = "error";
-		message.value = statusMessage(link);
-		return;
-	}
-	pending.value = null;
-	phase.value = "done";
-	router.reload();
-}
-
+/** Upload an avatar via regular multipart form-data. Files ≤ 100 MB use
+ *  this path; the tus protocol at /uploads is reserved for larger
+ *  resumable uploads. The server decodes, resizes and re-encodes the
+ *  image to WebP with Bun.image before storing it. */
 function onFile(e: Event) {
 	const target = e.target as HTMLInputElement;
 	const file = target.files?.[0];
 	target.value = ""; // allow re-selecting the same file
 	if (!file) return;
-	if (pending.value && pending.value.name === file.name) {
-		void runUpload(pending.value.id, file);
-	} else {
-		void runUpload("", file);
-	}
+
+	phase.value = "uploading";
+	message.value = null;
+	progress.value = 0;
+	selectedName.value = file.name;
+
+	const fd = new FormData();
+	fd.append("avatar", file);
+
+	const xhr = new XMLHttpRequest();
+	xhr.upload.onprogress = (ev) => {
+		if (ev.lengthComputable)
+			progress.value = Math.round((ev.loaded / ev.total) * 100);
+	};
+	xhr.onload = () => {
+		if (xhr.status === 204) {
+			phase.value = "done";
+			selectedName.value = null;
+			router.reload();
+		} else {
+			phase.value = "error";
+			message.value = `Request failed (HTTP ${xhr.status})`;
+		}
+	};
+	xhr.onerror = () => {
+		phase.value = "error";
+		message.value = "Network error";
+	};
+	xhr.open("POST", "/profile/avatar");
+	xhr.send(fd);
 }
 
 function submitInfo() {
@@ -208,7 +132,7 @@ function initials(name: string): string {
 						<input
 							ref="inputRef"
 							type="file"
-							accept="image/*"
+							accept="image/png,image/jpeg,image/gif,image/webp"
 							hidden
 							@change="onFile"
 						/>
@@ -218,20 +142,16 @@ function initials(name: string): string {
 							:disabled="phase === 'uploading'"
 							@click="inputRef?.click()"
 						>
-							{{
-								phase === "uploading"
-									? "Uploading…"
-									: pending
-										? "Resume upload"
-										: "Change avatar"
-							}}
+						{{
+							phase === "uploading" ? "Uploading…" : "Change avatar"
+						}}
 						</button>
-						<span v-if="pending" class="upload-file">
-							{{ pending.name }} ({{ Math.max(1, Math.round(pending.size / 1024)) }} KB)
+						<span v-if="selectedName" class="upload-file">
+							{{ selectedName }}
 						</span>
 						<p v-if="message" class="upload-error">{{ message }}</p>
 						<div
-							v-if="phase === 'uploading' || (pending && phase === 'idle')"
+							v-if="phase === 'uploading'"
 							class="progress"
 							role="progressbar"
 							:aria-valuenow="progress"
