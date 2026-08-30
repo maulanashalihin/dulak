@@ -254,7 +254,7 @@
               >
                 <div
                   class="h-full rounded-full bg-primary transition-[width] duration-[120ms] ease-out"
-                  style={`width: ${progress}%`}
+                  style:width={`${progress}%`}
                 ></div>
               </div>
             {/if}
