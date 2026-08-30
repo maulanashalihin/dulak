@@ -20,6 +20,7 @@ import { createApp, createSSRApp, h } from "vue";
 import { notFoundPage, pages } from "./pages";
 import { loadSession } from "./session";
 import "./.tailwind.css"; // Tailwind output (preflight + utilities)
+import "./styles.css"; // custom CSS (overrides Tailwind via cascade)
 
 /** Read the CSP nonce from the <meta name="csp-nonce"> tag set by the server.
  *  Used by Inertia for inline styles (progress bar, error modal) so they
