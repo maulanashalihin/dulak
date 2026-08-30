@@ -95,7 +95,7 @@ roles, SSR, and test suite.
 | `bun run dev`       | Watch mode; rebuilds client assets on restart             |
 | `bun run build`     | Prebuild client assets → `dist/` (+ `manifest.json`)      |
 | `bun run start`     | Serve prebuilt assets (`NODE_ENV=production`)             |
-| `bun run test`      | E2E suite (auth, roles, reset flow, Inertia protocol, tus) |
+| `bun run test`      | E2E suite (auth, roles, reset flow, Inertia, tus, avatar upload) |
 | `bun run db:seed`   | Create a demo user (`[email] [password] [role]` args)     |
 | `bun run typecheck` | `tsc --noEmit`                                            |
 
@@ -113,10 +113,15 @@ roles, SSR, and test suite.
 - **Rate limiting**: global per-IP limit on all routes (DDoS baseline, excludes `/health` and `/assets/*`) plus a stricter layer on auth endpoints (brute-force protection). In-memory fixed window, configurable via env.
 - **Inertia v3**: full SSR on first load, SPA navigation after, asset-version
   negotiation (409 + reload), partial reloads, flash messages, shared props.
-- **Resumable uploads**: tus protocol v1 at `/uploads` (creation,
-  creation-with-upload, termination, expiration, checksum) with SQLite state
-  and on-disk storage — demonstrated end to end by the avatar upload on the
-  profile page.
+- **Two upload protocols**:
+  - **Regular upload** (multipart/form-data) for files ≤ 100 MB. Avatar
+    uploads use this path: the image is decoded, resized to 256×256 and
+    re-encoded to WebP with `Bun.Image` (Bun 1.4) before storage, so
+    avatars are always small, raster, and served from our own origin.
+  - **tus protocol v1** at `/uploads` (creation, creation-with-upload,
+    termination, expiration, checksum) with SQLite state and on-disk
+    storage — for resumable chunked uploads of files > 100 MB where a
+    plain multipart request would be unreliable.
 - **Migrations**: versioned SQL files applied at startup in transactions.
 - **Ops**: batched request logging with correlation id, gzip compression,
   security headers (CSP, nosniff, frame denial), `/health`, graceful
@@ -192,7 +197,7 @@ src/
 │       ├── auth.routes.ts         # /login /register /logout /forgot/reset (GET+POST)
 │       ├── google-oauth.routes.ts # /auth/google, /auth/google/callback
 │       ├── pages.routes.ts        # app-shell pages: /, /dashboard, /admin
-│       ├── profile.routes.ts      # /profile page + /profile/avatar
+│       ├── profile.routes.ts      # /profile page + /profile/avatar (multipart + Bun.Image)
 │       └── uploads.routes.ts      # /uploads* (tus resumable upload)
 ├── client/
 │   ├── app.tsx             # Inertia client bootstrap (hydrate or render)
@@ -277,8 +282,9 @@ bun test --isolate   # or: bun run test
 63 tests (snapshot — the suite grows; AGENTS.md only requires it stays green). The suite boots the full app against an in-memory SQLite database
 and drives it through `app.request()`: registration/login/logout, guards and
 roles, password reset end to end (via the log mail driver), Inertia protocol
-(409/404/SSR), CSRF, `/health`, static asset serving, and the tus
-resumable-upload flow (creation, resume, checksum, termination, ownership).
+(409/404/SSR), CSRF, `/health`, static asset serving, the tus
+resumable-upload flow (creation, resume, checksum, termination, ownership),
+and avatar upload via multipart with Bun.Image re-encoding to WebP.
 
 `--isolate` gives each test file fresh globals. It is required: the files
 are written as independent suites — each sets its env (`DATABASE_PATH`,
