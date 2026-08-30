@@ -7,7 +7,7 @@ contributions broke the architecture by inventing their own layout.
 
 ## Stack
 
-- **Bun >= 1.3** — runtime, bundler, and test runner.
+- **Bun >= 1.4** — runtime, bundler, and test runner.
 - **Hono 4.x** (HTTP). Stable, runtime-agnostic; served via `Bun.serve` with
   `app.fetch` (Bun hands the server to fetch as its 2nd arg → `c.env`).
 - **bun:sqlite** — synchronous, zero-ORM. Schema lives in `migrations/`
@@ -139,7 +139,6 @@ Two upload protocols coexist in this boilerplate:
    Implements creation, creation-with-upload, termination, expiration,
    and checksum extensions. See `tus-protocol.ts`, `tus-storage.ts`,
    and `uploads.routes.ts`.
-
 
 ## CDN cache pattern (public vs auth pages)
 
