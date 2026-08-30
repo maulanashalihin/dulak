@@ -30,7 +30,7 @@ The rest of this guide runs from inside the cloned repo directory.
 docker compose up -d --build
 ```
 
-- Multi-stage `Dockerfile` on `oven/bun:1.3-alpine`: client assets are
+- Multi-stage `Dockerfile` on `oven/bun:1.4-alpine`: client assets are
   prebuilt in the build stage; the runtime stage ships production
   dependencies only.
 - `./data` volume keeps the SQLite database across restarts; the healthcheck
