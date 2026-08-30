@@ -222,6 +222,22 @@ private and always receive user data via Inertia props.
   `bun run test` before finishing. `tsc` only covers `src/` and `scripts/`.
 
 
+
+## Dev server
+
+- **Nyalakan:** `bun run dev &>/tmp/dulak-dev.log &` via `bash` di background.
+  **JANGAN pakai `hub op:start`** — hub-spawned process tidak pick up
+  `bun --watch` reload dengan benar (code lama tetap running, bug sulit
+  di-debug).
+- **Setelah edit code di `src/`:** tunggu 2-3 detik untuk watch reload,
+  lalu test langsung. Cek log: `tail -3 /tmp/dulak-dev.log`.
+- **JANGAN restart** setelah edit — `bun --watch` sudah auto-restart.
+- **HANYA restart manual jika:** (1) server crash/hang, (2) edit `.env`
+  (env dibaca saat startup, watch tidak reload env), (3) edit file di luar
+  `src/` yang tidak di-watch.
+- **Kalau user sudah nyalakan server sendiri:** biarkan. Jangan stop,
+  jangan restart, jangan nyalakan yang kedua. Pakai server yang sudah ada.
+
 ## Browser testing
 
 - When testing in the browser, ALWAYS open the browser console (DevTools →
