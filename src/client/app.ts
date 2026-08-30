@@ -22,6 +22,7 @@ import "./styles.css";
 
 const resolve = (name: string) =>
 	pages[`./pages/${name}.svelte`] ?? notFoundPage;
+
 /** Read the CSP nonce from the <meta name="csp-nonce"> tag set by the server.
  *  Used by Inertia for inline styles (progress bar, error modal) so they
  *  pass a strict CSP without 'unsafe-inline'. */
