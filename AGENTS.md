@@ -121,6 +121,25 @@ src/
   no arguments — the Inertia adapter is a global middleware on the app, not
   per-route state.
 
+## Upload protocols
+
+Two upload protocols coexist in this boilerplate:
+
+1. **Regular upload (multipart/form-data)** — for files ≤ 100 MB.
+   `POST /profile/avatar` accepts a `FormData` with an `avatar` field.
+   The image is decoded, resized to 256×256 (`fit: "inside"`), and
+   re-encoded to WebP (quality 80) with `Bun.Image` (`import { Image }
+   from "bun"` — not the global `Bun.Image`, which is `undefined` in
+   server context) before storage. Hono's `formData()` returns `Blob`,
+   not `File` — use `instanceof Blob`. Stored via `writeBytes` +
+   `insertUpload`, served from `/uploads/<id>` as `image/webp`.
+
+2. **tus protocol v1** at `/uploads` — for resumable chunked uploads of
+   files > 100 MB where a plain multipart request would be unreliable.
+   Implements creation, creation-with-upload, termination, expiration,
+   and checksum extensions. See `tus-protocol.ts`, `tus-storage.ts`,
+   and `uploads.routes.ts`.
+
 
 ## CDN cache pattern (public vs auth pages)
 
