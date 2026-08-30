@@ -20,7 +20,13 @@ import { createApp, createSSRApp, h } from "vue";
 import { notFoundPage, pages } from "./pages";
 import { loadSession } from "./session";
 import "./.tailwind.css"; // Tailwind output (preflight + utilities)
-import "./styles.css"; // custom CSS (overrides Tailwind via cascade)
+
+/** Read the CSP nonce from the <meta name="csp-nonce"> tag set by the server.
+ *  Used by Inertia for inline styles (progress bar, error modal) so they
+ *  pass a strict CSP without 'unsafe-inline'. */
+const cspNonce =
+	document.querySelector('meta[name="csp-nonce"]')?.getAttribute("content") ??
+	undefined;
 
 // Fetch user session once on boot — decoupled from Inertia page props so
 // public page HTML stays identical for all visitors (CDN-cacheable).
@@ -47,6 +53,7 @@ createInertiaApp({
 	id: "app",
 	resolve: (name) =>
 		(pages[`./pages/${name}.vue`]?.default ?? notFoundPage) as DefineComponent,
+	nonce: cspNonce,
 	setup({ el, App, props, plugin }) {
 		const hydrate = el.hasAttribute("data-server-rendered");
 		const app = (hydrate ? createSSRApp : createApp)({
