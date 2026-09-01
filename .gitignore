@@ -11,5 +11,6 @@ data/uploads/
 .svelte-css-cache/
 .tailwind.css
 
+.dulak/
 .llm-wiki/meta/
 site/.astro/
