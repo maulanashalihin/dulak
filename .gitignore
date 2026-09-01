@@ -10,6 +10,7 @@ data/uploads/
 *.png
 .tailwind.css
 
+.dulak/
 .llm-wiki/meta/
 .svelte-css-cache/
 site/.astro/
