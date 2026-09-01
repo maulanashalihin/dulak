@@ -224,18 +224,29 @@ private and always receive user data via Inertia props.
 
 ## Dev server
 
-- **Nyalakan:** `bun run dev &>/tmp/dulak-dev.log &` via `bash` di background.
-  **JANGAN pakai `hub op:start`** — hub-spawned process tidak pick up
+AI agents use the lifecycle manager (`scripts/dev.ts`), not raw `bun --watch`.
+Human developers use `bun run dev` (foreground) — agents use `dev:background`.
+
+- **Start:** `bun run dev:background` — server jalan detached di background,
+  lock file di `.dulak/dev.json` (PID, port, URL). Output "Server ready"
+  muncul saat server siap — tunggu itu sebelum test.
+- **Cek status:** `bun run dev:status` — cek server hidup, port, PID, 3 baris
+  log terakhir. Pakai ini setelah watch reload untuk konfirmasi restart selesai.
+- **Cek log:** `bun run dev:logs` (50 baris terakhir) atau
+  `bun run scripts/dev.ts logs --follow` (tail -f style, blocking).
+- **Stop:** `bun run dev:stop` — graceful SIGTERM, fallback SIGKILL, hapus
+  lock file.
+- **Restart manual:** `bun run dev:restart` (stop + background). HANYA jika:
+  (1) server crash/hang, (2) edit `.env` (env dibaca saat startup, watch
+  tidak reload env), (3) edit file di luar `src/` yang tidak di-watch.
+- **JANGAN restart** setelah edit code di `src/` — `bun --watch` sudah
+  auto-restart. Tunggu 2-3 detik, lalu `bun run dev:status` untuk konfirmasi.
+- **JANGAN pakai `hub op:start`** — hub-spawned process tidak pick up
   `bun --watch` reload dengan benar (code lama tetap running, bug sulit
   di-debug).
-- **Setelah edit code di `src/`:** tunggu 2-3 detik untuk watch reload,
-  lalu test langsung. Cek log: `tail -3 /tmp/dulak-dev.log`.
-- **JANGAN restart** setelah edit — `bun --watch` sudah auto-restart.
-- **HANYA restart manual jika:** (1) server crash/hang, (2) edit `.env`
-  (env dibaca saat startup, watch tidak reload env), (3) edit file di luar
-  `src/` yang tidak di-watch.
 - **Kalau user sudah nyalakan server sendiri:** biarkan. Jangan stop,
-  jangan restart, jangan nyalakan yang kedua. Pakai server yang sudah ada.
+  jangan restart, jangan nyalakan yang kedua. Pakai `bun run dev:status`
+  untuk detect, atau tanya user port-nya.
 
 ## Browser testing
 
