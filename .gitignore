@@ -9,6 +9,6 @@ deploy.env
 data/uploads/
 .playwright-mcp/
 *.png
-
+.dulak/
 .llm-wiki/meta/
 site/.astro/
