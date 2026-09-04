@@ -47,7 +47,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",
     "@types/bun": "^1.2.0",
-    "typescript": "^5.8.0",
+    "typescript": "^7.0.2",
     "vue-tsc": "^3.3.9"
   }
 }
