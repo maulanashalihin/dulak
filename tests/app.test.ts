@@ -70,6 +70,7 @@ function sessionCookie(res: Response): string {
 	return cookie ? cookie.split(";")[0]! : "";
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: test helper returns untyped JSON
 async function page(res: Response): Promise<any> {
 	return res.json();
 }
@@ -323,7 +324,7 @@ describe("roles & admin", () => {
 		expect(data.props.users.meta.total).toBeGreaterThanOrEqual(2);
 		expect(data.props.users.meta.currentPage).toBe(1);
 		expect(
-			data.props.users.data.some((u: any) => u.email === "boss@example.com"),
+		data.props.users.data.some((u: Record<string, unknown>) => u.email === "boss@example.com"),
 		).toBe(true);
 
 		// non-admin cookie is still bounced
