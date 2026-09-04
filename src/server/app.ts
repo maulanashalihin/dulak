@@ -217,7 +217,7 @@ export function createApp(assets: InertiaAssets) {
 				return new Response("Unauthorized", { status: 401 });
 			}
 		} else {
-			const server = c.env as unknown as Server<any> | undefined;
+		const server = c.env as unknown as Server<unknown> | undefined;
 			const ip = server?.requestIP?.(c.req.raw)?.address ?? "local";
 			if (ip !== "127.0.0.1" && ip !== "::1" && ip !== "local") {
 				return new Response("Forbidden", { status: 403 });
