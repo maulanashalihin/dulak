@@ -31,7 +31,7 @@ let state: SessionData = initial;
 const listeners = new Set<() => void>();
 
 function emit(): void {
-  listeners.forEach((l) => l());
+  listeners.forEach((l) => { l(); });
 }
 
 /** Fetch /api/session and update the store. Called once on boot. */

@@ -39,7 +39,7 @@ interface Bucket {
 
 const MAX_BUCKETS = 10_000;
 
-type BunServer = Server<any>;
+type BunServer = Server<unknown>;
 
 function clientKey(request: Request, server: BunServer | null): string {
 	const forwarded = request.headers.get("x-forwarded-for");
