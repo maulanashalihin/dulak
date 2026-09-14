@@ -14,7 +14,7 @@
       <span class="dl-badge-dot"></span>
       <span>MIT · Bun-native</span>
       <span class="dl-badge-sep">·</span>
-      <span class="dl-stars">★ <span id="dl-star-count">–</span></span>
+      <span class="dl-badge-hl">67 E2E tests</span>
     </a>
 
     <h1 class="dl-title rv rv-d1">
@@ -115,15 +115,6 @@
       if (copyLabel) copyLabel.textContent = "select + ⌘C";
     }
   });
-
-  // Live GitHub star count (progressive enhancement; silent fail)
-  fetch("https://api.github.com/repos/maulanashalihin/dulak")
-    .then((r) => (r.ok ? r.json() : null))
-    .then((d) => {
-      const n = document.getElementById("dl-star-count");
-      if (n && d && typeof d.stargazers_count === "number") n.textContent = String(d.stargazers_count);
-    })
-    .catch(() => {});
 </script>
 
 <style>
@@ -196,7 +187,7 @@
   }
   @keyframes blinkdot { 50% { opacity: 0.45; } }
   .dl-badge-sep { color: var(--dl-faint); }
-  .dl-stars { color: var(--dl-accent); font-weight: 600; }
+  .dl-badge-hl { color: var(--dl-accent); font-weight: 600; }
 
   .dl-title {
     margin: 1.4rem 0 1.1rem;

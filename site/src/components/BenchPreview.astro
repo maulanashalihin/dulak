@@ -1,11 +1,4 @@
 ---
-const rows = [
-  { op: "Point read via HTTP", detail: "GET /users/:id · p99 2.6ms · median of 3", value: "52K", unit: "req/s" },
-  { op: "Create via HTTP", detail: "POST /users · p99 14ms · median of 3", value: "19.6K", unit: "req/s" },
-  { op: "Point read (direct)", detail: "bun:sqlite prepared stmt · no HTTP", value: "526K", unit: "ops/s" },
-  { op: "Autocommit insert (direct)", detail: "WAL + synchronous=NORMAL · no HTTP", value: "95K", unit: "ops/s" },
-  { op: "Transactional insert (direct)", detail: "db.transaction() · 0.75µs/row", value: "1.3M", unit: "ops/s" },
-];
 
 const compare = [
   { op: "Health (no DB)", dulak: "66K", laravel: "6K", x: "10.5", note: "same box, same SQLite WAL" },
@@ -38,27 +31,6 @@ const compare = [
     ))}
   </div>
   <p class="dl-bench-vs-label rv">vs Laravel 13 + FrankenPHP · 8 workers · same SQLite WAL · same machine</p>
-
-  <p class="dl-bench-legend rv">
-    <span class="dl-bench-legend-item"><span class="dl-bench-legend-dot dl-bench-legend-http"></span>via HTTP = full stack, what users experience</span>
-    <span class="dl-bench-legend-item"><span class="dl-bench-legend-dot dl-bench-legend-direct"></span>direct = raw bun:sqlite, no HTTP layer</span>
-  </p>
-  <div class="dl-bench-table-wrap rv">
-    <table class="dl-bench-table">
-      <thead>
-        <tr><th>Operation</th><th>Detail</th><th class="num">Throughput</th></tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr>
-            <td class="op">{r.op}</td>
-            <td class="detail">{r.detail}</td>
-            <td class="num"><strong>{r.value}</strong> <span>{r.unit}</span></td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
 </section>
 
 <script>
@@ -175,60 +147,6 @@ const compare = [
     font-family: var(--dl-mono);
     font-size: 0.74rem;
     color: var(--dl-faint);
-    margin: 0 0 2.4rem;
+    margin: 0;
   }
-
-  .dl-bench-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem 1.4rem;
-    justify-content: center;
-    margin: 0 0 1.1rem;
-    font-size: 0.8rem;
-    color: var(--dl-muted);
-  }
-  .dl-bench-legend-item { display: inline-flex; align-items: center; gap: 0.45rem; }
-  .dl-bench-legend-dot { width: 9px; height: 9px; border-radius: 50%; }
-  .dl-bench-legend-http { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.7); }
-  .dl-bench-legend-direct { background: #0d9488; }
-
-  .dl-bench-table-wrap {
-    border: 1px solid var(--dl-line);
-    border-radius: 1rem;
-    overflow: hidden;
-    overflow-x: auto;
-    background: #0a0e13;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-  }
-  .dl-bench-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.86rem;
-    min-width: 560px;
-  }
-  .dl-bench-table th {
-    text-align: left;
-    font-family: var(--dl-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--dl-faint);
-    font-weight: 600;
-    padding: 0.85rem 1.1rem;
-    border-bottom: 1px solid var(--dl-line);
-    background: rgba(52, 211, 153, 0.03);
-  }
-  .dl-bench-table td {
-    padding: 0.8rem 1.1rem;
-    border-bottom: 1px solid var(--dl-line-soft);
-    color: #c6ced8;
-  }
-  .dl-bench-table tbody tr:last-child td { border-bottom: none; }
-  .dl-bench-table tbody tr { transition: background 0.2s ease; }
-  .dl-bench-table tbody tr:hover { background: rgba(52, 211, 153, 0.045); }
-  .dl-bench-table td.op { font-weight: 600; color: var(--dl-ink); white-space: nowrap; }
-  .dl-bench-table td.detail { color: var(--dl-faint); font-family: var(--dl-mono); font-size: 0.76rem; }
-  .dl-bench-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .dl-bench-table .num strong { color: var(--dl-accent); font-size: 1rem; }
-  .dl-bench-table .num span { color: var(--dl-faint); font-size: 0.74rem; }
 </style>
