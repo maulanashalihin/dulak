@@ -225,26 +225,26 @@ private and always receive user data via Inertia props.
 AI agents use the lifecycle manager (`scripts/dev.ts`), not raw `bun --watch`.
 Human developers use `bun run dev` (foreground) — agents use `dev:background`.
 
-- **Start:** `bun run dev:background` — server jalan detached di background,
-  lock file di `.dulak/dev.json` (PID, port, URL). Output "Server ready"
-  muncul saat server siap — tunggu itu sebelum test.
-- **Cek status:** `bun run dev:status` — cek server hidup, port, PID, 3 baris
-  log terakhir. Pakai ini setelah watch reload untuk konfirmasi restart selesai.
-- **Cek log:** `bun run dev:logs` (50 baris terakhir) atau
+- **Start:** `bun run dev:background` — runs the server detached in the background,
+  lock file at `.dulak/dev.json` (PID, port, URL). The "Server ready"
+  output appears when the server is ready — wait for it before testing.
+- **Check status:** `bun run dev:status` — checks whether the server is alive, port, PID, last 3
+  log lines. Use this after a watch reload to confirm the restart finished.
+- **Check logs:** `bun run dev:logs` (last 50 lines) or
   `bun run scripts/dev.ts logs --follow` (tail -f style, blocking).
-- **Stop:** `bun run dev:stop` — graceful SIGTERM, fallback SIGKILL, hapus
+- **Stop:** `bun run dev:stop` — graceful SIGTERM, fallback SIGKILL, removes
   lock file.
-- **Restart manual:** `bun run dev:restart` (stop + background). HANYA jika:
-  (1) server crash/hang, (2) edit `.env` (env dibaca saat startup, watch
-  tidak reload env), (3) edit file di luar `src/` yang tidak di-watch.
-- **JANGAN restart** setelah edit code di `src/` — `bun --watch` sudah
-  auto-restart. Tunggu 2-3 detik, lalu `bun run dev:status` untuk konfirmasi.
-- **JANGAN pakai `hub op:start`** — hub-spawned process tidak pick up
-  `bun --watch` reload dengan benar (code lama tetap running, bug sulit
-  di-debug).
-- **Kalau user sudah nyalakan server sendiri:** biarkan. Jangan stop,
-  jangan restart, jangan nyalakan yang kedua. Pakai `bun run dev:status`
-  untuk detect, atau tanya user port-nya.
+- **Manual restart:** `bun run dev:restart` (stop + background). ONLY when:
+  (1) server crash/hang, (2) `.env` edited (env is read at startup, watch
+  does not reload env), (3) files outside `src/` edited that are not watched.
+- **DO NOT restart** after editing code in `src/` — `bun --watch` already
+  auto-restarts. Wait 2-3 seconds, then `bun run dev:status` to confirm.
+- **DO NOT use `hub op:start`** — hub-spawned processes do not pick up
+  `bun --watch` reloads correctly (stale code keeps running, bugs that are hard
+  to debug).
+- **If the user already started the server themselves:** leave it alone. Do not stop,
+  restart, or start a second one. Use `bun run dev:status`
+  to detect it, or ask the user for the port.
 
 ## Browser testing
 
