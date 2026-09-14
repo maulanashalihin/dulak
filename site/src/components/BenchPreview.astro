@@ -8,65 +8,52 @@ const rows = [
 ];
 
 const compare = [
-  { op: "Health (no DB)", dulak: "66K", laravel: "6K", x: "10.5×" },
-  { op: "Point read", dulak: "52K", laravel: "6K", x: "8.1×" },
-  { op: "List 20 rows", dulak: "32K", laravel: "5K", x: "6.8×" },
-  { op: "Delete", dulak: "28K", laravel: "6K", x: "4.9×" },
+  { op: "Health (no DB)", dulak: "66K", laravel: "6K", x: "10.5", note: "same box, same SQLite WAL" },
+  { op: "Point read", dulak: "52K", laravel: "6K", x: "8.1", note: "p99 2.6ms vs 41ms" },
+  { op: "List 20 rows", dulak: "32K", laravel: "5K", x: "6.8", note: "one query, no N+1" },
+  { op: "Delete", dulak: "28K", laravel: "6K", x: "4.9", note: "transactional" },
 ];
-
 ---
 <section class="dl-bench">
-  <h2 class="dl-section-title">Numbers from <span class="dl-accent">real hardware</span></h2>
-  <p class="dl-section-sub">
+  <p class="dl-kicker rv">Benchmarks</p>
+  <h2 class="dl-section-title rv">Numbers from <span class="dl-accent">real hardware</span></h2>
+  <p class="dl-section-sub rv rv-d1">
     bun:sqlite + Hono on Apple M4, measured — not estimated.
     <a href="/database/performance/">Full benchmark →</a>
   </p>
-  <p class="dl-bench-legend">
+
+  <div class="dl-bench-grid">
+    {compare.map((c, i) => (
+      <div class={`dl-vs-card rv ${i === 1 ? "rv-d1" : i === 2 ? "rv-d2" : i === 3 ? "rv-d3" : ""}`}>
+        <div class="dl-vs-op">{c.op}</div>
+        <div class="dl-vs-x"><span data-x={c.x}>0</span>×</div>
+        <div class="dl-vs-sub">faster than Laravel</div>
+        <div class="dl-vs-nums">
+          <span class="dl-vs-dulak">{c.dulak}</span>
+          <span class="dl-vs-sep">vs</span>
+          <span class="dl-vs-lar">{c.laravel}</span>
+        </div>
+        <div class="dl-vs-note">{c.note}</div>
+      </div>
+    ))}
+  </div>
+  <p class="dl-bench-vs-label rv">vs Laravel 13 + FrankenPHP · 8 workers · same SQLite WAL · same machine</p>
+
+  <p class="dl-bench-legend rv">
     <span class="dl-bench-legend-item"><span class="dl-bench-legend-dot dl-bench-legend-http"></span>via HTTP = full stack, what users experience</span>
     <span class="dl-bench-legend-item"><span class="dl-bench-legend-dot dl-bench-legend-direct"></span>direct = raw bun:sqlite, no HTTP layer</span>
   </p>
-  <div class="dl-bench-table-wrap">
+  <div class="dl-bench-table-wrap rv">
     <table class="dl-bench-table">
       <thead>
-        <tr>
-          <th>Operation</th>
-          <th class="dl-bench-num">Throughput</th>
-        </tr>
+        <tr><th>Operation</th><th>Detail</th><th class="num">Throughput</th></tr>
       </thead>
       <tbody>
         {rows.map((r) => (
           <tr>
-            <td class="dl-bench-op">
-              <span class="dl-bench-op-name">{r.op}</span>
-              <span class="dl-bench-op-detail">{r.detail}</span>
-            </td>
-            <td class="dl-bench-num">
-              <span class="dl-bench-value">{r.value}</span>
-              <span class="dl-bench-unit">{r.unit}</span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-  <div class="dl-bench-vs">
-    <p class="dl-bench-vs-label">vs Laravel 13 + FrankenPHP (8 workers, same SQLite WAL)</p>
-    <table class="dl-bench-table dl-bench-table-sm dl-bench-vs-table">
-      <thead>
-        <tr>
-          <th class="dl-bench-vs-endpoint">Endpoint</th>
-          <th class="dl-bench-num">Dulak <span class="dl-bench-th-unit">req/s</span></th>
-          <th class="dl-bench-num">Laravel <span class="dl-bench-th-unit">req/s</span></th>
-          <th class="dl-bench-num">Faster</th>
-        </tr>
-      </thead>
-      <tbody>
-        {compare.map((c) => (
-          <tr>
-            <td class="dl-bench-vs-endpoint">{c.op}</td>
-            <td class="dl-bench-num dl-bench-vs-dulak">{c.dulak}</td>
-            <td class="dl-bench-num dl-bench-vs-laravel">{c.laravel}</td>
-            <td class="dl-bench-num dl-bench-vs-x">{c.x}</td>
+            <td class="op">{r.op}</td>
+            <td class="detail">{r.detail}</td>
+            <td class="num"><strong>{r.value}</strong> <span>{r.unit}</span></td>
           </tr>
         ))}
       </tbody>
@@ -74,162 +61,174 @@ const compare = [
   </div>
 </section>
 
+<script>
+  // Count up the "× faster" multiples when they scroll into view
+  const xs = document.querySelectorAll<HTMLElement>("[data-x]");
+  const runX = (el: HTMLElement) => {
+    const target = Number(el.dataset.x || "0");
+    const t0 = performance.now();
+    const dur = 1300;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = (target * eased).toFixed(1);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => {
+        if (e.isIntersecting) {
+          runX(e.target as HTMLElement);
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.6 });
+    xs.forEach((el) => io.observe(el));
+  } else {
+    xs.forEach(runX);
+  }
+</script>
+
 <style>
-  .dl-bench { max-width: 760px; margin: 0 auto 5rem; padding: 0 1.5rem; }
-  .dl-section-title { font-size: 1.7rem; letter-spacing: -0.02em; text-align: center; margin-bottom: 0.5rem; }
-  .dl-section-sub {
+  .dl-bench { max-width: 960px; margin: 0 auto 5rem; padding: 0 1.5rem; }
+  .dl-kicker {
     text-align: center;
-    color: #8b95a5;
-    margin: 0.4rem 0 2.2rem;
-    font-size: 0.92rem;
+    font-family: var(--dl-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--dl-accent);
+    margin: 0 0 0.9rem;
   }
-  .dl-section-sub a {
-    color: #34d399;
-    text-decoration: none;
-    font-weight: 600;
+
+  .dl-bench-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1rem;
   }
-  .dl-section-sub a:hover { text-decoration: underline; }
-  .dl-accent {
-    color: #34d399;
+  .dl-vs-card {
+    position: relative;
+    border: 1px solid var(--dl-line);
+    border-radius: 1rem;
+    padding: 1.5rem 1.3rem;
+    background: linear-gradient(180deg, #0e141c, #090d12);
+    text-align: center;
+    overflow: hidden;
+    transition: border-color 0.25s ease, transform 0.25s ease;
+  }
+  .dl-vs-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.65), transparent);
+  }
+  .dl-vs-card:hover {
+    border-color: rgba(52, 211, 153, 0.45);
+    transform: translateY(-3px);
+  }
+  .dl-vs-op {
+    font-size: 0.78rem;
+    color: var(--dl-muted);
+    font-family: var(--dl-mono);
+  }
+  .dl-vs-x {
+    font-size: 2.9rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--dl-accent);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+    text-shadow: 0 0 34px rgba(52, 211, 153, 0.4);
+  }
+  .dl-vs-sub {
+    font-size: 0.78rem;
+    color: var(--dl-faint);
+    margin-bottom: 0.9rem;
+  }
+  .dl-vs-nums {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--dl-mono);
+    font-size: 0.85rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--dl-line-soft);
+  }
+  .dl-vs-dulak { color: var(--dl-ink); font-weight: 700; }
+  .dl-vs-sep { color: var(--dl-faint); font-size: 0.72rem; }
+  .dl-vs-lar { color: var(--dl-faint); }
+  .dl-vs-note {
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--dl-faint);
+    font-family: var(--dl-mono);
+  }
+  .dl-bench-vs-label {
+    text-align: center;
+    font-family: var(--dl-mono);
+    font-size: 0.74rem;
+    color: var(--dl-faint);
+    margin: 0 0 2.4rem;
   }
 
   .dl-bench-legend {
     display: flex;
-    justify-content: center;
-    gap: 1.5rem;
     flex-wrap: wrap;
-    margin: -1.2rem 0 1.2rem;
-    font-size: 0.78rem;
-    color: #8b95a5;
+    gap: 0.6rem 1.4rem;
+    justify-content: center;
+    margin: 0 0 1.1rem;
+    font-size: 0.8rem;
+    color: var(--dl-muted);
   }
-  .dl-bench-legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-  .dl-bench-legend-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-  .dl-bench-legend-http { background: #34d399; }
-  .dl-bench-legend-direct { background: #475569; }
+  .dl-bench-legend-item { display: inline-flex; align-items: center; gap: 0.45rem; }
+  .dl-bench-legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .dl-bench-legend-http { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.7); }
+  .dl-bench-legend-direct { background: #0d9488; }
 
   .dl-bench-table-wrap {
-    border: 1px solid #1f2937;
-    border-radius: 0.75rem;
+    border: 1px solid var(--dl-line);
+    border-radius: 1rem;
     overflow: hidden;
-    padding: 0.4rem 0.4rem 0.2rem;
-    background: #0f141a;
+    overflow-x: auto;
+    background: #0a0e13;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   }
   .dl-bench-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.92rem;
+    font-size: 0.86rem;
+    min-width: 560px;
   }
-  .dl-bench-table thead th {
+  .dl-bench-table th {
     text-align: left;
-    padding: 0.7rem 1.2rem;
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-family: var(--dl-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #9aa4b2;
-    background: #131922;
-    border-bottom: 1px solid #1f2937;
+    color: var(--dl-faint);
+    font-weight: 600;
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid var(--dl-line);
+    background: rgba(52, 211, 153, 0.03);
   }
-  .dl-bench-table thead th.dl-bench-num {
-    text-align: right;
-  }
-  .dl-bench-table tbody tr {
-    border-bottom: 1px solid #161c26;
-    transition: background 0.15s ease;
-  }
-  .dl-bench-table tbody tr:last-child { border-bottom: none; }
-  .dl-bench-table tbody tr:hover { background: #131922; }
   .dl-bench-table td {
-    padding: 0.85rem 1.2rem;
-    vertical-align: middle;
+    padding: 0.8rem 1.1rem;
+    border-bottom: 1px solid var(--dl-line-soft);
+    color: #c6ced8;
   }
-  .dl-bench-num { text-align: right; white-space: nowrap; }
-
-  .dl-bench-op-name {
-    display: block;
-    font-weight: 600;
-    color: #d3dae4;
-  }
-  .dl-bench-op-detail {
-    display: block;
-    font-size: 0.78rem;
-    color: #8b95a5;
-    font-family: ui-monospace, monospace;
-    margin-top: 0.15rem;
-  }
-
-  .dl-bench-value {
-    font-size: 1.35rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: #34d399;
-  }
-  .dl-bench-unit {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #8b95a5;
-    margin-left: 0.3rem;
-  }
-  .dl-bench-vs {
-    max-width: 100%;
-    margin: 1.5rem auto 0;
-  }
-  .dl-bench-vs-label {
-    text-align: center;
-    font-size: 0.82rem;
-    color: #8b95a5;
-    margin: 0 0 0.6rem;
-  }
-  .dl-bench-vs-table {
-    table-layout: fixed;
-    border: 1px solid #1f2937;
-    border-radius: 0.75rem;
-    overflow: hidden;
-    background: #0f141a;
-  }
-  .dl-bench-vs-table th,
-  .dl-bench-vs-table td {
-    padding: 0.55rem 1rem;
-  }
-  .dl-bench-vs-endpoint {
-    width: 38%;
-    text-align: left;
-    font-weight: 600;
-    color: #d3dae4;
-    font-size: 0.85rem;
-  }
-  .dl-bench-th-unit {
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: #8b95a5;
-    display: block;
-    margin-top: 0.1rem;
-  }
-  .dl-bench-vs-dulak {
-    color: #34d399;
-    font-weight: 700;
-    font-size: 1.05rem;
-  }
-  .dl-bench-vs-laravel {
-    color: #8b95a5;
-    font-size: 1.05rem;
-  }
-  .dl-bench-vs-x {
-    color: #34d399;
-    font-weight: 800;
-    font-size: 0.95rem;
-  }
-  @media (max-width: 520px) {
-    .dl-bench-table td { padding: 0.7rem 0.8rem; }
-    .dl-bench-value { font-size: 1.15rem; }
-  }
+  .dl-bench-table tbody tr:last-child td { border-bottom: none; }
+  .dl-bench-table tbody tr { transition: background 0.2s ease; }
+  .dl-bench-table tbody tr:hover { background: rgba(52, 211, 153, 0.045); }
+  .dl-bench-table td.op { font-weight: 600; color: var(--dl-ink); white-space: nowrap; }
+  .dl-bench-table td.detail { color: var(--dl-faint); font-family: var(--dl-mono); font-size: 0.76rem; }
+  .dl-bench-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .dl-bench-table .num strong { color: var(--dl-accent); font-size: 1rem; }
+  .dl-bench-table .num span { color: var(--dl-faint); font-size: 0.74rem; }
 </style>

@@ -77,5 +77,28 @@ import Faq from "../components/Faq.astro";
         <span>MIT License</span>
       </div>
     </footer>
+    <script>
+      // Reveal-on-scroll for .rv elements (each component marks its own blocks)
+      const rvEls = document.querySelectorAll(".rv");
+      if ("IntersectionObserver" in window) {
+        const io = new IntersectionObserver(
+          (es) => es.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("in");
+              io.unobserve(e.target);
+            }
+          }),
+          { threshold: 0.12, rootMargin: "0px 0px -6% 0px" }
+        );
+        rvEls.forEach((el) => io.observe(el));
+      } else {
+        rvEls.forEach((el) => el.classList.add("in"));
+      }
+      // Sticky nav border on scroll
+      const nav = document.querySelector(".dl-nav");
+      const onScroll = () => nav?.classList.toggle("scrolled", window.scrollY > 12);
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+    </script>
   </body>
 </html>

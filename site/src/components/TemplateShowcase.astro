@@ -115,9 +115,9 @@ function submit() {
   },
 ];
 ---
-<section class="dl-templates">
+<section class="dl-templates rv">
+  <p class="dl-kicker">Templates</p>
   <h2 class="dl-section-title">One server. <span class="dl-accent">Three clients.</span></h2>
-  <p class="dl-section-sub">Pick a framework and styling — the same Login page, in your stack.</p>
 
   <div class="dl-tabs">
     <div class="dl-tab-buttons">
@@ -151,7 +151,16 @@ function submit() {
 </script>
 
 <style>
-  .dl-templates { max-width: 860px; margin: 0 auto 4.5rem; padding: 0 1.5rem; }
+  .dl-templates { max-width: 860px; margin: 0 auto 5rem; padding: 0 1.5rem; }
+  .dl-kicker {
+    text-align: center;
+    font-family: var(--dl-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--dl-accent);
+    margin: 0 0 0.9rem;
+  }
   .dl-tabs { margin-top: 1.6rem; }
   .dl-tab-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .dl-tab-input { display: none; }
@@ -168,8 +177,9 @@ function submit() {
   .dl-tab-btn:hover { color: #d3dae4; }
   .dl-tab-btn.active {
     color: #34d399;
-    border-color: #059669;
-    background: rgba(5, 150, 105, 0.1);
+    border-color: rgba(52, 211, 153, 0.55);
+    background: rgba(5, 150, 105, 0.12);
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.15);
   }
   .dl-tab-panel { display: none; margin-top: 0.4rem; }
   .dl-tab-panel.show { display: block; }

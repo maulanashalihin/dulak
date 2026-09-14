@@ -484,3 +484,70 @@ starlight-toc nav ul li a.is-current {
 	background: transparent;
 	border-radius: 0;
 }
+
+/* --- Atmosphere lift (visual polish, no layout changes) --- */
+
+/* Branded text selection */
+::selection {
+	background: rgba(52, 211, 153, 0.32);
+}
+
+/* Slim themed scrollbar */
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background: var(--sl-color-gray-5);
+	border-radius: 8px;
+	border: 2px solid transparent;
+	background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: var(--sl-color-accent);
+	background-clip: content-box;
+}
+
+/* Sidebar links — soft accent glide on hover */
+.sidebar-content a {
+	border-radius: 0.4rem;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+.sidebar-content a:hover {
+	background: rgba(5, 150, 105, 0.08);
+}
+.sidebar-content a[aria-current="page"] {
+	background: rgba(5, 150, 105, 0.12);
+	box-shadow: inset 2px 0 0 var(--sl-color-accent);
+	color: var(--sl-color-accent-high);
+}
+
+/* Code blocks — lift off the page with a hairline + depth */
+.sl-markdown-content .expressive-code figure {
+	border: 1px solid var(--sl-color-gray-5);
+	box-shadow: 0 16px 44px rgba(0, 0, 0, 0.35);
+}
+
+/* Heading anchors — fade in instead of popping */
+.sl-markdown-content :is(h2, h3, h4) .sl-anchor-link {
+	opacity: 0;
+	transition: opacity 0.2s ease, color 0.2s ease;
+}
+.sl-markdown-content :is(h2, h3, h4):hover .sl-anchor-link {
+	opacity: 1;
+}
+
+/* Cards (link cards, asides) — consistent accent hover */
+.sl-link-card:hover {
+	transform: translateY(-2px);
+	transition: border-color 0.15s ease, transform 0.2s ease;
+}
+
+/* Top nav — blur backdrop for depth over long pages */
+.page > header.header {
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+}

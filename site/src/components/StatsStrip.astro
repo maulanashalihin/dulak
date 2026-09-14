@@ -1,48 +1,93 @@
 ---
 const stats = [
-  { value: "1", label: "server, three clients" },
-  { value: "63", label: "E2E tests" },
-  { value: "6", label: "templates" },
-  { value: "0", label: "CSS frameworks required" },
+  { value: "1", label: "server, three clients", count: true },
+  { value: "63", label: "E2E tests", count: true },
+  { value: "6", label: "templates", count: true },
+  { value: "0", label: "CSS frameworks required", count: false },
 ];
 ---
 
-<div class="dl-stats">
+<div class="dl-stats rv">
   {stats.map((s) => (
     <div class="dl-stat">
-      <span class="dl-stat-value">{s.value}</span>
+      <span class="dl-stat-value" data-count={s.count ? s.value : undefined}>{s.value}</span>
       <span class="dl-stat-label">{s.label}</span>
     </div>
   ))}
 </div>
+
+<script>
+  const els = document.querySelectorAll<HTMLElement>(".dl-stat-value[data-count]");
+  const run = (el: HTMLElement) => {
+    const target = Number(el.dataset.count || "0");
+    const t0 = performance.now();
+    const dur = 1200;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => {
+        if (e.isIntersecting) {
+          run(e.target as HTMLElement);
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    els.forEach((el) => io.observe(el));
+  }
+</script>
 
 <style>
   .dl-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1px;
-    background: #1f2937;
-    border: 1px solid #1f2937;
-    border-radius: 0.75rem;
+    background: #1a2330;
+    border: 1px solid #1a2330;
+    border-radius: 1rem;
     overflow: hidden;
-    max-width: 760px;
-    margin: 4.5rem auto 4.5rem;
+    max-width: 780px;
+    margin: 4.5rem auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   }
   .dl-stat {
-    background: #0f141a;
-    padding: 1.4rem 1rem;
+    background: linear-gradient(180deg, #0e141b, #0b0f14);
+    padding: 1.6rem 1rem;
     text-align: center;
+    position: relative;
+  }
+  .dl-stat::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.4), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .dl-stat:hover::after {
+    opacity: 1;
   }
   .dl-stat-value {
     display: block;
-    font-size: 1.9rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-size: 2.1rem;
+    font-weight: 750;
+    letter-spacing: -0.03em;
     color: #34d399;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 26px rgba(52, 211, 153, 0.35);
   }
   .dl-stat-label {
     display: block;
-    margin-top: 0.25rem;
+    margin-top: 0.3rem;
     font-size: 0.82rem;
     color: #8b95a5;
   }

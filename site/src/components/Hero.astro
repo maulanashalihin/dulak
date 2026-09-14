@@ -7,40 +7,44 @@
     <span class="dl-aurora-blob a2"></span>
     <span class="dl-aurora-blob a3"></span>
   </div>
+  <div class="dl-grid-bg" aria-hidden="true"></div>
 
   <div class="dl-hero-inner">
-    <div class="dl-bolt">
-      <svg viewBox="0 0 32 32" width="52" height="52" aria-hidden="true">
-        <rect width="32" height="32" rx="8" fill="#059669" />
-        <path d="M12 9h2.2c5.6 0 9.3 3.1 9.3 7s-3.7 7-9.3 7H12V9Z"
-          fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-        <rect x="16" y="18.2" width="4.4" height="2.2" rx="1.1" fill="#059669" />
-      </svg>
-    </div>
+    <a class="dl-badge rv" href="https://github.com/maulanashalihin/dulak" target="_blank" rel="noreferrer">
+      <span class="dl-badge-dot"></span>
+      <span>MIT · Bun-native</span>
+      <span class="dl-badge-sep">·</span>
+      <span class="dl-stars">★ <span id="dl-star-count">–</span></span>
+    </a>
 
-    <h1 class="dl-title">
+    <h1 class="dl-title rv rv-d1">
       Deliberately <span class="dl-accent">boring</span>.<br />
       A full-stack starter that actually works.
     </h1>
 
-    <p class="dl-tagline">
+    <p class="dl-tagline rv rv-d2">
       One Bun process: <strong>Hono</strong> + <strong>bun:sqlite</strong> +
       <strong>Inertia v3</strong> with in-process SSR. React, Svelte, or Vue —
       your choice. Auth, uploads, migrations, tests, Docker — wired end to end,
       not left for you to glue.
     </p>
 
-    <div class="dl-actions">
-      <a class="dl-btn dl-btn-primary" href="/getting-started/introduction/">Get started</a>
+    <div class="dl-actions rv rv-d2">
+      <a class="dl-btn dl-btn-primary" href="/getting-started/introduction/">Get started →</a>
       <a class="dl-btn dl-btn-ghost" href="https://github.com/maulanashalihin/dulak" target="_blank" rel="noreferrer">
         View on GitHub
       </a>
     </div>
 
-    <div class="dl-terminal" aria-label="Quick start">
+    <div class="dl-terminal rv rv-d3" aria-label="Quick start">
+      <div class="dl-terminal-glow" aria-hidden="true"></div>
       <div class="dl-terminal-bar">
         <span class="dl-dot r"></span><span class="dl-dot y"></span><span class="dl-dot g"></span>
         <span class="dl-terminal-title">zsh</span>
+        <button class="dl-copy" id="dl-copy" type="button" title="Copy command">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          <span id="dl-copy-label">copy</span>
+        </button>
       </div>
       <div class="dl-terminal-body">
         <div class="dl-line"><span class="dl-prompt">➜</span> <span class="dl-typing" id="dl-typing"></span><span class="dl-cursor" id="dl-cursor"></span></div>
@@ -57,13 +61,14 @@
       </div>
     </div>
 
-    <div class="dl-chips">
+    <div class="dl-chips rv rv-d3">
       <span>Bun</span><span>Hono</span><span>Inertia v3</span><span>bun:sqlite</span><span>TypeBox</span>
     </div>
   </div>
 </div>
 
 <script>
+  // Typing effect
   const el = document.getElementById("dl-typing");
   const cursor = document.getElementById("dl-cursor");
   if (el && cursor) {
@@ -82,15 +87,50 @@
         });
       }
     };
-    tick();
+    // Start typing only when the terminal scrolls into view
+    const start = () => tick();
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((es) => {
+        es.forEach((e) => { if (e.isIntersecting) { start(); io.disconnect(); } });
+      }, { threshold: 0.3 });
+      io.observe(el);
+    } else {
+      start();
+    }
   }
+
+  // Copy command button
+  const copyBtn = document.getElementById("dl-copy");
+  const copyLabel = document.getElementById("dl-copy-label");
+  copyBtn?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText("bun create dulak@latest my-app");
+      if (copyLabel) copyLabel.textContent = "copied ✓";
+      copyBtn.classList.add("done");
+      setTimeout(() => {
+        if (copyLabel) copyLabel.textContent = "copy";
+        copyBtn.classList.remove("done");
+      }, 1800);
+    } catch {
+      if (copyLabel) copyLabel.textContent = "select + ⌘C";
+    }
+  });
+
+  // Live GitHub star count (progressive enhancement; silent fail)
+  fetch("https://api.github.com/repos/maulanashalihin/dulak")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      const n = document.getElementById("dl-star-count");
+      if (n && d && typeof d.stargazers_count === "number") n.textContent = String(d.stargazers_count);
+    })
+    .catch(() => {});
 </script>
 
 <style>
   .dl-hero {
     position: relative;
     overflow: hidden;
-    padding: 5.5rem 1.5rem 4rem;
+    padding: 4.5rem 1.5rem 5rem;
     text-align: center;
   }
   .dl-aurora {
@@ -102,91 +142,155 @@
   .dl-aurora-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(90px);
-    opacity: 0.45;
+    filter: blur(110px);
+    opacity: 0.32;
   }
-  .a1 { width: 480px; height: 480px; background: #059669; top: -160px; left: -120px; animation: drift 18s ease-in-out infinite; }
-  .a2 { width: 420px; height: 420px; background: #0d9488; top: 40px; right: -140px; animation: drift 22s ease-in-out infinite reverse; }
-  .a3 { width: 360px; height: 360px; background: #065f46; bottom: -180px; left: 30%; animation: drift 26s ease-in-out infinite; }
+  .a1 { width: 560px; height: 560px; background: #059669; top: -220px; left: -160px; animation: drift 18s ease-in-out infinite; }
+  .a2 { width: 480px; height: 480px; background: #0d9488; top: 60px; right: -180px; animation: drift 22s ease-in-out infinite reverse; }
+  .a3 { width: 420px; height: 420px; background: #065f46; bottom: -220px; left: 32%; animation: drift 26s ease-in-out infinite; }
   @keyframes drift {
     0%, 100% { transform: translate(0, 0) scale(1); }
     50% { transform: translate(40px, 30px) scale(1.08); }
   }
-  .dl-hero-inner { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; }
-  .dl-bolt {
+  .dl-grid-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.055) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 75% 62% at 50% 32%, black 20%, transparent 72%);
+    -webkit-mask-image: radial-gradient(ellipse 75% 62% at 50% 32%, black 20%, transparent 72%);
+  }
+  .dl-hero-inner { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; }
+
+  .dl-badge {
     display: inline-flex;
-    filter: drop-shadow(0 0 24px rgba(16, 185, 129, 0.55));
-    animation: pulse 4s ease-in-out infinite;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.78rem;
+    font-family: var(--dl-mono);
+    color: var(--dl-muted);
+    border: 1px solid var(--dl-line);
+    background: rgba(13, 18, 24, 0.7);
+    backdrop-filter: blur(8px);
+    border-radius: 999px;
+    padding: 0.42rem 1rem;
+    text-decoration: none;
+    margin-bottom: 1.6rem;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
   }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.06); }
+  .dl-badge:hover {
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 24px rgba(52, 211, 153, 0.18);
   }
+  .dl-badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--dl-accent);
+    box-shadow: 0 0 10px var(--dl-accent);
+    animation: blinkdot 2s ease-in-out infinite;
+  }
+  @keyframes blinkdot { 50% { opacity: 0.45; } }
+  .dl-badge-sep { color: var(--dl-faint); }
+  .dl-stars { color: var(--dl-accent); font-weight: 600; }
+
   .dl-title {
-    margin: 1.4rem 0 1rem;
-    font-size: clamp(2.4rem, 6vw, 3.6rem);
-    line-height: 1.08;
-    letter-spacing: -0.03em;
-  }
-  .dl-accent {
-    color: #34d399;
+    margin: 1.4rem 0 1.1rem;
+    font-size: clamp(2.6rem, 7vw, 4.4rem);
+    line-height: 1.04;
+    letter-spacing: -0.04em;
+    text-wrap: balance;
   }
   .dl-tagline {
-    max-width: 620px;
-    margin: 0 auto 1.8rem;
-    font-size: 1.08rem;
-    line-height: 1.65;
+    max-width: 640px;
+    margin: 0 auto 2rem;
+    font-size: 1.1rem;
+    line-height: 1.7;
     color: #9aa4b2;
+    text-wrap: pretty;
   }
-  .dl-actions { display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 2.5rem; }
+  .dl-tagline strong { color: #e6ebf1; font-weight: 600; }
+  .dl-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3rem; }
   .dl-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.7rem 1.4rem;
-    border-radius: 0.6rem;
-    font-weight: 600;
-    font-size: 0.95rem;
+    padding: 0.8rem 1.7rem;
+    border-radius: 0.65rem;
+    font-weight: 650;
+    font-size: 0.97rem;
     text-decoration: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
   }
-  .dl-btn:hover { transform: translateY(-1px); }
+  .dl-btn:hover { transform: translateY(-2px); }
+  .dl-btn:active { transform: translateY(0); }
   .dl-btn-primary {
-    background: #047857;
+    background: linear-gradient(180deg, #10b981, #047857);
     color: #fff;
-    box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35);
+    box-shadow: 0 10px 32px rgba(5, 150, 105, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   }
-  .dl-btn-primary:hover { box-shadow: 0 12px 32px rgba(5, 150, 105, 0.5); }
+  .dl-btn-primary:hover { box-shadow: 0 14px 44px rgba(5, 150, 105, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.22); }
   .dl-btn-ghost {
     border: 1px solid #263041;
     color: #d3dae4;
     background: rgba(15, 17, 23, 0.6);
   }
-  .dl-btn-ghost:hover { background: rgba(30, 41, 59, 0.8); }
+  .dl-btn-ghost:hover { background: rgba(30, 41, 59, 0.8); border-color: rgba(52, 211, 153, 0.4); }
 
   .dl-terminal {
-    max-width: 640px;
-    margin: 0 auto 1.6rem;
-    border-radius: 0.75rem;
-    border: 1px solid #1f2937;
-    background: #0b0f14;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    max-width: 660px;
+    margin: 0 auto 1.8rem;
+    border-radius: 0.85rem;
+    border: 1px solid #223041;
+    background: rgba(8, 12, 17, 0.92);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.4), 0 0 90px rgba(5, 150, 105, 0.12);
     text-align: left;
     overflow: hidden;
+  }
+  .dl-terminal-glow {
+    position: absolute;
+    top: -1px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.8), transparent);
   }
   .dl-terminal-bar {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.6rem 0.9rem;
-    border-bottom: 1px solid #1f2937;
-    background: #10151c;
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid #1a2430;
+    background: rgba(16, 21, 28, 0.9);
   }
   .dl-dot { width: 11px; height: 11px; border-radius: 50%; }
   .dl-dot.r { background: #f87171; } .dl-dot.y { background: #fbbf24; } .dl-dot.g { background: #34d399; }
-  .dl-terminal-title { margin-left: 0.4rem; font-size: 0.75rem; color: #64748b; font-family: ui-monospace, monospace; }
-  .dl-terminal-body { padding: 1rem 1.1rem; font-family: ui-monospace, "SF Mono", monospace; font-size: 0.85rem; line-height: 1.7; }
-  .dl-line { color: #d1d5db; white-space: nowrap; overflow: hidden; }
+  .dl-terminal-title { margin-left: 0.4rem; font-size: 0.75rem; color: #64748b; font-family: var(--dl-mono); }
+  .dl-copy {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0.4rem;
+    color: #7b8794;
+    font-size: 0.72rem;
+    font-family: var(--dl-mono);
+    padding: 0.25rem 0.55rem;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .dl-copy:hover { color: var(--dl-accent); border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.07); }
+  .dl-copy.done { color: var(--dl-accent); border-color: rgba(52, 211, 153, 0.5); }
+  .dl-terminal-body { padding: 1.1rem 1.2rem 1.2rem; font-family: var(--dl-mono); font-size: 0.85rem; line-height: 1.75; }
+  .dl-line { color: #d1d5db; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .dl-line::-webkit-scrollbar { display: none; }
   .dl-prompt { color: #34d399; margin-right: 0.5rem; }
   .dl-cursor {
     display: inline-block;
@@ -194,6 +298,7 @@
     background: #34d399;
     vertical-align: text-bottom;
     animation: blink 1s steps(1) infinite;
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
   }
   @keyframes blink { 50% { opacity: 0; } }
   .dl-out { opacity: 0; }
@@ -205,10 +310,17 @@
   .dl-chips { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
   .dl-chips span {
     font-size: 0.78rem;
+    font-family: var(--dl-mono);
     color: #9aa4b2;
-    border: 1px solid #263041;
+    border: 1px solid #223041;
     border-radius: 999px;
-    padding: 0.25rem 0.75rem;
-    background: rgba(15, 17, 23, 0.6);
+    padding: 0.3rem 0.85rem;
+    background: rgba(13, 18, 24, 0.7);
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .dl-chips span:hover { border-color: rgba(52, 211, 153, 0.45); color: var(--dl-accent); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dl-aurora-blob, .dl-badge-dot, .dl-cursor { animation: none; }
   }
 </style>
