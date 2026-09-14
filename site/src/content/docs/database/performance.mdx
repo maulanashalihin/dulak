@@ -191,15 +191,39 @@ place when you need multiple servers — not when you need raw speed.
 
 ## The tradeoff
 
+Both rows assume WAL (Dulak's journal) — only `synchronous` varies:
+
 | Mode | Power-loss behavior | Writes/s |
 | --- | --- | ---: |
-| `NORMAL` | last WAL transactions may be lost; **DB never corrupts** | ~95K |
-| `FULL` | zero loss | ~3.5K |
+| `FULL` | zero loss | ~21K |
+| `NORMAL` (Dulak) | last WAL transactions may be lost; **DB never corrupts** | ~98K |
 
-`NORMAL` is the right default for web apps. Switch to `FULL` only for
-data where losing the last few transactions is unacceptable (financial
-records, etc.). Numbers vary by hardware — re-run the matrix on your own
-machine before tuning further.
+`FULL` costs ~5× write throughput for zero-loss. (The old ~3.5K figure
+was `DELETE` + `FULL` — the journal switch to WAL is a separate ~5×,
+covered in the matrix above.)
+
+`NORMAL` is the right default for web apps. Switch to `FULL` only
+for data where losing the last few transactions is unacceptable
+(financial records, etc.). Numbers vary by hardware — re-run the matrix
+on your own machine before tuning further.
+
+### Same comparison over HTTP
+
+Dedicated minimal CRUD harness — Hono + raw prepared statements +
+JSON, no auth, no mail, no Inertia — fresh file DB per mode, 50
+concurrent connections:
+
+| Endpoint | `FULL` | `NORMAL` (Dulak) |
+| --- | ---: | ---: |
+| `GET /users/:id` (read) | 77,019 req/s | 100,970 req/s |
+| `POST /users` (write) | 4,461 req/s | 51,810 req/s |
+| `PUT /users/:id` (write) | 4,354 req/s | 51,916 req/s |
+| `DELETE /users/:id` (write) | 4,362 req/s | 64,885 req/s |
+
+Writes are ~12–15× faster on `NORMAL`; reads ~1.3× (the WAL effect,
+not fsync). Real app endpoints add their own costs on top — argon2id
+dominates `POST /login` (~300 req/s either mode) — but no endpoint
+erases the write gap the way hashing does.
 
 ## Test environment
 
@@ -225,6 +249,6 @@ Methodology:
   settings (`innodb_flush_log_at_trx_commit = 1`, `sync_binlog = 1`).
   `pgbench` numbers are the server-side baseline (C client, no HTTP, no
   driver serialization).
-- **Full-stack:** Hono + `bun:sqlite`, concurrent load (50 workers), JSON
-  responses, 5K–10K requests per endpoint. Same concurrency used for the
-  Laravel comparison.
+- **HTTP comparison (September 2026):** dedicated CRUD harness (Hono +
+  raw prepared statements + JSON, no app middleware), fresh file DB per
+  `synchronous` mode, 50 concurrent connections.
