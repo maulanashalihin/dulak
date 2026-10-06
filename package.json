@@ -38,17 +38,17 @@
     "test": "bun test --isolate"
   },
   "dependencies": {
-    "@inertiajs/react": "^3.0.0",
+    "@inertiajs/react": "^3.8.0",
     "@sinclair/typebox": "^0.34.52",
-    "hono": "^4.13.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "hono": "^4.13.13",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.7",
-    "@types/bun": "^1.2.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@biomejs/biome": "^2.5.15",
+    "@types/bun": "^1.4.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "typescript": "^7.0.2"
   }
 }
