@@ -143,7 +143,6 @@
             {#if selectedName}
               <span class="upload-file">{selectedName}</span>
             {/if}
-            {/if}
             {#if message}
               <p class="upload-error">{message}</p>
             {/if}
