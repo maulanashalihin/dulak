@@ -97,7 +97,7 @@ roles, SSR, and test suite.
 | `bun run start`     | Serve prebuilt assets (`NODE_ENV=production`)             |
 | `bun run test`      | E2E suite (auth, roles, reset flow, Inertia, tus, avatar upload) |
 | `bun run db:seed`   | Create a demo user (`[email] [password] [role]` args)     |
-| `bun run typecheck` | `tsc --noEmit`                                            |
+| `bun run typecheck` | `bun check` (fallback: `bun run typecheck:tsc`)          |
 
 ## Features
 

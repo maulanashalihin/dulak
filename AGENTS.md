@@ -218,7 +218,7 @@ private and always receive user data via Inertia props.
   in `beforeAll` BEFORE importing the app module — mirror
   `tests/app.test.ts` and `tests/tus.test.ts`.
 - Suite must stay green: run `bun run typecheck` and
-  `bun run test` before finishing. `tsc` only covers `src/` and `scripts/`.
+  `bun run test` before finishing. Both checkers only cover `src/` and `scripts/`.
 
 
 

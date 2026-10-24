@@ -57,4 +57,4 @@ bun install
 | `bun run start` | Serve prebuilt assets (`NODE_ENV=production`) |
 | `bun run test` | E2E suite (67 tests) |
 | `bun run db:seed` | Create a demo user (`[email] [password] [role]`) |
-| `bun run typecheck` | `tsc --noEmit` (or `svelte-check` / `vue-tsc` on templates) |
+| `bun run typecheck` | `bun check` (fallback `typecheck:tsc`, or `svelte-check` / `vue-tsc` on templates) |
