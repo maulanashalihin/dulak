@@ -109,9 +109,9 @@ Node's relationship with TypeScript in 2026 is... improving. Node 22.6+ ships `-
 
 Before that, you needed `ts-node`, or `tsx`, or a build step with `tsc`, or a bundler that transpiles. Each option adds a dependency and a configuration decision. `tsconfig.json` alone is a 40-line file with 30 options, and if you get one wrong, your imports silently break.
 
-Bun runs TypeScript natively. No flag. No `ts-node`. No compilation step. No `tsx`. You write `.ts` files, you run `bun src/index.ts`, it works. Type checking is a separate concern — `tsc --noEmit` in CI — but the runtime doesn't care about your types. It just runs the code.
+Bun runs TypeScript natively. No flag. No `ts-node`. No compilation step. No `tsx`. You write `.ts` files, you run `bun src/index.ts`, it works. Type checking is a separate concern — `bun check` in CI — but the runtime doesn't care about your types. It just runs the code.
 
-Dulak's `package.json` has `"typecheck": "tsc --noEmit"` as a separate script. Type errors are caught in CI, not at runtime. The runtime executes JavaScript; the types are a development-time contract. This is the correct separation of concerns — and Bun makes it the default, not something you configure.
+Dulak's `package.json` has `"typecheck": "bun check"` as a separate script (with `"typecheck:tsc": "tsc --noEmit"` as fallback). Type errors are caught in CI, not at runtime. The runtime executes JavaScript; the types are a development-time contract. This is the correct separation of concerns — and Bun makes it the default, not something you configure.
 
 ## The toolchain tax, quantified
 
