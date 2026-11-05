@@ -1,12 +1,13 @@
 # Multi-stage: build assets in stage 1, minimal runtime in stage 2.
-FROM oven/bun:1.4-alpine AS build
+# Pinned to >=1.4.4: fixes CVE-2026-111497 (Brotli RCE), eMudhra CA, QPACK DoS.
+FROM oven/bun:1.4.4-alpine AS build
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY . .
 RUN bun run build
 
-FROM oven/bun:1.4-alpine
+FROM oven/bun:1.4.4-alpine
 # curl: docker-compose healthcheck. su-exec: drop privileges in entrypoint.
 RUN apk add --no-cache curl su-exec
 WORKDIR /app
