@@ -300,7 +300,7 @@ teardown finalize the next file's prepared statements.
 docker compose up -d --build
 ```
 
-- Multi-stage `Dockerfile` (`oven/bun:1.4-alpine`): assets prebuilt in the
+- Multi-stage `Dockerfile` (`oven/bun:1.4.4-alpine`): assets prebuilt in the
   build stage, production deps only at runtime. The app process runs as a
   non-root user (`bun`, UID 1000) — the entrypoint fixes the `./data`
   bind-mount ownership, then drops privileges before exec'ing Bun.
