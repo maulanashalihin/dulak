@@ -9,6 +9,7 @@ data/uploads/
 .playwright-mcp/
 *.png
 .svelte-css-cache/
+.svelte-check/
 .tailwind.css
 
 .dulak/
