@@ -13,4 +13,5 @@ data/uploads/
 .dulak/
 .llm-wiki/meta/
 .svelte-css-cache/
+.svelte-check/
 site/.astro/
