@@ -9,7 +9,9 @@ RUN bun run build
 
 FROM oven/bun:1.4.4-alpine
 # curl: docker-compose healthcheck. su-exec: drop privileges in entrypoint.
-RUN apk add --no-cache curl su-exec
+# sqlite3: per-deploy DB dumps + rotation run INSIDE the container
+# (see prompts/update-docker.txt) so the routine never depends on the host.
+RUN apk add --no-cache curl su-exec sqlite3
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json bun.lock ./

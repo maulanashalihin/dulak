@@ -1,9 +1,53 @@
-# Routine update — Docker
+# Routine update — Docker (zero-surprise deploys)
 #
-# No editing needed. The first deploy created deploy.env in your
-# project root with the SSH address, server path, and port.
 # Paste this to your AI agent each time you push new code.
+# The first deploy created deploy.env in the project root (SSH address,
+# server path, service name, port).
 
-Read deploy.env, then update the Dulak Docker deployment: SSH in,
-cd to DEPLOY_PATH, git pull, docker compose up -d --build,
-and verify /health on port DEPLOY_PORT.
+Read deploy.env, then update the app:
+
+1. Pre-flight (stop on any failure, report — never force):
+   - `git status --short` on prod must be EMPTY (no local mods).
+   - Record the active commit (`git rev-parse --short HEAD`) for rollback.
+   - `docker compose ps` — the app container must be up before you touch it.
+2. Backup — ONLY if this deploy ships `migrations/*.sql` or a data
+   `*.sql` file (check `git log` range first); code-only deploys skip this:
+   - The DB lives in the `./data` bind-mount; run sqlite3 INSIDE the
+     container (the image ships the CLI — see Dockerfile), never from
+     the host (a fresh VPS may not have it, and the WAL is live):
+     `docker compose exec -T app sh -c 'DB="$DATABASE_PATH"; D=$(dirname "$DB"); B=$(basename "$DB" .sqlite); sqlite3 "$DB" ".backup $D/${B}.pre-$(date +%F-%H%M)"'`
+   - Rotate: keep max 3 dumps, delete the oldest in the same cycle —
+     `docker compose exec -T app sh -c 'DB="$DATABASE_PATH"; D=$(dirname "$DB"); B=$(basename "$DB" .sqlite); ls -1t $D/${B}.pre-* | tail -n +4 | while IFS= read -r f; do rm -f "$f"; done'`
+     (newest 3 survive; dump names are date-stamped so no spaces to worry about).
+   - Assumes the default relative DATABASE_PATH (container cwd is /app);
+     absolute paths need the exec paths adjusted.
+   - Once litestream replication is live, drop this step entirely
+     (continuous backup + point-in-time recovery supersedes per-deploy dumps).
+3. Rebuild + swap (old container keeps serving until the swap):
+   - `git pull`, then `docker compose up -d --build` (bun install +
+     asset build happen inside the image). A failed build fails HERE,
+     before traffic moves — read the output, never assume success.
+4. Gated verify:
+   - Poll `/health` on `localhost:$DEPLOY_PORT` with retry until 200
+     (not a single shot); `docker compose ps` must show healthy, no
+     restart loop (`docker compose logs --tail` on suspicion). Expect
+     seconds of downtime during the container swap.
+   - Warm-up (cold start is real: first hits pay SQLite cold pages +
+     first SSR render): hit `/` plus your 2–3 slowest/key pages (find
+     them by `durationMs` in the request logs) via localhost so the
+     first real visitor never pays it.
+5. Data SQL (only if this deploy ships a `*.sql` data file):
+   - Apply LIVE — never stop the container: SQLite WAL serializes the
+     writer; set busy timeout so it waits instead of failing:
+     `(echo "PRAGMA busy_timeout=5000;"; cat file.sql) | docker compose exec -T app sh -c 'sqlite3 "$DATABASE_PATH"'`
+6. Spot-check 1–2 key pages (status 200 + one content marker each,
+   e.g. a headline on `/`, a username on `/dashboard`).
+7. Rollback (if 4/5/6 fail): `git checkout <commit from step 1>`,
+   `docker compose up -d --build` (rebuild is mandatory — code is baked
+   into the image), re-verify health. Report.
+
+Notes learned the hard way:
+- `up -d --build` never deletes old images; prune occasionally
+  (`docker image prune`), never `docker system prune -a` blindly.
+- Migrations (`migrations/`) apply automatically at boot; data `*.sql`
+  files do NOT — step 5 is manual and mandatory when present.
