@@ -61,3 +61,35 @@ export const noStore = async (c: Context<AppEnv>, next: Next) => {
 	await next();
 	c.res.headers.set("Cache-Control", "private, no-store");
 };
+
+/**
+ * Canonicalize `?_spa=1` browser document loads back to the clean URL.
+ * `_spa` is an XHR-only edge-cache key (see `app.tsx`): JSON lives under
+ * `?_spa=1`, HTML under the clean URL. If a document load ever lands on
+ * the `?_spa` key (leaked 409 Location, bookmark, reload), origin would
+ * cache that HTML there and later XHR visits would receive HTML instead
+ * of JSON — Inertia cannot process it and renders the raw document.
+ * Redirecting keeps the HTML out of the XHR key. XHR itself (which
+ * carries `x-inertia`) is untouched and still returns JSON.
+ * Mount globally, before routes.
+ */
+export const stripSpaParam = async (c: Context<AppEnv>, next: Next) => {
+	if (
+		c.req.method === "GET" &&
+		!c.req.header("x-inertia") &&
+		c.req.query("_spa") !== undefined
+	) {
+		let pathname: string;
+		let search: string;
+		try {
+			const url = new URL(c.req.url);
+			url.searchParams.delete("_spa");
+			pathname = url.pathname;
+			search = url.searchParams.toString();
+		} catch {
+			return next();
+		}
+		return c.redirect(`${pathname}${search ? `?${search}` : ""}`, 302);
+	}
+	await next();
+};
