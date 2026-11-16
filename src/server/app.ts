@@ -30,6 +30,7 @@ import {
 import { uploadsRoutes } from "./routes/uploads.routes";
 import { checkOrigin } from "./security";
 import { safeUrl } from "./url";
+import { stripSpaParam } from "./cache";
 import { ValidationFailed } from "./validation";
 import type { Context } from "hono";
 
@@ -158,6 +159,11 @@ export function createApp(assets: InertiaAssets) {
 			return next();
 		return globalLimiter(c, next);
 	});
+
+	// `?_spa` is an XHR-only edge-cache key (HTML must never be cached
+	// under it, or later XHR visits receive HTML instead of JSON).
+	// Canonicalize leaked document loads before they reach the routes.
+	app.use(stripSpaParam);
 
 	app.onError(async (err, c) => {
 		logError(c, err);
