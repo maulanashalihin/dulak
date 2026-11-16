@@ -25,6 +25,7 @@ import {
 import { config } from "../config";
 import { createUser, findUserByEmail, updateUserPassword } from "../db";
 import type { AppEnv } from "../inertia-middleware";
+import { noStore } from "../cache";
 import { sendMail } from "../mailer";
 import { rateLimit } from "../rate-limit";
 import { validateJson } from "../validation";
@@ -103,22 +104,22 @@ export const authRoutes = () => {
 		}),
 	);
 
-	app.get("/login", guestOnly, (c) => {
+	app.get("/login", guestOnly, noStore, (c) => {
 		const noticeParam = c.req.query("notice");
 		return c.var.inertia.render("Login", {
 			googleEnabled: Boolean(config.google.clientId),
 			notice: noticeParam ? (LOGIN_NOTICES[noticeParam] ?? null) : null,
 		});
 	});
-	app.get("/register", guestOnly, (c) =>
+	app.get("/register", guestOnly, noStore, (c) =>
 		c.var.inertia.render("Register", {
 			googleEnabled: Boolean(config.google.clientId),
 		}),
 	);
-	app.get("/forgot-password", guestOnly, (c) =>
+	app.get("/forgot-password", guestOnly, noStore, (c) =>
 		c.var.inertia.render("ForgotPassword"),
 	);
-	app.get("/reset-password", guestOnly, (c) =>
+	app.get("/reset-password", guestOnly, noStore, (c) =>
 		c.var.inertia.render("ResetPassword", {
 			email: c.req.query("email") ?? "",
 			token: c.req.query("token") ?? "",

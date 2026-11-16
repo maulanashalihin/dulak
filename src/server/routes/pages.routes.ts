@@ -11,7 +11,7 @@
  */
 import { Hono } from "hono";
 import { requireAuth, requireRole } from "../auth";
-import { cacheablePublic } from "../cache";
+import { cacheablePublic, noStore } from "../cache";
 import { countUsers, listUsers, recentUsers, toPublicUser } from "../db";
 import type { AppEnv } from "../inertia-middleware";
 import type { DashboardStats, Paginated, User } from "../../shared/types";
@@ -33,10 +33,10 @@ export const pageRoutes = () => {
 	app.get("/", (c) =>
 		c.var.inertia.render("Home", {}, { public: true }),
 	);
-	app.get("/dashboard", requireAuth, (c) =>
+	app.get("/dashboard", requireAuth, noStore, (c) =>
 		c.var.inertia.render("Dashboard", { stats: dashboardStats() }),
 	);
-	app.get("/admin", requireRole("admin"), (c) => {
+	app.get("/admin", requireRole("admin"), noStore, (c) => {
 		const page = Math.max(1, Number(c.req.query("page") ?? 1) || 1);
 		const perPage = Math.min(
 			100,
