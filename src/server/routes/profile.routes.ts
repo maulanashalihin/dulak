@@ -32,6 +32,7 @@ import {
 import { generateUploadId } from "../tus-protocol";
 import { uploadPath, writeBytes } from "../tus-storage";
 import type { AppEnv } from "../inertia-middleware";
+import { noStore } from "../cache";
 import { validateJson } from "../validation";
 
 const infoBody = t.Object(
@@ -63,7 +64,9 @@ export const PROFILE_VALIDATION_MESSAGES: Record<string, string> = {
 export const profileRoutes = () => {
 	const app = new Hono<AppEnv>();
 
-	app.get("/profile", requireAuth, (c) => c.var.inertia.render("Profile", {}));
+	app.get("/profile", requireAuth, noStore, (c) =>
+		c.var.inertia.render("Profile", {}),
+	);
 
 	app.post("/profile/avatar", requireAuth, async (c) => {
 		const user = c.var.user;
