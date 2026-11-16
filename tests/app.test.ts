@@ -243,6 +243,39 @@ describe("inertia protocol", () => {
 		expect(data.url).toBe("/login");
 	});
 
+	it("keeps the XHR-only _spa key out of the canonical page URL", async () => {
+		// ?_spa=1 separates the Cloudflare JSON key from the HTML key.
+		// It must never leak into page.url (address bar) — a document
+		// load under that key would cache HTML where XHR expects JSON.
+		const res = await call("/?_spa=1", { headers: xhr });
+		expect(res.status).toBe(200);
+		const data = await res.json();
+		expect(data.component).toBe("Home");
+		expect(data.url).toBe("/");
+	});
+
+	it("redirects _spa document loads to the canonical URL", async () => {
+		// A browser document load (no x-inertia) carrying ?_spa must not
+		// render — it would cache HTML under the XHR key. Send it home.
+		const res = await call("/?_spa=1");
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe("/");
+		// The clean URL still renders the full document.
+		const clean = await call("/");
+		expect(clean.status).toBe(200);
+		expect(clean.headers.get("content-type")).toContain("text/html");
+	});
+
+	it("keeps _spa out of the 409 X-Inertia-Location", async () => {
+		const res = await call("/?_spa=1", {
+			headers: { ...xhr, "x-inertia-version": "stale" },
+		});
+		expect(res.status).toBe(409);
+		expect(res.headers.get("x-inertia-location")).toBe(
+			"http://localhost:3000/",
+		);
+	});
+
 	it("returns plain 404 for .well-known DevTools probes", async () => {
 		const res = await call(
 			"/.well-known/appspecific/com.chrome.devtools.json",
