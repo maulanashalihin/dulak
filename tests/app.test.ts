@@ -306,6 +306,23 @@ describe("inertia protocol", () => {
 		expect(res.headers.get("x-request-id")).toBeTruthy();
 	});
 
+	it("never edge-caches auth pages (private HTML must not leak to anon)", async () => {
+		// The public landing keeps its shared cache header...
+		const home = await call("/");
+		expect(home.headers.get("cache-control")).toContain("s-maxage=300");
+		// ...while every user-specific surface opts out entirely.
+		const cookie = await registerUser("nostore@example.com");
+		for (const path of ["/dashboard", "/profile"]) {
+			const res = await call(path, { headers: { cookie } });
+			expect(res.status).toBe(200);
+			expect(res.headers.get("cache-control")).toBe("private, no-store");
+		}
+		// Guest-only form pages carry per-session flash/errors too.
+		const login = await call("/login");
+		expect(login.status).toBe(200);
+		expect(login.headers.get("cache-control")).toBe("private, no-store");
+	});
+
 	it("skips SSR for authenticated routes (client-only render)", async () => {
 		const cookie = await registerUser("nossr@example.com");
 		const res = await call("/dashboard", { headers: { cookie } });
