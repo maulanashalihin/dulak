@@ -94,7 +94,14 @@ export class Inertia {
 
 	private get currentUrl(): string {
 		const url = this.requestUrl;
-		return url.pathname + url.search;
+		// `_spa` is an XHR-only edge-cache key (see `app.ts`) — never part
+		// of the canonical page URL. Leaking it into page.url or the 409
+		// Location would put it in the address bar, where a document load
+		// caches HTML under the XHR key and later Inertia visits receive
+		// HTML instead of JSON (the edge key does not vary on X-Inertia).
+		url.searchParams.delete("_spa");
+		const q = url.searchParams.toString();
+		return url.pathname + (q ? `?${q}` : "");
 	}
 
 	private get versionMatches(): boolean {
