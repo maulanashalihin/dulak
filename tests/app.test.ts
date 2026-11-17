@@ -248,21 +248,51 @@ describe("inertia protocol", () => {
 		expect(data.url).toBe("/login");
 	});
 
-	it("keeps the XHR-only _spa key out of the canonical page URL", async () => {
-		// ?_spa=1 separates the Cloudflare JSON key from the HTML key.
-		// It must never leak into page.url (address bar) — a document
-		// load under that key would cache HTML where XHR expects JSON.
-		const res = await call("/?_spa=1", { headers: xhr });
+	it("keeps _spa and v keys out of the canonical page URL", async () => {
+		// The client sends ?_spa=1&v=<version> on every XHR; neither may
+		// leak into page.url (address bar).
+		const res = await call("/?_spa=1&v=junk", { headers: xhr });
 		expect(res.status).toBe(200);
 		const data = await res.json();
 		expect(data.component).toBe("Home");
 		expect(data.url).toBe("/");
 	});
 
-	it("redirects _spa document loads to the canonical URL", async () => {
-		// A browser document load (no x-inertia) carrying ?_spa must not
-		// render — it would cache HTML under the XHR key. Send it home.
-		const res = await call("/?_spa=1");
+	it("caches version-keyed XHR JSON, bypasses everything else", async () => {
+		// The live version (what the client sends as ?v= after boot).
+		const probe = await call("/?_spa=1", { headers: xhr });
+		const live = probe.headers.get("x-inertia-version") ?? "";
+		expect(live.length).toBeGreaterThan(0);
+		// Matching key: edge may serve this entry per generation.
+		const hit = await call(`/?_spa=1&v=${live}`, { headers: xhr });
+		expect(hit.status).toBe(200);
+		expect(hit.headers.get("cache-control")).toContain("s-maxage=300");
+		// Missing or foreign key: must never be stored (a cached
+		// pre-deploy payload would pin the client to the old version and
+		// every later visit would 409 — edge cannot vary the key on the
+		// X-Inertia-Version header).
+		const missing = await call("/?_spa=1", { headers: xhr });
+		expect(missing.headers.get("cache-control")).toBe("no-store");
+		const foreign = await call("/?_spa=1&v=stale", { headers: xhr });
+		expect(foreign.status).toBe(200);
+		expect(foreign.headers.get("cache-control")).toBe("no-store");
+		// Partial reloads share the full key for a different subset —
+		// never cacheable regardless of v.
+		const partial = await call(`/?_spa=1&v=${live}`, {
+			headers: {
+				...xhr,
+				"x-inertia-partial-component": "Home",
+				"x-inertia-partial-data": "stats",
+			},
+		});
+		expect(partial.status).toBe(200);
+		expect(partial.headers.get("cache-control")).toBe("no-store");
+	});
+
+	it("redirects _spa/v document loads to the canonical URL", async () => {
+		// A browser document load (no x-inertia) carrying XHR-only params
+		// must not render — it would cache HTML under the JSON key.
+		const res = await call("/?_spa=1&v=junk");
 		expect(res.status).toBe(302);
 		expect(res.headers.get("location")).toBe("/");
 		// The clean URL still renders the full document.
@@ -271,8 +301,8 @@ describe("inertia protocol", () => {
 		expect(clean.headers.get("content-type")).toContain("text/html");
 	});
 
-	it("keeps _spa out of the 409 X-Inertia-Location", async () => {
-		const res = await call("/?_spa=1", {
+	it("keeps _spa and v out of the 409 X-Inertia-Location", async () => {
+		const res = await call("/?_spa=1&v=stale", {
 			headers: { ...xhr, "x-inertia-version": "stale" },
 		});
 		expect(res.status).toBe(409);

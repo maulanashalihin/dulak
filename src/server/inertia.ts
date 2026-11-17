@@ -94,12 +94,13 @@ export class Inertia {
 
 	private get currentUrl(): string {
 		const url = this.requestUrl;
-		// `_spa` is an XHR-only edge-cache key (see `app.ts`) — never part
-		// of the canonical page URL. Leaking it into page.url or the 409
-		// Location would put it in the address bar, where a document load
-		// caches HTML under the XHR key and later Inertia visits receive
-		// HTML instead of JSON (the edge key does not vary on X-Inertia).
+		// `?_spa` plus its version-keyed `?v` companion (the client sends
+		// both on every XHR, see `app.ts`). Never part of the canonical
+		// page URL: leaking a stray param into page.url or the 409
+		// Location would put it in the address bar. Stripping is a no-op
+		// for normal traffic.
 		url.searchParams.delete("_spa");
+		url.searchParams.delete("v");
 		const q = url.searchParams.toString();
 		return url.pathname + (q ? `?${q}` : "");
 	}
@@ -225,10 +226,27 @@ export class Inertia {
 	// -- protocol internals ----------------------------------------------------
 
 	private json(page: Page, status: number): Response {
+		// Version-keyed edge cache (client appends `?v=`, see app.ts).
+		// Cacheable ONLY when `v` equals this exact version: the edge key
+		// then pins one generation per entry, so a pre-deploy payload can
+		// never be served to a new bundle. Anything else — missing/stale
+		// `v`, or a partial reload whose subset would poison the full key —
+		// stays no-store (kills edge + browser caching in one header).
+		// Partial bodies are small and props are SWR-served from memory,
+		// so bypassing the cache costs nothing.
+		const q = this.requestUrl.searchParams;
+		const partial =
+			this.c.headers["x-inertia-partial-component"] !== undefined ||
+			this.c.headers["x-inertia-partial-data"] !== undefined ||
+			this.c.headers["x-inertia-partial-except"] !== undefined;
+		const cacheable = !partial && q.get("v") === this.assets.version;
 		return new Response(JSON.stringify(page), {
 			status,
 			headers: {
 				"content-type": "application/json; charset=utf-8",
+				"cache-control": cacheable
+					? "public, max-age=60, s-maxage=300, stale-while-revalidate=600"
+					: "no-store",
 				"x-inertia": "true",
 				"x-inertia-version": this.assets.version,
 			},
