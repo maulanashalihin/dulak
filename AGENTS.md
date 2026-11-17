@@ -170,12 +170,18 @@ reads.
   fetch needed.
 - Example: `/dashboard`, `/admin`, `/profile`, `/login`, `/register`.
 
-### SPA cache-key separation
+### SPA responses are version-keyed
 
 Inertia XHR navigations carry `X-Inertia: true` and are excluded from the
-public cache header. The client also appends `?_spa=1` to XHR URLs (see
-`app.tsx`) so Cloudflare caches JSON and HTML under separate cache keys.
-After navigation, the param is stripped from the address bar.
+public cache header. Their JSON carries the bundle version as `?v=<hash>`
+(plus the legacy `?_spa=1` separator — see `app.tsx`), so the edge key pins
+one generation per entry: a pre-deploy payload can never be served to a new
+bundle. The server marks JSON cacheable
+(`public, max-age=60, s-maxage=300, swr=600`) only when `?v` equals its own
+version; missing/stale `v` and partial reloads (whose subset would poison
+the full key) stay `no-store` (see `inertia.ts`). HTML stays edge-cached
+(`max-age=0`, always revalidated by browsers). `page.url` and 409 locations
+never contain either param.
 
 ### When to use which pattern
 
