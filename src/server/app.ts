@@ -160,9 +160,8 @@ export function createApp(assets: InertiaAssets) {
 		return globalLimiter(c, next);
 	});
 
-	// `?_spa` is an XHR-only edge-cache key (HTML must never be cached
-	// under it, or later XHR visits receive HTML instead of JSON).
-	// Canonicalize leaked document loads before they reach the routes.
+	// `?_spa` + `?v` guards: canonicalize stray document loads carrying
+	// XHR-only params before they reach the routes.
 	app.use(stripSpaParam);
 
 	app.onError(async (err, c) => {
