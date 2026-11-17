@@ -9,10 +9,12 @@
  * (CDN-cacheable). Public page components read user state from the session
  * store (`session`), not from Inertia props.
  *
- * SPA cache-key separation: Inertia XHR navigations get `?_spa=1` appended
- * so Cloudflare caches the JSON response under a separate key from the
- * HTML. After navigation, the param is stripped from the address bar so
- * reloads/bookmarks hit the HTML cache.
+ * SPA navigations carry this bundle's version as `?_spa=1&v=<hash>`
+ * (stock XHR otherwise). The edge key then pins one generation per entry:
+ * a pre-deploy payload can never be served to a new bundle, so versioned
+ * JSON is safely cacheable. The server only marks the payload cacheable
+ * when `v` equals its own version (stray/foreign keys stay no-store), and
+ * `page.url` never contains either param. See inertia.ts.
  */
 import { createInertiaApp, router } from "@inertiajs/vue3";
 import type { DefineComponent } from "vue";
@@ -32,19 +34,27 @@ const cspNonce =
 // public page HTML stays identical for all visitors (CDN-cacheable).
 void loadSession();
 
-// CDN cache strategy: add ?_spa=1 to SPA navigations so Cloudflare caches
-// the JSON response separately from the HTML (different cache key). After
-// navigation, strip the param from the address bar so reloads/bookmarks
-// hit the HTML cache, not the JSON cache.
+// Version-keyed edge cache: every XHR carries this bundle's version so
+// each generation gets its own key (a stale payload can never be served
+// to a new bundle — the key simply won't match). `?_spa` stays as the
+// JSON/HTML separator for the server's canonical guards. Seeded from the
+// booted page, refreshed on every successful visit.
+let currentVersion: string | undefined;
 router.on("before", (event) => {
 	const url = new URL(event.detail.visit.url);
 	url.searchParams.set("_spa", "1");
+	if (currentVersion) url.searchParams.set("v", currentVersion);
 	event.detail.visit.url = url;
 });
-router.on("success", () => {
+router.on("success", (event) => {
+	const page = event.detail.page as unknown as { version?: unknown };
+	if (typeof page.version === "string" && page.version.length > 0) {
+		currentVersion = page.version;
+	}
 	const url = new URL(window.location.href);
-	if (url.searchParams.has("_spa")) {
+	if (url.searchParams.has("_spa") || url.searchParams.has("v")) {
 		url.searchParams.delete("_spa");
+		url.searchParams.delete("v");
 		window.history.replaceState(window.history.state, "", url.toString());
 	}
 });
@@ -55,6 +65,31 @@ createInertiaApp({
 		(pages[`./pages/${name}.vue`]?.default ?? notFoundPage) as DefineComponent,
 	nonce: cspNonce,
 	setup({ el, App, props, plugin }) {
+		// Seed the version-keyed cache from the booted page (covers the
+		// very first visit, before any success event fires). setup's
+		// `props` is the inner page props — the version lives in the
+		// inlined data-page JSON next to the mount point.
+		const booted = props as unknown as { version?: unknown };
+		if (typeof booted.version === "string" && booted.version.length > 0) {
+			currentVersion = booted.version;
+		} else {
+			try {
+				// Script tag (clientBody) or div attribute (core SSR body)
+				// — whichever the server rendered.
+				const raw =
+					document.querySelector('script[data-page="app"]')
+						?.textContent ??
+					document.getElementById("app")?.getAttribute("data-page") ??
+					undefined;
+				const v = raw
+					? (JSON.parse(raw) as { version?: unknown }).version
+					: undefined;
+				if (typeof v === "string" && v.length > 0) currentVersion = v;
+			} catch {
+				// Malformed payload — visits simply omit ?v and the
+				// server answers no-store (safe fallback).
+			}
+		}
 		const hydrate = el.hasAttribute("data-server-rendered");
 		const app = (hydrate ? createSSRApp : createApp)({
 			render: () => h(App, props),
