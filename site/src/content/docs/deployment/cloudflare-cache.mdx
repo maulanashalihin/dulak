@@ -1,0 +1,184 @@
+---
+title: Cloudflare cache
+description: Cache public pages at the Cloudflare edge — what Dulak sends, which dashboard rules to create, and what to bypass.
+---
+
+Dulak is designed so a single Bun process serves high traffic:
+public HTML is identical for all visitors, so Cloudflare absorbs
+90%+ of reads. The origin already sends the right `Cache-Control`
+headers — you only need **three dashboard rules** to activate edge
+caching. No Workers, no extra software.
+
+> Prerequisite: your domain is already proxied through Cloudflare
+> (orange cloud) with TLS terminated at the edge. If not, do
+> [Reverse proxy](/deployment/reverse-proxy/) first (Option A1).
+
+## What the origin sends
+
+| Response | `Cache-Control` | Edge behavior |
+| --- | --- | --- |
+| `GET /` (public HTML) | `public, max-age=0, s-maxage=300, stale-while-revalidate=600` | Edge caches 5 min, serves stale 10 min while revalidating. Browsers always revalidate (`max-age=0`). |
+| Inertia XHR JSON (`X-Inertia: true` + `?v=<version>`) | `public, max-age=60, s-maxage=300, stale-while-revalidate=600` — **only** when `?v` equals the current asset version and it is not a partial reload. Otherwise `no-store`. | Edge caches version-pinned JSON. Missing/stale `v` or partial reloads never cache. |
+| `/assets/*` (hashed JS/CSS) | `public, max-age=31536000, immutable` | Edge + browser cache 1 year. Filenames contain the content hash, so deploys never collide. |
+| Auth pages (`/dashboard`, `/admin`, `/profile`, `/login`, …) + `GET /api/session` | `private, no-store` | Never cached anywhere. |
+
+Source: `src/server/cache.ts` (`cacheablePublic`, `noStore`),
+`src/server/inertia.ts` (`json()` version-keyed cache),
+`src/server/routes/pages.routes.ts` (`/` uses `{ public: true }`).
+
+How the pieces fit:
+
+- `/` renders with `{ public: true }` — `auth.user` and `flash` are
+  omitted, so the HTML is user-agnostic. The client fetches identity
+  separately via `GET /api/session` after hydration
+  (`src/client/session.ts` → `useSession()`).
+- Inertia navigations send `?v=<hash>` on every XHR (see `app.tsx`).
+  The edge key pins one generation per entry: a pre-deploy payload can
+  never be served to a new bundle. A version mismatch returns `409`
+  and the client full-reloads.
+- A stray `?_spa=1` or `?v=` on a document load is 302-redirected to
+  the clean URL (`stripSpaParam`), so it never poisons the HTML cache
+  key or leaks into the address bar.
+
+## Why you still need a dashboard rule
+
+By default Cloudflare **does not cache HTML** — only static
+extensions (`.js`, `.css`, images). Your `/assets/*` files are cached
+automatically, but `/` returns `cf-cache-status: DYNAMIC` until you
+add an explicit **Cache Rule** that says "eligible for cache". The
+rule below tells Cloudflare to honor the `s-maxage` the origin
+already sends.
+
+## Setup (3 rules, ~5 minutes)
+
+Dashboard → your zone → **Caching → Cache Rules** → **Create rule**.
+Order matters — Cloudflare evaluates rules top-down, first match wins.
+Put the **bypass rule first**, then public HTML, then assets.
+
+### Rule 1 — Bypass private traffic (first)
+
+Never cache user-specific responses, even if you later add a broad
+`/*` rule. This is your safety net.
+
+- Name: `bypass-private`
+- If incoming requests match… **Custom filter expression**:
+
+```txt
+(http.request.uri.path starts_with "/dashboard") or
+(http.request.uri.path starts_with "/admin") or
+(http.request.uri.path starts_with "/profile") or
+(http.request.uri.path starts_with "/login") or
+(http.request.uri.path starts_with "/register") or
+(http.request.uri.path starts_with "/forgot-password") or
+(http.request.uri.path starts_with "/reset-password") or
+(http.request.uri.path starts_with "/api/") or
+(http.request.uri.path starts_with "/uploads") or
+(http.request.uri.path starts_with "/metrics") or
+(http.request.uri.path starts_with "/.well-known/")
+```
+
+- Then: **Bypass cache**.
+
+> Do not add `Set-Cookie` responses to the cache. Auth pages and
+> `/api/session` already send `private, no-store`, but this rule
+> guarantees a future `/*` "cache everything" experiment can never
+> leak one user's HTML to another.
+
+### Rule 2 — Cache public HTML (second)
+
+- Name: `cache-public-html`
+- If incoming requests match… :
+
+```txt
+(http.host eq "your-domain.com" and http.request.uri.path eq "/")
+```
+
+  Add more `or http.request.uri.path eq "/about"` lines as you add
+  public pages (every page rendered with `{ public: true }` +
+  `cacheablePublic(...)` belongs here).
+
+- Then:
+  - **Eligible for cache**
+  - Edge TTL → **Honor origin** (uses `s-maxage=300` from the app)
+  - Browser TTL → **Honor origin** (uses `max-age=0`: browsers
+    revalidate every load, edge still serves from cache)
+  - Cache key → leave **Query string: Include all** (default). The
+    Inertia `?v=` key and `?_spa` guard depend on it.
+
+### Rule 3 — Cache hashed assets (third, optional but explicit)
+
+Cloudflare caches `.js`/`.css` by default, but pinning it makes the
+intent obvious and survives preset changes:
+
+- Name: `cache-assets`
+- If: `http.request.uri.path starts_with "/assets/"`
+- Then: **Eligible for cache**, Edge TTL → **Honor origin** (uses
+  `max-age=31536000, immutable`), Browser TTL → **Honor origin**.
+
+## Recommended extras
+
+- **Tiered Cache** (Caching → Tiered Cache → Enable Smart Tiered
+  Cache): upper-tier hits shield your origin during traffic spikes —
+  one origin fetch per region instead of per PoP.
+- **Always Online** (Caching → Configuration): keep serving the last
+  cached `/` if the origin goes down briefly during a restart.
+- **Development Mode** (Caching → Configuration → Development Mode):
+  temporarily bypasses everything while you test cache behavior.
+  Turn it **off** when done.
+- **Browser Cache TTL → Honor origin**: if you ever touched the global
+  "Browser Cache TTL" setting, set it back to honor origin — the app
+  deliberately sends `max-age=0` for HTML and `immutable` for assets.
+
+## Verify it works
+
+```bash
+# 1. Warm the edge, then check the second response
+curl -sI https://your-domain.com/ | grep -i -E 'cache-control|cf-cache-status'
+# expect: cache-control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+# expect: cf-cache-status: MISS (first) → HIT (second)
+
+# 2. Assets are long-lived
+curl -sI https://your-domain.com/assets/app-XXXX.js | grep -i -E 'cache-control|cf-cache-status'
+# expect: cache-control: public, max-age=31536000, immutable
+
+# 3. Private pages are never cached
+curl -sI https://your-domain.com/dashboard | grep -i -E 'cache-control|cf-cache-status'
+# expect: cache-control: private, no-store
+# expect: cf-cache-status: DYNAMIC or BYPASS
+```
+
+In the browser: DevTools → Network → reload `/` twice — the second
+load should show `cf-cache-status: HIT` and ~10–50 ms TTFB from the
+edge instead of full SSR time from origin.
+
+## Deploys and purging
+
+You normally need **no purge**:
+
+- Assets are content-hashed (`app-a1b2c3.js` → `app-e5f6g7.js`) — old
+  and new files coexist, browsers pick up the new hash from fresh HTML.
+- HTML TTL is 5 minutes — a deploy converges by itself. A stale client
+  gets a `409` on its next XHR navigation and full-reloads to the new
+  bundle automatically.
+
+If you need it live *now* (price change, typo on `/`):
+
+Dashboard → **Caching → Purge Cache → Purge by URL** →
+`https://your-domain.com/` (exact URL, not `/*`).
+
+## Common mistakes
+
+| Mistake | Why it hurts | Fix |
+| --- | --- | --- |
+| `/*` → Eligible for cache | Caches `/dashboard`, `/api/session` — leaks one user's HTML/JSON to everyone | Keep Rule 1 (bypass) first; only list public paths in Rule 2 |
+| Query string → Ignore | `?v=old` and `?v=new` collapse into one entry — stale Inertia JSON served to new bundles | Leave query string included (default) |
+| Edge TTL → Override with long value | Overrides `s-maxage=300` — deploys take hours to converge instead of 5 min | Use **Honor origin** and change TTL in code (`cacheablePublic(300, 600)`) |
+| Caching with `Cookie: session=...` | Authenticated HTML cached under a guest key | Public pages send no `Set-Cookie` and omit `auth.user` — keep it that way; verify new public pages use `{ public: true }` + `useSession()` |
+| Testing with Development Mode on | Every request is `DYNAMIC` — looks like "cache doesn't work" | Turn Development Mode off before verifying |
+
+## Adding a new public page
+
+1. Render with `{ public: true }` and wrap with `cacheablePublic(300, 600)` (see `pages.routes.ts` `/` route).
+2. Read identity via `useSession()`, never from Inertia props.
+3. Add its path to Rule 2 above.
+4. `curl -I` it twice — expect `HIT` on the second request.

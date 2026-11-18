@@ -95,6 +95,7 @@ export default defineConfig({
 					{ label: "Docker", slug: "deployment/docker" },
 					{ label: "Linux VPS (no Docker)", slug: "deployment/vps" },
 					{ label: "Reverse proxy", slug: "deployment/reverse-proxy" },
+					{ label: "Cloudflare cache", slug: "deployment/cloudflare-cache" },
 				],
 				},
 				{

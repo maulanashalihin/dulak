@@ -3,10 +3,13 @@
 # Requires a Cloudflare API Token with these permissions:
 #   Zone → DNS → Edit
 #   Zone → Zone → Read
+#   Zone → Cache Rules → Edit (for the public-page cache rule, step 6)
+#   Account → Rulesets → Edit (cache rules are managed via the Rulesets API)
 #   Account → Account Filter Lists → Read (for origin rules)
 #
 # Create one at: https://dash.cloudflare.com/profile/api-tokens
-# Template: "Edit zone DNS" (add Zone → Read if missing)
+# Template: "Edit zone DNS" (add Zone → Read, Cache Rules → Edit,
+# and Account Rulesets → Edit if missing)
 #
 # Edit the four placeholders below, then paste to your AI agent.
 # For APP_PORT, use the port the app is actually running on
@@ -31,9 +34,57 @@ Steps:
 5. Create an Origin Rule: rewrite Host header to the domain for
    incoming requests matching the hostname. This ensures CSRF
    and OAuth work correctly.
-6. On the server, set up UFW to only allow Cloudflare IPs on the app port:
+6. Create a Cache Rule so the public landing page is served from
+   the Cloudflare edge, while authenticated pages are never cached.
+   Background — how the app marks its responses (src/server/cache.ts,
+   src/server/inertia.ts, src/server/assets.ts):
+   - GET / (public landing, identical HTML for all visitors):
+     Cache-Control: public, max-age=0, s-maxage=300,
+     stale-while-revalidate=600 → edge caches 5 min + 10 min SWR,
+     browsers revalidate every load.
+   - Inertia SPA JSON (GET /?_spa=1&v=<deploy-hash> with X-Inertia
+     header): cacheable ONLY when ?v= matches the current deploy
+     (public, max-age=60, s-maxage=300, SWR=600); missing/stale ?v
+     and partial reloads are no-store.
+   - Auth pages (/dashboard, /admin, /profile, auth forms, /api/*):
+     Cache-Control: private, no-store → the edge must never cache these.
+   - /assets/* (content-hashed filenames):
+     public, max-age=31536000, immutable → cached by Cloudflare
+     automatically, no rule needed.
+   Rule to create (phase http_request_cache_settings):
+   - Name: dulak-public-cache
+   - Expression:
+     (http.host eq "your-domain.com" and http.request.method eq "GET"
+      and http.request.uri.path eq "/")
+     Scoped to / on purpose: auth pages stay uncacheable by default
+     even if a future code change forgets no-store. When new public
+     pages are added to the app, extend this expression with their paths.
+   - Eligible for cache; Edge TTL and Browser TTL both respect origin
+     (action set_cache_settings with action_parameters {"cache": true}
+     and nothing else — this honors the s-maxage / max-age above).
+   - Do NOT add any bypass on the X-Inertia header or on Cookie:
+     the version-keyed SPA cache (?_spa=1&v=) relies on the edge
+     caching Inertia JSON, and the public HTML is user-agnostic
+     (logged-in visitors share the same edge entry; identity loads
+     client-side via GET /api/session, which is no-store).
+   - Keep the default cache key (query string included): / and
+     /?_spa=1&v=... must stay separate edge entries, otherwise HTML
+     gets served to Inertia XHR and the SPA breaks.
+   - Use the Rulesets API: PUT
+     zones/:zone_id/rulesets/phases/http_request_cache_settings/entrypoint.
+     That endpoint REPLACES all rules in the phase, so first GET the
+     existing rules and append — do not wipe rules you did not create.
+     (If the phase ruleset does not exist yet, create it first with
+     kind "zone" and phase "http_request_cache_settings".)
+7. On the server, set up UFW to only allow Cloudflare IPs on the app port:
    - Allow OpenSSH
    - Fetch Cloudflare IP ranges from the API and allow them on the app port
    - Enable UFW
-7. Verify: curl https://your-domain.com/health should return 200.
-8. Tell me the status and any issues.
+8. Verify:
+   - curl https://your-domain.com/health should return 200.
+   - curl -sI https://your-domain.com/ twice: the second response should
+     contain cf-cache-status: HIT (first may be MISS while the edge fills).
+   - curl -sI https://your-domain.com/dashboard must NOT return
+     cf-cache-status: HIT (expect DYNAMIC/BYPASS/MISS — one user's HTML
+     must never be served to another user).
+9. Tell me the status and any issues.
