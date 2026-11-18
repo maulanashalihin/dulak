@@ -1,12 +1,12 @@
 ---
 title: Cloudflare cache
-description: Cache public pages at the Cloudflare edge — what Dulak sends, which dashboard rules to create, and what to bypass.
+description: Cache public pages at the Cloudflare edge — what Dulak sends and the single dashboard rule to create.
 ---
 
 Dulak is designed so a single Bun process serves high traffic:
 public HTML is identical for all visitors, so Cloudflare absorbs
 90%+ of reads. The origin already sends the right `Cache-Control`
-headers — you only need **three dashboard rules** to activate edge
+headers — you only need **one dashboard rule** to activate edge
 caching. No Workers, no extra software.
 
 > Prerequisite: your domain is already proxied through Cloudflare
@@ -49,71 +49,41 @@ add an explicit **Cache Rule** that says "eligible for cache". The
 rule below tells Cloudflare to honor the `s-maxage` the origin
 already sends.
 
-## Setup (3 rules, ~5 minutes)
+## Setup (1 rule, ~2 minutes)
 
-Dashboard → your zone → **Caching → Cache Rules** → **Create rule**.
-Order matters — Cloudflare evaluates rules top-down, first match wins.
-Put the **bypass rule first**, then public HTML, then assets.
+Dashboard → your zone → **Caching → Cache Rules** → **Create rule**:
 
-### Rule 1 — Bypass private traffic (first)
-
-Never cache user-specific responses, even if you later add a broad
-`/*` rule. This is your safety net.
-
-- Name: `bypass-private`
+- Name: `dulak-cache-get`
 - If incoming requests match… **Custom filter expression**:
 
 ```txt
-(http.request.uri.path starts_with "/dashboard") or
-(http.request.uri.path starts_with "/admin") or
-(http.request.uri.path starts_with "/profile") or
-(http.request.uri.path starts_with "/login") or
-(http.request.uri.path starts_with "/register") or
-(http.request.uri.path starts_with "/forgot-password") or
-(http.request.uri.path starts_with "/reset-password") or
-(http.request.uri.path starts_with "/api/") or
-(http.request.uri.path starts_with "/uploads") or
-(http.request.uri.path starts_with "/metrics") or
-(http.request.uri.path starts_with "/.well-known/")
+(http.request.method eq "GET")
 ```
-
-- Then: **Bypass cache**.
-
-> Do not add `Set-Cookie` responses to the cache. Auth pages and
-> `/api/session` already send `private, no-store`, but this rule
-> guarantees a future `/*` "cache everything" experiment can never
-> leak one user's HTML to another.
-
-### Rule 2 — Cache public HTML (second)
-
-- Name: `cache-public-html`
-- If incoming requests match… :
-
-```txt
-(http.host eq "your-domain.com" and http.request.uri.path eq "/")
-```
-
-  Add more `or http.request.uri.path eq "/about"` lines as you add
-  public pages (every page rendered with `{ public: true }` +
-  `cacheablePublic(...)` belongs here).
 
 - Then:
   - **Eligible for cache**
-  - Edge TTL → **Honor origin** (uses `s-maxage=300` from the app)
-  - Browser TTL → **Honor origin** (uses `max-age=0`: browsers
-    revalidate every load, edge still serves from cache)
+  - Edge TTL → **Honor origin**
+  - Browser TTL → **Honor origin**
   - Cache key → leave **Query string: Include all** (default). The
     Inertia `?v=` key and `?_spa` guard depend on it.
 
-### Rule 3 — Cache hashed assets (third, optional but explicit)
+That's it. No per-path rules, no bypass list — new public pages work
+automatically with zero dashboard changes.
 
-Cloudflare caches `.js`/`.css` by default, but pinning it makes the
-intent obvious and survives preset changes:
+### Why one rule is safe
 
-- Name: `cache-assets`
-- If: `http.request.uri.path starts_with "/assets/"`
-- Then: **Eligible for cache**, Edge TTL → **Honor origin** (uses
-  `max-age=31536000, immutable`), Browser TTL → **Honor origin**.
+The origin already separates cacheable from private via
+`Cache-Control`, and **Honor origin** means Cloudflare obeys it:
+
+- `public, s-maxage=...` (landing HTML, version-pinned Inertia JSON,
+  `/assets/*`) → cached at the edge.
+- `private, no-store` (auth pages, `/api/session`) → never cached,
+  even though the rule matches them. The edge passes them straight
+  through to origin every time.
+
+Path-scoped rules would only duplicate what the headers already say —
+and burn through your rule quota (free zones get 10). One
+`GET + Honor origin` rule covers every current and future page.
 
 ## Recommended extras
 
@@ -170,15 +140,15 @@ Dashboard → **Caching → Purge Cache → Purge by URL** →
 
 | Mistake | Why it hurts | Fix |
 | --- | --- | --- |
-| `/*` → Eligible for cache | Caches `/dashboard`, `/api/session` — leaks one user's HTML/JSON to everyone | Keep Rule 1 (bypass) first; only list public paths in Rule 2 |
-| Query string → Ignore | `?v=old` and `?v=new` collapse into one entry — stale Inertia JSON served to new bundles | Leave query string included (default) |
 | Edge TTL → Override with long value | Overrides `s-maxage=300` — deploys take hours to converge instead of 5 min | Use **Honor origin** and change TTL in code (`cacheablePublic(300, 600)`) |
-| Caching with `Cookie: session=...` | Authenticated HTML cached under a guest key | Public pages send no `Set-Cookie` and omit `auth.user` — keep it that way; verify new public pages use `{ public: true }` + `useSession()` |
+| Query string → Ignore | `?v=old` and `?v=new` collapse into one entry — stale Inertia JSON served to new bundles | Leave query string included (default) |
+| Bypass on `X-Inertia` header or `Cookie` | Kills the version-keyed SPA JSON cache; public HTML is user-agnostic anyway (identity loads via `/api/session`) | Don't add header/cookie bypasses — `private, no-store` on auth responses already protects them |
+| Caching non-GET (POST/PUT/DELETE) | Form submissions and tus uploads must always reach origin | Keep the rule scoped to `GET` only |
 | Testing with Development Mode on | Every request is `DYNAMIC` — looks like "cache doesn't work" | Turn Development Mode off before verifying |
 
 ## Adding a new public page
 
 1. Render with `{ public: true }` and wrap with `cacheablePublic(300, 600)` (see `pages.routes.ts` `/` route).
 2. Read identity via `useSession()`, never from Inertia props.
-3. Add its path to Rule 2 above.
+3. No dashboard change needed — the single GET rule picks it up.
 4. `curl -I` it twice — expect `HIT` on the second request.

@@ -34,8 +34,9 @@ Steps:
 5. Create an Origin Rule: rewrite Host header to the domain for
    incoming requests matching the hostname. This ensures CSRF
    and OAuth work correctly.
-6. Create a Cache Rule so the public landing page is served from
-   the Cloudflare edge, while authenticated pages are never cached.
+6. Create ONE Cache Rule so GET responses are served from
+   the Cloudflare edge. One rule is enough — the app already marks
+   every response, and the rule just honors the origin headers.
    Background — how the app marks its responses (src/server/cache.ts,
    src/server/inertia.ts, src/server/assets.ts):
    - GET / (public landing, identical HTML for all visitors):
@@ -47,18 +48,17 @@ Steps:
      (public, max-age=60, s-maxage=300, SWR=600); missing/stale ?v
      and partial reloads are no-store.
    - Auth pages (/dashboard, /admin, /profile, auth forms, /api/*):
-     Cache-Control: private, no-store → the edge must never cache these.
+     Cache-Control: private, no-store → with "respect origin" the
+     edge never caches these even though the rule matches them.
    - /assets/* (content-hashed filenames):
      public, max-age=31536000, immutable → cached by Cloudflare
      automatically, no rule needed.
    Rule to create (phase http_request_cache_settings):
-   - Name: dulak-public-cache
-   - Expression:
-     (http.host eq "your-domain.com" and http.request.method eq "GET"
-      and http.request.uri.path eq "/")
-     Scoped to / on purpose: auth pages stay uncacheable by default
-     even if a future code change forgets no-store. When new public
-     pages are added to the app, extend this expression with their paths.
+   - Name: dulak-cache-get
+   - Expression: (http.request.method eq "GET")
+     Deliberately broad: "respect origin" below means only responses
+     the app marked public get cached; private/no-store pass through.
+     No per-path list to maintain — new public pages work automatically.
    - Eligible for cache; Edge TTL and Browser TTL both respect origin
      (action set_cache_settings with action_parameters {"cache": true}
      and nothing else — this honors the s-maxage / max-age above).
